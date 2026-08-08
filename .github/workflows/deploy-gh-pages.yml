@@ -39,6 +39,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: ${{ secrets.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8830072583:AAEYhpGNTgD9AMR5hd5RC0eX3QlBi3is73c' }}
           NEXT_PUBLIC_COMMISSION_PERCENTAGE: 8
+          NEXT_PUBLIC_BASE_PATH: neighbourly_trust2
         run: npm run build
 
       - name: Upload GitHub Pages Artifact
