@@ -44,11 +44,30 @@ jobs:
           NEXT_PUBLIC_METERED_API_KEY: ${{ secrets.NEXT_PUBLIC_METERED_API_KEY }}
         run: npm run build
 
+      - name: Check GitHub Pages status
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages")
+
+          if [ "$status" = "200" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::GitHub Pages is not enabled for this repository. Skipping deploy step."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload GitHub Pages Artifact
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
 
       - name: Deploy to GitHub Pages
+        if: steps.pages.outputs.enabled == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
