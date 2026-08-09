@@ -4,7 +4,18 @@ import { useApp } from '../../context/AppContext';
 import { SearchWithVoice } from '../SearchWithVoice';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
-import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin } from 'lucide-react';
+import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X } from 'lucide-react';
+
+const LANGUAGES = [
+  { code: 'en', name: 'English',  native: 'English',  flag: '🇺🇸' },
+  { code: 'hi', name: 'Hindi',    native: 'हिन्दी',   flag: '🇮🇳' },
+  { code: 'kn', name: 'Kannada',  native: 'ಕನ್ನಡ',    flag: '🇮🇳' },
+  { code: 'te', name: 'Telugu',   native: 'తెలుగు',   flag: '🇮🇳' },
+  { code: 'ta', name: 'Tamil',    native: 'தமிழ்',    flag: '🇮🇳' },
+  { code: 'mr', name: 'Marathi',  native: 'मराठी',    flag: '🇮🇳' },
+  { code: 'bn', name: 'Bengali',  native: 'বাংলা',    flag: '🇮🇳' },
+  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી',  flag: '🇮🇳' },
+];
 
 const CategoryIcon = ({ slug, size = 32 }: { slug: string, size?: number }) => {
   switch (slug.toLowerCase()) {
@@ -26,8 +37,10 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, userLocation } = useApp();
+  const { categories, user, settings, setLanguage, userLocation, showToast } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLangPicker, setShowLangPicker] = useState(false);
+  const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
   
   // Specialists state
   const [nearbyWorkers, setNearbyWorkers] = useState<WorkerProfile[]>([]);
@@ -78,8 +91,8 @@ export default function HomeScreen({
             <button style={{ width: 40, height: 40, borderRadius: '50%', background: '#0F5762', border: '1px solid #147B88', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4BF' }}>
               <Volume2 size={20} />
             </button>
-            <button style={{ height: 40, padding: '0 16px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', color: 'white', fontSize: 14, fontWeight: 700, gap: 4 }}>
-              <span>IN</span><span style={{ fontSize: 13 }}>हिन्दी</span>
+            <button onClick={() => setShowLangPicker(true)} style={{ height: 40, padding: '0 16px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', color: 'white', fontSize: 14, fontWeight: 700, gap: 4 }}>
+              <span>{currentLangObj.flag}</span><span style={{ fontSize: 13 }}>{currentLangObj.native}</span>
             </button>
           </div>
         </div>
@@ -272,6 +285,60 @@ export default function HomeScreen({
           
         </div>
       </div>
+
+      {showLangPicker && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(4,27,48,0.72)',
+            backdropFilter: 'blur(4px)', zIndex: 999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setShowLangPicker(false); }}
+        >
+          <div style={{ background: 'white', borderRadius: 24, padding: 22, width: '100%', maxWidth: 360 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                🌐 Choose Language / भाषा चुनें
+              </h3>
+              <button
+                onClick={() => setShowLangPicker(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={15} color="#64748B" />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => {
+                    setLanguage(lang.code as any);
+                    setShowLangPicker(false);
+                    showToast(`Language: ${lang.name} (${lang.native})`, 'success');
+                  }}
+                  style={{
+                    background: currentLangObj.code === lang.code ? '#0B3D66' : '#F8FAFC',
+                    color: currentLangObj.code === lang.code ? 'white' : '#0F172A',
+                    border: `1.5px solid ${currentLangObj.code === lang.code ? '#0B3D66' : '#E2E8F0'}`,
+                    borderRadius: 14, padding: '10px 12px', textAlign: 'left',
+                    fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{lang.flag}</span>
+                  <div>
+                    <div style={{ fontSize: 12 }}>{lang.native}</div>
+                    <div style={{ fontSize: 9, opacity: 0.65 }}>{lang.name}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
