@@ -3,11 +3,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, ChevronLeft, Smartphone } from 'lucide-react';
 
-type Step = 'phone' | 'otp' | 'profile';
+type Step = 'language' | 'phone' | 'otp' | 'profile';
+
+const LANGUAGES = [
+  { code: 'en', label: 'English',    native: 'English'   },
+  { code: 'hi', label: 'Hindi',      native: 'हिंदी'      },
+  { code: 'kn', label: 'Kannada',    native: 'ಕನ್ನಡ'      },
+  { code: 'te', label: 'Telugu',     native: 'తెలుగు'     },
+  { code: 'ta', label: 'Tamil',      native: 'தமிழ்'      },
+  { code: 'mr', label: 'Marathi',    native: 'मराठी'      },
+  { code: 'bn', label: 'Bengali',    native: 'বাংলা'      },
+  { code: 'gu', label: 'Gujarati',   native: 'ગુજરાતી'    },
+];
 
 export default function LoginScreen() {
-  const { loginUser, settings, showToast } = useApp();
-  const [step, setStep] = useState<Step>('phone');
+  const { loginUser, settings, setLanguage, showToast } = useApp();
+  const [step, setStep] = useState<Step>('language');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [name, setName] = useState('');
@@ -140,6 +151,65 @@ export default function LoginScreen() {
     if (!name.trim()) { setError('Please enter your name.'); return; }
     loginUser(phone, name.trim(), authUserId);
   };
+
+  if (step === 'language') {
+    return (
+      <div style={{ height: '100%', background: '#F0F7FF', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Hero */}
+        <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '48px 24px 32px', textAlign: 'center' }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 20, background: 'rgba(255,255,255,0.1)',
+            border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(10px)',
+          }}>
+            <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: 0 }}>
+            Neighborly Trust
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, marginTop: 6, fontWeight: 500 }}>
+            Trusted help, right at your door.
+          </p>
+        </div>
+
+        {/* Language Select */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', background: '#F0F7FF' }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#64748B', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 12 }}>
+            Select your language — भाषा चुनें
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => { setLanguage(lang.code as any); setStep('phone'); }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                  padding: '14px 16px', borderRadius: 14,
+                  background: settings.language === lang.code ? '#0B3D66' : 'white',
+                  border: `2px solid ${settings.language === lang.code ? '#0B3D66' : '#E2E8F0'}`,
+                  cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                <span style={{
+                  fontSize: 15, fontWeight: 800,
+                  color: settings.language === lang.code ? 'white' : '#0F172A',
+                }}>
+                  {lang.native}
+                </span>
+                <span style={{
+                  fontSize: 11, fontWeight: 500, marginTop: 2,
+                  color: settings.language === lang.code ? 'rgba(255,255,255,0.7)' : '#94A3B8',
+                }}>
+                  {lang.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'otp') {
     return (
