@@ -312,34 +312,59 @@ export default function HomeScreen({
                     <Volume2 size={16} />
                   </button>
 
-                  {/* Available Badge */}
+                  {/* TOP PRO badge */}
+                  {worker.featured && (
+                    <div style={{
+                      position: 'absolute', top: 12, left: 12,
+                      background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
+                      color: '#92400E', fontSize: 10, fontWeight: 900,
+                      padding: '4px 10px', borderRadius: 20, letterSpacing: '0.4px',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                    }}>
+                      <Sparkles size={12} color="#92400E" /> TOP PRO
+                    </div>
+                  )}
+
+                  {/* Presence indicator */}
                   <div style={{
-                    position: 'absolute', bottom: 12, right: 12, background: '#10B981',
-                    color: 'white', fontSize: 11, fontWeight: 800, padding: '4px 10px',
-                    borderRadius: 12, display: 'flex', alignItems: 'center', gap: 4,
-                    boxShadow: '0 2px 8px rgba(16,185,129,0.3)'
+                    position: 'absolute', bottom: 12, right: 12,
+                    background: worker.is_online ? 'rgba(16,185,129,0.92)' : 'rgba(100,116,139,0.8)',
+                    color: 'white', padding: '4px 10px', borderRadius: 20,
+                    fontSize: 11, fontWeight: 800,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    backdropFilter: 'blur(6px)'
                   }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
-                    Available
+                    {worker.is_online ? 'Available' : 'Offline'}
                   </div>
                 </div>
 
                 {/* Card Body */}
                 <div style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {worker.full_name}
-                    </h3>
-                    <div style={{ 
-                      background: '#FEF3C7', color: '#D97706', fontSize: 12, fontWeight: 800,
-                      padding: '2px 8px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4
-                    }}>
-                      ⭐ {worker.avg_rating?.toFixed(1) || '5.0'}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 4px', color: '#0F172A', letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {worker.full_name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', background: '#FEF3C7', padding: '2px 8px', borderRadius: 12 }}>
+                          <Star size={12} color="#D97706" fill="#D97706" style={{ marginRight: 4 }} />
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#92400E' }}>{worker.avg_rating?.toFixed(1) || '4.5'}</span>
+                        </div>
+                        <span style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>
+                          ({worker.total_jobs || 0} jobs)
+                        </span>
+                      </div>
                     </div>
                   </div>
                   
-                  <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px', fontWeight: 500 }}>
-                    {categories.find(c => c.id === worker.category_id)?.name_en || 'Specialist'}
+                  <p style={{
+                    fontSize: 13, color: '#64748B', margin: '0 0 16px', fontWeight: 500,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {worker.description || `${categories.find(c => c.id === worker.category_id)?.name_en || 'Service'} Specialist`}
                   </p>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

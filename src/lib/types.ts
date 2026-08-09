@@ -46,6 +46,12 @@ export interface WorkerProfile {
   years_experience: number;
   distance_km: number;
   
+  // From old schema / dummy data
+  hourly_rate?: number;
+  is_online?: boolean;
+  description?: string;
+  featured?: boolean;
+  
   // Computed on client
   tags?: string[];
   location?: {
