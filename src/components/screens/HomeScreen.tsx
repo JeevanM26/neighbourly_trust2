@@ -44,18 +44,13 @@ function ProviderSkeleton() {
       background: 'white', border: '1px solid #E2E8F0', borderRadius: 18,
       overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', minWidth: 240, flexShrink: 0
     }}>
-      <div style={{
-        width: '100%', height: 140,
-        background: 'linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%)',
-        backgroundSize: '200% 100%',
-        animation: 'shimmer 1.4s ease-in-out infinite',
-      }} />
+      <div className="shimmer-loading" style={{ width: '100%', height: 140 }} />
       <div style={{ padding: '16px' }}>
-        <div style={{ height: 18, borderRadius: 9, background: '#F1F5F9', marginBottom: 8, width: '70%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
-        <div style={{ height: 13, borderRadius: 6, background: '#F1F5F9', marginBottom: 16, width: '40%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+        <div className="shimmer-loading" style={{ height: 18, borderRadius: 9, marginBottom: 8, width: '70%' }} />
+        <div className="shimmer-loading" style={{ height: 13, borderRadius: 6, marginBottom: 16, width: '40%' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{ height: 13, borderRadius: 6, background: '#F1F5F9', width: '30%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
-            <div style={{ height: 16, borderRadius: 8, background: '#F1F5F9', width: '25%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+            <div className="shimmer-loading" style={{ height: 13, borderRadius: 6, width: '30%' }} />
+            <div className="shimmer-loading" style={{ height: 16, borderRadius: 8, width: '25%' }} />
         </div>
       </div>
     </div>
@@ -90,13 +85,21 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
+  const roundedLat = userLocation.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
+  const roundedLng = userLocation.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
+  const hasFetchedRef = React.useRef(false);
+
   useEffect(() => {
     let isMounted = true;
     async function fetchWorkers() {
-      if (!userLocation.lat) return;
-      setIsLoadingWorkers(true);
+      if (!roundedLat) return;
+      
+      if (!hasFetchedRef.current) {
+        setIsLoadingWorkers(true);
+      }
+
       // Fetch all workers to show on home screen
-      const promises = categories.slice(0,3).map(c => findNearbyWorkers(c.id, userLocation.lat, userLocation.lng));
+      const promises = categories.slice(0,3).map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
       const results = await Promise.all(promises);
       const allWorkers = results.flat();
       const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
@@ -104,11 +107,12 @@ export default function HomeScreen({
       if (isMounted) {
         setNearbyWorkers(unique);
         setIsLoadingWorkers(false);
+        hasFetchedRef.current = true;
       }
     }
     if (categories.length > 0) fetchWorkers();
     return () => { isMounted = false; };
-  }, [categories, userLocation.lat, userLocation.lng]);
+  }, [categories, roundedLat, roundedLng]);
 
   const filteredWorkers = React.useMemo(() => {
     if (!searchQuery.trim()) return nearbyWorkers;
@@ -443,6 +447,11 @@ export default function HomeScreen({
       )}
 
       <style>{`
+        .shimmer-loading {
+          background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s ease-in-out infinite;
+        }
         @keyframes shimmer { 0%,100% { background-position: 200% 0; } 50% { background-position: -200% 0; } }
       `}</style>
     </div>
