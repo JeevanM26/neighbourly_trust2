@@ -10,11 +10,13 @@ import { findNearbyWorkers } from '../../lib/supabase';
 export default function MapScreen({
   categoryId,
   onSelectWorker,
+  onSelectCategory,
   onClearCategory,
   onLocationConfirmed
 }: {
   categoryId: string | null;
   onSelectWorker?: (workerId: string, categoryId?: string) => void;
+  onSelectCategory?: (categoryId: string) => void;
   onClearCategory?: () => void;
   onLocationConfirmed?: () => void;
 }) {
@@ -414,7 +416,7 @@ export default function MapScreen({
                   if (f === 'All') {
                     if (onClearCategory) onClearCategory();
                   } else {
-                    alert("Please select category from Home screen.");
+                    if (onSelectCategory) onSelectCategory(f);
                   }
                 }}
                 style={{

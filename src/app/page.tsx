@@ -251,6 +251,7 @@ function AuthenticatedApp() {
           <MapScreen 
             categoryId={selectedCategoryId} 
             onSelectWorker={handleSelectWorker} 
+            onSelectCategory={setSelectedCategoryId}
             onClearCategory={() => setSelectedCategoryId(null)}
             onLocationConfirmed={() => setTab('home')}
           />

@@ -64,7 +64,7 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast } = useApp();
+  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast, t } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
@@ -126,17 +126,32 @@ export default function HomeScreen({
   }, [categories, roundedLat, roundedLng]);
 
   const filteredWorkers = React.useMemo(() => {
-    if (!searchQuery.trim()) return nearbyWorkers;
-    const intent = detectIntent(searchQuery);
-    const categoryMatch = intent?.category.toLowerCase() || searchQuery.toLowerCase();
+    let result = nearbyWorkers;
     
-    return nearbyWorkers.filter(w => {
-      const cat = categories.find(c => c.id === w.category_id)?.name_en?.toLowerCase() || '';
-      return w.full_name?.toLowerCase().includes(categoryMatch) || cat.includes(categoryMatch);
-    });
-  }, [nearbyWorkers, searchQuery, categories]);
+    // 1. Search Query Filter
+    if (searchQuery.trim()) {
+      const intent = detectIntent(searchQuery);
+      const categoryMatch = intent?.category.toLowerCase() || searchQuery.toLowerCase();
+      
+      result = result.filter(w => {
+        const cat = categories.find(c => c.id === w.category_id)?.name_en?.toLowerCase() || '';
+        return w.full_name?.toLowerCase().includes(categoryMatch) || cat.includes(categoryMatch);
+      });
+    }
 
-  const greeting = new Date().getHours() < 12 ? 'Good morning' : 'Good afternoon';
+    // 2. Active Pill Filter
+    if (activeFilter === 'Top Rated') {
+      result = result.filter(w => (w.avg_rating || 0) >= 4.8);
+    } else if (activeFilter === 'Available Now') {
+      result = result.filter(w => w.is_online);
+    } else if (activeFilter === 'Under ₹350') {
+      result = result.filter(w => (w.hourly_rate || 350) < 350);
+    }
+
+    return result;
+  }, [nearbyWorkers, searchQuery, categories, activeFilter]);
+
+  const greeting = new Date().getHours() < 12 ? t('goodMorning') : t('goodAfternoon');
   
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F1F5F9', overflowY: 'auto' }}>
@@ -175,6 +190,8 @@ export default function HomeScreen({
             value={searchQuery}
             onSearchChange={setSearchQuery} 
             selectedLanguage={settings?.language === 'hi' ? 'hi-IN' : 'en-IN'}
+            placeholder={t('searchPlaceholder')}
+            listeningPlaceholder={t('listening')}
           />
         </div>
 
@@ -199,7 +216,7 @@ export default function HomeScreen({
           {/* All Services Title */}
           <div style={{ padding: '24px 20px 16px' }}>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: 'white', margin: 0 }}>
-              All Services
+              {t('allServices')}
             </h2>
           </div>
 
@@ -210,7 +227,7 @@ export default function HomeScreen({
             {categories.slice(0, 4).map(cat => (
               <button
                 key={cat.id}
-                onClick={() => onSelectCategory(cat.id)}
+                onClick={() => setSearchQuery(cat.name_en)}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, cursor: 'pointer',
                   background: 'transparent', border: 'none', padding: 0
@@ -241,29 +258,35 @@ export default function HomeScreen({
         
         {/* Filter Pills */}
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px', background: 'white', borderBottom: '1px solid #F1F5F9', scrollbarWidth: 'none' }}>
-          {['All', '⭐ Top Rated', '📅 Available Now', '💰 Under ₹350'].map((f) => (
-            <button key={f} onClick={() => setActiveFilter(f)} style={{
-              background: activeFilter === f ? '#0B3D66' : '#F1F5F9',
-              color: activeFilter === f ? 'white' : '#334155',
+          {[
+            { id: 'All', label: t('filterAll') }, 
+            { id: 'Top Rated', label: t('filterTopRated') }, 
+            { id: 'Available Now', label: t('filterAvailableNow') }, 
+            { id: 'Under ₹350', label: t('filterUnder350') }
+          ].map((f) => (
+            <button key={f.id} onClick={() => setActiveFilter(f.id)} style={{
+              background: activeFilter === f.id ? '#0B3D66' : '#F1F5F9',
+              color: activeFilter === f.id ? 'white' : '#334155',
               border: 'none', borderRadius: 20, padding: '8px 16px',
               fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0
             }}>
-              {f}
+              {f.label}
             </button>
           ))}
         </div>
 
         {/* Specialists Near You */}
         <div style={{ padding: '24px 20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+          <div style={{ padding: '24px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
-                Specialists Near You
+                {t('specialistsNearYou')}
               </h2>
-              <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 16 }}>📈</span> {filteredWorkers.length} verified specialist{filteredWorkers.length !== 1 ? 's' : ''} found
+              <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <MapPin size={14} /> {filteredWorkers.length} {filteredWorkers.length === 1 ? t('verifiedSpecialistFound') : t('verifiedSpecialistsFound')}
               </p>
             </div>
+            
             <button 
               onClick={handleRefresh}
               disabled={isLoadingWorkers}
@@ -275,7 +298,7 @@ export default function HomeScreen({
                 boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
               }}
             >
-              <RefreshCw size={14} className={isLoadingWorkers ? 'animate-spin' : ''} /> {isLoadingWorkers ? 'Refreshing...' : 'Refresh'}
+              <RefreshCw size={14} className={isLoadingWorkers ? 'animate-spin' : ''} /> {isLoadingWorkers ? t('refreshing') : t('refresh')}
             </button>
           </div>
 
@@ -400,7 +423,7 @@ export default function HomeScreen({
               </div>
             )) : (
               <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%' }}>
-                No specialists found nearby.
+                {t('noSpecialistsFound')}
               </div>
             )}
           </div>

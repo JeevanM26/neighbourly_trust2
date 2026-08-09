@@ -11,6 +11,8 @@ interface SearchProps {
   onSearchChange: (query: string) => void;
   onCategorySelect?: (categoryId: string) => void;
   selectedLanguage?: string; // e.g. 'hi-IN' | 'en-IN' | 'ta-IN' | 'te-IN' | 'kn-IN'
+  placeholder?: string;
+  listeningPlaceholder?: string;
 }
 
 export const SearchWithVoice: React.FC<SearchProps> = ({
@@ -18,6 +20,8 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
   onSearchChange,
   onCategorySelect,
   selectedLanguage = "hi-IN",
+  placeholder = "Search 'electrician', 'water leak'...",
+  listeningPlaceholder = "Listening... बोलिए...",
 }) => {
   const [query, setQuery] = useState(value);
   
@@ -215,7 +219,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
             setQuery(e.target.value);
             onSearchChange(e.target.value);
           }}
-          placeholder={isListening ? "Listening... बोलिए..." : "Search 'electrician', 'water leak'..."}
+          placeholder={isListening ? listeningPlaceholder : placeholder}
           style={{
             flex: 1,
             padding: '16px 12px',
