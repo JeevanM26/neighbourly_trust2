@@ -56,13 +56,7 @@ export default function WorkerProfileSheet({
   // Prioritize active states over 'searching' in case there are orphaned test bookings
   const relevantBookings = bookings.filter(b => {
     if (b.category_id !== categoryId) return false;
-    if (!['searching', 'accepted', 'on_the_way', 'in_progress'].includes(b.status)) return false;
-    
-    // Ignore orphaned 'searching' bookings that are older than 5 minutes
-    if (b.status === 'searching') {
-      const ageMs = Date.now() - new Date(b.created_at).getTime();
-      if (ageMs > 5 * 60 * 1000) return false;
-    }
+    if (!['searching', 'accepted', 'on_the_way', 'in_progress', 'no_workers_found'].includes(b.status)) return false;
     return true;
   });
   const statusPriority: Record<string, number> = { in_progress: 1, on_the_way: 2, accepted: 3, searching: 4 };
@@ -116,9 +110,36 @@ export default function WorkerProfileSheet({
     );
   }
 
-  const isSearching = activeBooking?.status === 'searching' || (bookingStatus === 'success' && !activeBooking);
+  const isSearching = activeBooking?.status === 'searching' || (bookingStatus === 'success' && (!activeBooking || activeBooking.status === 'searching'));
   const isAccepted = activeBooking ? ['accepted', 'on_the_way', 'in_progress'].includes(activeBooking.status) : false;
   const isCompleted = activeBooking?.status === 'completed';
+  const noWorkers = activeBooking?.status === 'no_workers_found';
+
+  if (noWorkers) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+        <div style={{ padding: 40, textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ 
+            width: 64, height: 64, borderRadius: '50%', background: '#FEE2E2', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24
+          }}>
+            <X size={32} color="#EF4444" />
+          </div>
+          <h2 style={{ margin: '0 0 12px 0', color: '#0F172A' }}>Worker Not Available</h2>
+          <p style={{ color: '#64748B', marginBottom: 32 }}>We couldn't connect you with {worker.full_name}. They might be offline or busy.</p>
+          <button 
+            onClick={onBack}
+            style={{ 
+              width: '100%', padding: '16px', borderRadius: 12, border: 'none', 
+              background: '#0B3D66', color: 'white', fontWeight: 600, fontSize: 16, cursor: 'pointer'
+            }}
+          >
+            Find Another Worker
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
