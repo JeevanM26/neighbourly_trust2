@@ -5,7 +5,7 @@ import { SearchWithVoice } from '../SearchWithVoice';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { detectIntent } from '../../lib/intentEngine';
-import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X, VolumeX } from 'lucide-react';
+import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X, VolumeX, Star } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', name: 'English',  native: 'English',  flag: '🇺🇸' },
