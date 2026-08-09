@@ -84,7 +84,7 @@ export default function WorkerProfileSheet({
 
   const handleBook = async () => {
     setBookingStatus('booking');
-    const id = await bookWorker(categoryId);
+    const id = await bookWorker(categoryId, workerId);
     if (id) {
       setActiveBookingId(id);
       setBookingStatus('success');
@@ -269,7 +269,7 @@ export default function WorkerProfileSheet({
                     cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
                   }}
                 >
-                  <Loader2 size={20} className="animate-spin" /> Searching...
+                  <Loader2 size={20} className="animate-spin" /> Booking...
                 </button>
                 <button
                   onClick={async () => {

@@ -110,6 +110,7 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
 export async function createBooking(params: {
   customerId: string;
   categoryId: string;
+  workerId: string;
   lat: number;
   lng: number;
 }): Promise<string | null> {
@@ -121,7 +122,8 @@ export async function createBooking(params: {
       .insert({
         customer_id: params.customerId,
         category_id: params.categoryId,
-        status: 'searching',
+        worker_id: params.workerId,
+        status: 'accepted',
         customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`,
         customer_lat: params.lat,
         customer_lng: params.lng
