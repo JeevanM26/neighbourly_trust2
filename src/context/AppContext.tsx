@@ -54,7 +54,7 @@ interface AppContextType {
   refreshBookings: () => Promise<void>;
 
   // Actions
-  bookWorker: (categoryId: string, workerId: string) => Promise<string | null>;
+  bookWorker: (categoryId: string, workerId: string, exactLocation?: { lat: number, lng: number }) => Promise<string | null>;
 
   // Settings
   settings: AppSettings;
@@ -351,13 +351,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   }, []);
 
-  const bookWorker = useCallback(async (categoryId: string, workerId: string) => {
+  const bookWorker = useCallback(async (categoryId: string, workerId: string, exactLocation?: { lat: number, lng: number }) => {
     if (!user) return null;
     // ensure we have latest location
-    let loc = searchLocation || userLocation;
-    if (!searchLocation && locationStatus !== 'granted') {
+    let loc = exactLocation || searchLocation || userLocation;
+    if (!exactLocation && !searchLocation && locationStatus !== 'granted') {
       const newLoc = await requestLocation();
       if (newLoc) loc = newLoc;
+    }
+    
+    // Fallback if loc is still somehow empty
+    if (!loc || !loc.lat) {
+      loc = { lat: 12.9715987, lng: 77.5945627 };
     }
     
     const id = await createBooking({

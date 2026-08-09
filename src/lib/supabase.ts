@@ -123,7 +123,7 @@ export async function createBooking(params: {
         customer_id: params.customerId,
         category_id: params.categoryId,
         worker_id: params.workerId,
-        status: 'accepted',
+        status: 'searching',
         customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`,
         customer_lat: params.lat,
         customer_lng: params.lng
