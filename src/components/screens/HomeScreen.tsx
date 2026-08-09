@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { SearchWithVoice } from '../SearchWithVoice';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
+import { detectIntent } from '../../lib/intentEngine';
 import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X, VolumeX } from 'lucide-react';
 
 const LANGUAGES = [
@@ -28,7 +29,14 @@ const CategoryIcon = ({ slug, size = 32 }: { slug: string, size?: number }) => {
   }
 };
 
-const QuickChips = ['⚡ Light repair', '💦 Water leakage', '🧹 Cleaning maid', '🔧 Motor repair'];
+const PRESET_CHIPS = [
+  { label: '⚡ Light repair',   query: 'Light is not working'          },
+  { label: '🚰 Water leakage',  query: 'Water tap leaking'             },
+  { label: '🧹 Cleaning maid',  query: 'House cleaning helper needed'  },
+  { label: '🔧 Motor pump',     query: 'Borewell motor pump repair'    },
+  { label: '🪚 Carpenter',      query: 'Door lock repair carpenter'    },
+  { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
+];
 
 export default function HomeScreen({ 
   onSelectCategory,
@@ -78,6 +86,17 @@ export default function HomeScreen({
     return () => { isMounted = false; };
   }, [categories, userLocation.lat, userLocation.lng]);
 
+  const filteredWorkers = React.useMemo(() => {
+    if (!searchQuery.trim()) return nearbyWorkers;
+    const intent = detectIntent(searchQuery);
+    const categoryMatch = intent?.category.toLowerCase() || searchQuery.toLowerCase();
+    
+    return nearbyWorkers.filter(w => {
+      const cat = categories.find(c => c.id === w.category_id)?.name_en?.toLowerCase() || '';
+      return w.full_name?.toLowerCase().includes(categoryMatch) || cat.includes(categoryMatch);
+    });
+  }, [nearbyWorkers, searchQuery, categories]);
+
   const greeting = new Date().getHours() < 12 ? 'Good morning' : 'Good afternoon';
   
   return (
@@ -114,6 +133,7 @@ export default function HomeScreen({
         <div style={{ padding: '0 20px', position: 'relative' }}>
           {/* We wrap SearchWithVoice to hide its hardcoded padding and styles if possible, or just render it */}
           <SearchWithVoice 
+            value={searchQuery}
             onSearchChange={setSearchQuery} 
             selectedLanguage={settings?.language === 'hi' ? 'hi-IN' : 'en-IN'}
           />
@@ -121,13 +141,16 @@ export default function HomeScreen({
 
         {/* Quick Chips */}
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px 24px', scrollbarWidth: 'none' }}>
-          {QuickChips.map((chip, idx) => (
-            <button key={idx} style={{
+          {PRESET_CHIPS.map((chip, idx) => (
+            <button key={idx} 
+              onClick={() => setSearchQuery(chip.query)}
+              style={{
               background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 20, padding: '8px 16px', whiteSpace: 'nowrap',
-              color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0
+              color: 'white', padding: '8px 16px', borderRadius: 20, fontSize: 13,
+              fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
+              cursor: 'pointer'
             }}>
-              {chip}
+              {chip.label}
             </button>
           ))}
         </div>
@@ -199,7 +222,7 @@ export default function HomeScreen({
                 Specialists Near You
               </h2>
               <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 16 }}>📈</span> {nearbyWorkers.length > 0 ? nearbyWorkers.length : '1'} verified specialist found
+                <span style={{ fontSize: 16 }}>📈</span> {filteredWorkers.length > 0 ? filteredWorkers.length : '1'} verified specialist found
               </p>
             </div>
             <button style={{ 
@@ -214,7 +237,7 @@ export default function HomeScreen({
 
           {/* Specialist Cards Horizontal Scroll */}
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 16 }}>
-            {nearbyWorkers.length > 0 ? nearbyWorkers.map(worker => (
+            {filteredWorkers.length > 0 ? filteredWorkers.map(worker => (
               <div 
                 key={worker.worker_id} 
                 onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id)}

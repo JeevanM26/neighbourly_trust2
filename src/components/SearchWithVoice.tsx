@@ -7,17 +7,24 @@ import { Capacitor } from "@capacitor/core";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 
 interface SearchProps {
+  value: string;
   onSearchChange: (query: string) => void;
   onCategorySelect?: (categoryId: string) => void;
   selectedLanguage?: string; // e.g. 'hi-IN' | 'en-IN' | 'ta-IN' | 'te-IN' | 'kn-IN'
 }
 
 export const SearchWithVoice: React.FC<SearchProps> = ({
+  value,
   onSearchChange,
   onCategorySelect,
   selectedLanguage = "hi-IN",
 }) => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(value);
+  
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
   const [isListening, setIsListening] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
