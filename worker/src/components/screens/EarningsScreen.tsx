@@ -163,10 +163,10 @@ export default function EarningsScreen() {
         {skillData.length > 0 && (
           <div style={{ background: 'white', borderRadius: 20, padding: '20px', marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #F1F5F9' }}>
             <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', margin: '0 0 16px' }}>Earnings by Skill</h3>
-            {skillData.map(s => {
+            {skillData.map((s, i) => {
               const pct = earnings.net > 0 ? (s.amount / earnings.net) * 100 : 0;
               return (
-                <div key={s.category} style={{ marginBottom: 14, ':last-child': { marginBottom: 0 } } as any}>
+                <div key={s.category} style={{ marginBottom: i === skillData.length - 1 ? 0 : 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 16 }}>{s.emoji}</span>

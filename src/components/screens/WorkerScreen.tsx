@@ -1,8 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { WorkerProfile } from '../../lib/types';
-import { Briefcase, PlusCircle, CheckCircle2, Clock, DollarSign, MapPin, User, Phone, Sparkles, ShieldCheck } from 'lucide-react';
+import { WorkerProfile, Booking } from '../../lib/types';
+import { Briefcase, PlusCircle, CheckCircle2, Clock, DollarSign, MapPin, User, Phone, Sparkles, ShieldCheck, Navigation } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 export default function WorkerScreen({ onJobPosted }: { onJobPosted?: () => void }) {
   const { user, workers, bookings, showToast } = useApp();
@@ -11,6 +13,49 @@ export default function WorkerScreen({ onJobPosted }: { onJobPosted?: () => void
   const updateBookingStatus = console.log;
 
   const [activeTab, setActiveTab] = useState<'feed' | 'post' | 'earnings'>('feed');
+  const [expandedMapId, setExpandedMapId] = useState<string | null>(null);
+
+  // Initialize Map for a specific booking
+  useEffect(() => {
+    if (!expandedMapId) return;
+    const booking = bookings.find(b => b.id === expandedMapId);
+    if (!booking || !booking.customer_lat || !booking.customer_lng) return;
+
+    const mapContainer = document.getElementById(`worker-map-${expandedMapId}`);
+    if (!mapContainer || (mapContainer as any)._leaflet_id) return;
+
+    const map = L.map(mapContainer, {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([booking.customer_lat, booking.customer_lng], 16);
+
+    L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    }).addTo(map);
+
+    const pinHtml = `
+      <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; width: 100%; height: 100%; background: #0B3D66; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+        <div style="position: relative; z-index: 2; width: 24px; height: 24px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+          🏠
+        </div>
+      </div>
+    `;
+
+    L.marker([booking.customer_lat, booking.customer_lng], {
+      icon: L.divIcon({
+        html: pinHtml,
+        className: 'custom-customer-pin',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40]
+      })
+    }).addTo(map);
+
+    return () => {
+      map.remove();
+    };
+  }, [expandedMapId, bookings]);
 
   // Form State for Posting a Job / Registering Service Profile
   const [name, setName] = useState(user?.full_name || '');
@@ -253,23 +298,51 @@ export default function WorkerScreen({ onJobPosted }: { onJobPosted?: () => void
                         <span style={{ fontSize: 10, color: '#64748B', marginLeft: 6 }}>(Net ₹{(b.total_amount || 0) - (b.commission_amount || 0)})</span>
                       </div>
 
-                      {b.status === 'pending' && (
-                        <button
-                          onClick={() => console.log(b.id, 'accepted')}
-                          style={{ background: '#10B981', color: 'white', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
-                        >
-                          Accept Job ✓
-                        </button>
-                      )}
-                      {b.status === 'accepted' && (
-                        <button
-                          onClick={() => console.log(b.id, 'completed')}
-                          style={{ background: '#0B3D66', color: 'white', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
-                        >
-                          Mark Completed 🎉
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {b.customer_lat && b.customer_lng && (
+                          <button
+                            onClick={() => setExpandedMapId(expandedMapId === b.id ? null : b.id)}
+                            style={{ background: expandedMapId === b.id ? '#F1F5F9' : 'white', color: '#0F172A', border: '1px solid #CBD5E1', borderRadius: 10, padding: '6px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <MapPin size={14} /> {expandedMapId === b.id ? 'Hide Map' : 'View Map'}
+                          </button>
+                        )}
+                        {b.status === 'pending' && (
+                          <button
+                            onClick={() => console.log(b.id, 'accepted')}
+                            style={{ background: '#10B981', color: 'white', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            Accept ✓
+                          </button>
+                        )}
+                        {b.status === 'accepted' && (
+                          <button
+                            onClick={() => console.log(b.id, 'completed')}
+                            style={{ background: '#0B3D66', color: 'white', border: 'none', borderRadius: 10, padding: '6px 14px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            Complete 🎉
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {expandedMapId === b.id && b.customer_lat && b.customer_lng && (
+                      <div style={{ marginTop: 12, borderTop: '1px solid #F1F5F9', paddingTop: 12 }}>
+                        <div id={`worker-map-${b.id}`} style={{ width: '100%', height: 200, borderRadius: 12, backgroundColor: '#E2E8F0' }} />
+                        <a 
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${b.customer_lat},${b.customer_lng}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            width: '100%', background: '#2563EB', color: 'white', textDecoration: 'none',
+                            padding: '10px 0', borderRadius: 10, fontWeight: 800, fontSize: 12, marginTop: 8 
+                          }}
+                        >
+                          <Navigation size={14} /> Navigate with Google Maps
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

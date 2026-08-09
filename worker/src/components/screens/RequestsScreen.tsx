@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Phone, MapPin, Clock, Check, X, IndianRupee, RefreshCw, Bell, BellOff } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
+import CustomerMap from '../CustomerMap';
 
 // ── Countdown Timer for each booking ──
 function BookingTimer({ expiresAt, onExpire }: { expiresAt?: string; onExpire: () => void }) {
@@ -194,6 +195,9 @@ export default function RequestsScreen() {
                     <MapPin size={12} color="#94A3B8" style={{ marginTop: 2 }} />
                     <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{b.address_text}</span>
                   </div>
+                )}
+                {b.customer_location && ['accepted', 'on_the_way', 'in_progress'].includes(b.status) && (
+                  <CustomerMap customerLoc={b.customer_location} />
                 )}
                 {b.customer_phone && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>

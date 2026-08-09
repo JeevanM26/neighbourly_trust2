@@ -29,10 +29,11 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
       if (!leafletMap.current) {
         leafletMap.current = L.map(mapRef.current as HTMLElement).setView([userLoc.lat, userLoc.lng], 13);
 
-        // OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 18,
+        // Google Maps Roadmap tile layer
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps'
         }).addTo(leafletMap.current);
       } else {
         leafletMap.current.setView([userLoc.lat, userLoc.lng], 13);

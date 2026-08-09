@@ -182,11 +182,24 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className={`relative flex items-center bg-white rounded-[24px] border-2 transition-all overflow-hidden ${
-        isListening ? "border-amber-500 shadow-lg shadow-amber-500/20" : "border-transparent"
-      }`}>
-        <Search className="w-5 h-5 ml-4 text-gray-400"/>
+    <div style={{ width: '100%', margin: '0 auto', marginTop: '-20px' }}>
+      <div 
+        style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          background: 'white',
+          borderRadius: 24,
+          overflow: 'hidden',
+          transition: 'all 0.3s ease',
+          boxShadow: isListening 
+            ? '0 8px 30px rgba(245, 158, 11, 0.4)' 
+            : '0 8px 30px rgba(0,0,0,0.12)',
+          border: isListening ? '2px solid #F59E0B' : '2px solid transparent',
+          margin: '0 8px',
+        }}
+      >
+        <Search size={20} color="#94A3B8" style={{ marginLeft: 16 }} />
 
         <input
           type="text"
@@ -196,32 +209,70 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
             onSearchChange(e.target.value);
           }}
           placeholder={isListening ? "Listening... बोलिए..." : "Search 'electrician', 'water leak'..."}
-          className="w-full py-4 px-3 text-sm bg-transparent outline-none text-gray-900 placeholder-gray-500 font-medium"
+          style={{
+            flex: 1,
+            padding: '16px 12px',
+            fontSize: 14,
+            fontWeight: 600,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: '#0F172A',
+            width: '100%'
+          }}
         />
 
         {query && (
-          <button onClick={handleClear} className="p-1 mr-1 text-gray-400 hover:text-gray-600">
-            <X className="w-4 h-4"/>
+          <button 
+            onClick={handleClear}
+            style={{
+              padding: 4,
+              marginRight: 4,
+              background: 'transparent',
+              border: 'none',
+              color: '#94A3B8',
+              cursor: 'pointer'
+            }}
+          >
+            <X size={16} />
           </button>
         )}
 
         <button
           onClick={toggleVoiceSearch}
-          className={`p-2.5 mr-2 rounded-2xl transition-all ${
-            isListening
-              ? "bg-amber-500 text-white animate-pulse scale-110"
-              : "text-white hover:opacity-90"
-          }`}
-          style={{ background: isListening ? '' : '#0B3D66' }}
+          style={{
+            padding: 10,
+            marginRight: 8,
+            borderRadius: 16,
+            border: 'none',
+            transition: 'all 0.3s ease',
+            background: isListening ? '#F59E0B' : '#0B3D66',
+            color: 'white',
+            cursor: 'pointer',
+            transform: isListening ? 'scale(1.1)' : 'scale(1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
           title="Voice Search"
         >
-          <Mic className="w-5 h-5"/>
+          <Mic size={20} />
         </button>
       </div>
 
       {isListening && (
-        <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-amber-600 animate-pulse">
-          <Sparkles className="w-4 h-4"/>
+        <div style={{
+          marginTop: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          fontSize: 12,
+          fontWeight: 800,
+          color: '#F59E0B',
+          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        }}>
+          <Sparkles size={16} />
           Listening in {selectedLanguage.split("-")[0].toUpperCase()}... Speak now
         </div>
       )}

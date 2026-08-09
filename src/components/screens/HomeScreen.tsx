@@ -19,10 +19,12 @@ const CategoryIcon = ({ slug, size = 32 }: { slug: string, size?: number }) => {
 
 const QuickChips = ['⚡ Light repair', '💦 Water leakage', '🧹 Cleaning maid', '🔧 Motor repair'];
 
-export default function HomeScreen({
+export default function HomeScreen({ 
   onSelectCategory,
-}: {
+  onSelectWorker
+}: { 
   onSelectCategory: (categoryId: string) => void;
+  onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
   const { categories, user, settings, userLocation } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,11 +189,15 @@ export default function HomeScreen({
           {/* Specialist Cards Horizontal Scroll */}
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 16 }}>
             {nearbyWorkers.length > 0 ? nearbyWorkers.map(worker => (
-              <div key={worker.worker_id} style={{
-                background: 'white', borderRadius: 24, overflow: 'hidden',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)', position: 'relative',
-                minWidth: 260, maxWidth: 300, flexShrink: 0
-              }}>
+              <div 
+                key={worker.worker_id} 
+                onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id)}
+                style={{
+                  background: 'white', borderRadius: 24, overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)', position: 'relative',
+                  minWidth: 260, maxWidth: 300, flexShrink: 0, cursor: 'pointer'
+                }}
+              >
                 {/* Card Header Image Area */}
                 <div style={{ 
                   height: 140, background: '#FEF3C7', position: 'relative',

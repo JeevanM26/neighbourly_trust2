@@ -41,10 +41,16 @@ export function useWebRTC(userId: string) {
   }, [remoteStream, callStatus]);
 
   const startCall = (targetUserId: string, targetName: string, callerName: string, callerAvatar?: string) => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     managerRef.current?.startCall(targetUserId, targetName, callerName, callerAvatar);
   };
 
   const answerCall = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     managerRef.current?.answerCall();
   };
 

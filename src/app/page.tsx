@@ -243,7 +243,7 @@ function AuthenticatedApp() {
 
       {/* Screens */}
       <div className="screen" hidden={tab !== 'home'}>
-        <HomeScreen onSelectCategory={handleSelectCategory} />
+        <HomeScreen onSelectCategory={handleSelectCategory} onSelectWorker={handleSelectWorker} />
       </div>
 
       {tab === 'map' && (
@@ -252,6 +252,7 @@ function AuthenticatedApp() {
             categoryId={selectedCategoryId} 
             onSelectWorker={handleSelectWorker} 
             onClearCategory={() => setSelectedCategoryId(null)}
+            onLocationConfirmed={() => setTab('home')}
           />
         </div>
       )}

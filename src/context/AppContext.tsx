@@ -71,6 +71,9 @@ interface AppContextType {
 
   // Location
   userLocation: { lat: number; lng: number };
+  setUserLocation: (loc: { lat: number; lng: number }) => void;
+  searchLocation: { lat: number; lng: number } | null;
+  setSearchLocation: (loc: { lat: number; lng: number } | null) => void;
   locationStatus: 'loading' | 'granted' | 'denied' | 'idle';
   requestLocation: () => Promise<{lat: number, lng: number} | null>;
   webrtc: ReturnType<typeof useWebRTC>;
@@ -137,10 +140,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [userLocation, setUserLocation] = useState(DEFAULT_LOCATION);
+  const [searchLocation, setSearchLocation] = useState<{lat: number, lng: number} | null>(null);
   const [locationStatus, setLocationStatus] = useState<'loading' | 'granted' | 'denied' | 'idle'>('idle');
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const locationPromiseRef = useRef<{resolve: (val: any) => void, reject: () => void} | null>(null);
+  const geoWatchRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -152,6 +157,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nt_settings', JSON.stringify(settings));
   }, [settings]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !navigator.geolocation) return;
+
+    if (locationStatus === 'granted') {
+      if (geoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(geoWatchRef.current);
+      }
+      
+      geoWatchRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          console.log(`Real-time location updated: ${pos.coords.latitude}, ${pos.coords.longitude} (Accuracy: ${pos.coords.accuracy} meters)`);
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (err) => {
+          console.warn("Real-time location watch error:", err);
+        },
+        { enableHighAccuracy: true, maximumAge: 10000 }
+      );
+    }
+
+    return () => {
+      if (geoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(geoWatchRef.current);
+        geoWatchRef.current = null;
+      }
+    };
+  }, [locationStatus]);
+
   // Internal request location function
   const _executeLocationRequest = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
@@ -162,16 +195,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          console.log(`Initial location: ${pos.coords.latitude}, ${pos.coords.longitude} (Accuracy: ${pos.coords.accuracy} meters)`);
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(coords);
           setLocationStatus('granted');
           resolve(coords);
         },
-        () => {
+        (err) => {
+          console.warn("Initial location fetch error:", err);
           setLocationStatus('denied');
           resolve(null);
         },
-        { timeout: 8000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     });
   }, []);
@@ -318,8 +353,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const bookWorker = useCallback(async (categoryId: string) => {
     if (!user) return null;
     // ensure we have latest location
-    let loc = userLocation;
-    if (locationStatus !== 'granted') {
+    let loc = searchLocation || userLocation;
+    if (!searchLocation && locationStatus !== 'granted') {
       const newLoc = await requestLocation();
       if (newLoc) loc = newLoc;
     }
@@ -354,7 +389,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       bookWorker,
       settings, setLanguage, toggleSounds, toggleVoice,
       toast, showToast, dismissToast, translate, t: translate,
-      userLocation, locationStatus, requestLocation, webrtc,
+      userLocation, setUserLocation, searchLocation, setSearchLocation, locationStatus, requestLocation, webrtc,
       workers: [], // Provide empty array to satisfy type
     }}>
       {children}

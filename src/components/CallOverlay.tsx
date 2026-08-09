@@ -41,114 +41,116 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
   if (callStatus === 'idle') return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
-      <audio ref={audioRef} autoPlay style={{ display: 'none' }} />
-      
-      <div className="relative w-full max-w-sm bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-6 shadow-2xl border border-slate-800 flex flex-col items-center justify-between h-[520px]">
+    <>
+      <style>{`
+        @keyframes nt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes nt-pulse-ring {
+          0% { transform: scale(0.8); opacity: 0.5; }
+          80% { transform: scale(1.6); opacity: 0; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+      `}</style>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)', color: 'white', animation: 'nt-fade-in 0.2s ease forwards' }}>
+        <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
         
-        {/* Top Header */}
-        <div className="w-full flex items-center justify-center text-xs text-slate-400">
-          <div className="flex items-center space-x-1.5 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700/50">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-medium text-slate-200">Neighborly Privacy Shield</span>
+        <div style={{ position: 'relative', width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100dvh', maxHeight: 850, padding: '48px 0' }}>
+          
+          {/* Top Header */}
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShieldCheck size={16} color="#10B981" />
+              <span style={{ fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>End-to-end encrypted</span>
+            </div>
           </div>
-        </div>
 
-        {/* Center Content: Avatar & Info */}
-        <div className="flex flex-col items-center my-auto py-6 text-center w-full">
-          {/* Animated Avatar Ring */}
-          <div className="relative mb-6">
-            {(callStatus === 'ringing' || callStatus === 'calling') ? (
-              <>
-                <div className="absolute inset-0 rounded-full border-4 border-blue-500/30 animate-pulse-ring" />
-                <div className="absolute inset-0 rounded-full border-2 border-blue-400/20 animate-pulse-ring" style={{ animationDelay: '0.5s' }} />
-                <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-pulse-dot" />
-              </>
-            ) : callStatus === 'connected' ? (
-              <div className="absolute -inset-2 rounded-full bg-emerald-500/20 animate-pulse-dot" />
-            ) : null}
+          {/* Center Content: Avatar & Info */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0', width: '100%' }}>
+            
+            <div style={{ position: 'relative', marginBottom: 32 }}>
+              {(callStatus === 'ringing' || callStatus === 'calling') && (
+                <div style={{ position: 'absolute', top: -16, left: -16, right: -16, bottom: -16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', animation: 'nt-pulse-ring 2s infinite' }} />
+              )}
+              <div style={{ position: 'relative', width: 128, height: 128, borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, backdropFilter: 'blur(4px)' }}>
+                {incomingCall?.callerAvatar ? (
+                  <img src={incomingCall.callerAvatar} alt={incomingCall.callerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <Phone size={48} color="rgba(255,255,255,0.4)" />
+                )}
+              </div>
+            </div>
 
-            <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-800 shadow-xl flex items-center justify-center z-10">
-              {incomingCall?.callerAvatar ? (
-                <img src={incomingCall.callerAvatar} alt={incomingCall.callerName} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl text-slate-400">📞</span>
+            <h3 style={{ fontSize: 30, fontWeight: 300, letterSpacing: 0.5, color: 'white', marginBottom: 8, textAlign: 'center', margin: 0 }}>
+              {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
+            </h3>
+
+            <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.5, color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>
+              {callStatus === 'calling' && <span>Calling...</span>}
+              {callStatus === 'ringing' && <span>Incoming Voice Call</span>}
+              {callStatus === 'connected' && (
+                <span style={{ color: 'white', fontFamily: 'monospace', fontSize: 18, fontWeight: 300 }}>
+                  {formatCallDuration(duration)}
+                </span>
               )}
             </div>
           </div>
 
-          {/* Name & Status */}
-          <h3 className="text-2xl font-black tracking-tight text-white mb-2">
-            {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
-          </h3>
+          {/* Bottom Control Buttons */}
+          <div style={{ width: '100%', marginBottom: 32 }}>
+            {callStatus === 'ringing' ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 48px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <button
+                    onClick={declineCall}
+                    style={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', backgroundColor: '#FF3B30', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(255,59,48,0.2)' }}
+                  >
+                    <PhoneOff size={32} color="white" />
+                  </button>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>Decline</span>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <button
+                    onClick={answerCall}
+                    style={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', backgroundColor: '#34C759', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(52,199,89,0.2)' }}
+                  >
+                    <Phone size={32} color="white" fill="white" />
+                  </button>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>Accept</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, padding: '0 24px' }}>
+                {/* Mute Toggle */}
+                <button
+                  onClick={toggleMute}
+                  disabled={callStatus !== 'connected'}
+                  style={{ width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.15)', color: isMuted ? 'black' : 'white', border: 'none', cursor: callStatus === 'connected' ? 'pointer' : 'not-allowed', opacity: callStatus === 'connected' ? 1 : 0.4 }}
+                >
+                  {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
+                </button>
 
-          <div className="text-sm font-medium tracking-wide">
-            {callStatus === 'calling' && <span className="text-blue-300 animate-pulse">Calling...</span>}
-            {callStatus === 'ringing' && <span className="text-amber-300 animate-pulse">Incoming Voice Call...</span>}
-            {callStatus === 'connected' && (
-              <span className="text-emerald-400 font-mono text-lg font-bold">
-                {formatCallDuration(duration)}
-              </span>
+                {/* End Call Button */}
+                <button
+                  onClick={endCall}
+                  style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: '#FF3B30', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(255,59,48,0.2)' }}
+                >
+                  <PhoneOff size={28} fill="white" />
+                </button>
+
+                {/* Speaker Toggle */}
+                <button
+                  onClick={toggleSpeaker}
+                  disabled={callStatus !== 'connected'}
+                  style={{ width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isSpeakerOn ? 'white' : 'rgba(255,255,255,0.15)', color: isSpeakerOn ? 'black' : 'white', border: 'none', cursor: callStatus === 'connected' ? 'pointer' : 'not-allowed', opacity: callStatus === 'connected' ? 1 : 0.4 }}
+                >
+                  {isSpeakerOn ? <Volume2 size={28} /> : <VolumeX size={28} />}
+                </button>
+              </div>
             )}
           </div>
+
         </div>
-
-        {/* Bottom Control Buttons */}
-        <div className="w-full">
-          {callStatus === 'ringing' ? (
-            <div className="flex items-center justify-around w-full px-4 mb-4">
-              <button
-                onClick={declineCall}
-                className="flex flex-col items-center justify-center p-4 rounded-full bg-rose-600 hover:bg-rose-700 transition-transform active:scale-95 shadow-lg shadow-rose-900/40"
-              >
-                <PhoneOff className="w-8 h-8 text-white" />
-              </button>
-              <button
-                onClick={answerCall}
-                className="flex flex-col items-center justify-center p-4 rounded-full bg-emerald-500 hover:bg-emerald-600 transition-transform active:scale-95 shadow-lg shadow-emerald-900/40 animate-bounce"
-              >
-                <Phone className="w-8 h-8 text-white fill-white" />
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-4 text-center px-2 mb-2">
-              {/* Mute Toggle */}
-              <button
-                onClick={toggleMute}
-                disabled={callStatus !== 'connected'}
-                className={`p-4 rounded-2xl flex flex-col items-center justify-center transition-all ${
-                  isMuted ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {isMuted ? <MicOff className="w-6 h-6 mb-1" /> : <Mic className="w-6 h-6 mb-1" />}
-                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">{isMuted ? 'Muted' : 'Mute'}</span>
-              </button>
-
-              {/* End Call Button */}
-              <button
-                onClick={endCall}
-                className="p-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white flex flex-col items-center justify-center shadow-lg shadow-rose-900/40 transition-transform active:scale-95"
-              >
-                <PhoneOff className="w-7 h-7 mb-1 fill-white" />
-                <span className="text-[10px] font-extrabold uppercase tracking-wider mt-1">End</span>
-              </button>
-
-              {/* Speaker Toggle */}
-              <button
-                onClick={toggleSpeaker}
-                disabled={callStatus !== 'connected'}
-                className={`p-4 rounded-2xl flex flex-col items-center justify-center transition-all ${
-                  isSpeakerOn ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300' : 'bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {isSpeakerOn ? <Volume2 className="w-6 h-6 mb-1 text-blue-400" /> : <VolumeX className="w-6 h-6 mb-1" />}
-                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">{isSpeakerOn ? 'Speaker' : 'Speaker'}</span>
-              </button>
-            </div>
-          )}
-        </div>
-
       </div>
-    </div>
+    </>
   );
 }

@@ -81,22 +81,28 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
       .from('bookings')
       .select(`
         *,
-        worker_profiles:worker_id ( profiles:profile_id ( full_name, avatar_url, phone ) ),
+        profiles:worker_id ( full_name, avatar_url, phone ),
         service_categories:category_id ( name_en )
       `)
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
 
-    if (error || !data) return [];
+    if (error || !data) {
+      console.error("fetchCustomerBookings error:", error);
+      return [];
+    }
     
     return data.map((b: any) => ({
       ...b,
-      worker_name: b.worker_profiles?.profiles?.full_name,
-      worker_avatar: b.worker_profiles?.profiles?.avatar_url,
-      worker_phone: b.worker_profiles?.profiles?.phone,
+      worker_name: b.profiles?.full_name,
+      worker_avatar: b.profiles?.avatar_url,
+      worker_phone: b.profiles?.phone,
       category_name: b.service_categories?.name_en,
     }));
-  } catch { return []; }
+  } catch (err) {
+    console.error("fetchCustomerBookings exception:", err);
+    return []; 
+  }
 }
 
 // ─── Create Booking ─────────────────────────────────────────
@@ -115,7 +121,9 @@ export async function createBooking(params: {
         customer_id: params.customerId,
         category_id: params.categoryId,
         status: 'searching',
-        customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`
+        customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`,
+        customer_lat: params.lat,
+        customer_lng: params.lng
       })
       .select('id')
       .single();
@@ -194,7 +202,7 @@ export function subscribeToBookingStatus(
         .from('bookings')
         .select(`
           *,
-          worker_profiles:worker_id ( profiles:profile_id ( full_name, avatar_url, phone ) ),
+          profiles:worker_id ( full_name, avatar_url, phone ),
           service_categories:category_id ( name_en )
         `)
         .eq('id', row.id)
@@ -203,9 +211,9 @@ export function subscribeToBookingStatus(
       if (data) {
         onUpdate({
           ...data,
-          worker_name: data.worker_profiles?.profiles?.full_name,
-          worker_avatar: data.worker_profiles?.profiles?.avatar_url,
-          worker_phone: data.worker_profiles?.profiles?.phone,
+          worker_name: data.profiles?.full_name,
+          worker_avatar: data.profiles?.avatar_url,
+          worker_phone: data.profiles?.phone,
           category_name: data.service_categories?.name_en,
         });
       }

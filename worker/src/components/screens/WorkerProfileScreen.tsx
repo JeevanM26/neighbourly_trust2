@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
 import { fetchServiceCategories } from '../../lib/supabase';
-import { Star, Volume2, Globe, Shield, LogOut, Trash2, Edit3, Check, X, Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool } from 'lucide-react';
+import { Star, Volume2, Globe, Shield, LogOut, Trash2, Edit3, Check, X, Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors } from 'lucide-react';
 
 const CategoryIcon = ({ slug, size = 24 }: { slug: string, size?: number }) => {
   switch (slug.toLowerCase()) {
@@ -17,7 +17,7 @@ const CategoryIcon = ({ slug, size = 24 }: { slug: string, size?: number }) => {
     case 'house-cleaning': return <Sparkles size={size} />;
     case 'mechanic': return <Wrench size={size} />;
     case 'home-salon': return <Scissors size={size} />;
-    default: return <Tool size={size} />;
+    default: return <Wrench size={size} />;
   }
 };
 

@@ -41,114 +41,115 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
   if (callStatus === 'idle') return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in text-white">
-      <audio ref={audioRef} autoPlay style={{ display: 'none' }} />
-      
-      <div className="relative w-full max-w-sm bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-6 shadow-2xl border border-slate-800 flex flex-col items-center justify-between h-[520px]">
+    <>
+      <style>{`
+        @keyframes nt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes nt-pulse-ring {
+          0% { transform: scale(0.8); opacity: 0.5; }
+          80% { transform: scale(1.6); opacity: 0; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+      `}</style>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(2,6,23,0.95)', backdropFilter: 'blur(12px)', color: 'white', animation: 'nt-fade-in 0.2s ease forwards' }}>
+        <audio ref={audioRef} autoPlay style={{ display: 'none' }} />
         
-        {/* Top Header */}
-        <div className="w-full flex items-center justify-center text-xs text-slate-400">
-          <div className="flex items-center space-x-1.5 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700/50">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-medium text-slate-200">Neighborly Privacy Shield</span>
+        <div style={{ position: 'relative', width: '100%', maxWidth: 400, background: 'linear-gradient(180deg, #0F172A 0%, #0F172A 50%, #020617 100%)', borderRadius: 24, padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: 520 }}>
+          
+          {/* Top Header */}
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#94A3B8' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'rgba(30,41,59,0.8)', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(51,65,85,0.5)' }}>
+              <ShieldCheck size={14} color="#34D399" />
+              <span style={{ fontWeight: 500, color: '#E2E8F0' }}>Neighborly Privacy Shield</span>
+            </div>
           </div>
-        </div>
 
-        {/* Center Content: Avatar & Info */}
-        <div className="flex flex-col items-center my-auto py-6 text-center w-full">
-          {/* Animated Avatar Ring */}
-          <div className="relative mb-6">
-            {(callStatus === 'ringing' || callStatus === 'calling') ? (
-              <>
-                <div className="absolute inset-0 rounded-full border-4 border-blue-500/30 animate-pulse-ring" />
-                <div className="absolute inset-0 rounded-full border-2 border-blue-400/20 animate-pulse-ring" style={{ animationDelay: '0.5s' }} />
-                <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-pulse-dot" />
-              </>
-            ) : callStatus === 'connected' ? (
-              <div className="absolute -inset-2 rounded-full bg-emerald-500/20 animate-pulse-dot" />
-            ) : null}
+          {/* Center Content: Avatar & Info */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0', padding: '24px 0', textAlign: 'center', width: '100%' }}>
+            
+            <div style={{ position: 'relative', marginBottom: 24 }}>
+              {(callStatus === 'ringing' || callStatus === 'calling') && (
+                <div style={{ position: 'absolute', top: -16, left: -16, right: -16, bottom: -16, borderRadius: '50%', border: '4px solid rgba(59,130,246,0.3)', animation: 'nt-pulse-ring 2s infinite' }} />
+              )}
+              
+              <div style={{ position: 'relative', width: 112, height: 112, borderRadius: '50%', overflow: 'hidden', border: '2px solid #334155', backgroundColor: '#1E293B', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                {incomingCall?.callerAvatar ? (
+                  <img src={incomingCall.callerAvatar} alt={incomingCall.callerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 36, color: '#94A3B8' }}>📞</span>
+                )}
+              </div>
+            </div>
 
-            <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-800 shadow-xl flex items-center justify-center z-10">
-              {incomingCall?.callerAvatar ? (
-                <img src={incomingCall.callerAvatar} alt={incomingCall.callerName} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl text-slate-400">📞</span>
+            <h3 style={{ fontSize: 24, fontWeight: 900, letterSpacing: -0.5, color: 'white', margin: '0 0 8px' }}>
+              {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
+            </h3>
+
+            <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.5 }}>
+              {callStatus === 'calling' && <span style={{ color: '#93C5FD' }}>Calling...</span>}
+              {callStatus === 'ringing' && <span style={{ color: '#FCD34D' }}>Incoming Voice Call...</span>}
+              {callStatus === 'connected' && (
+                <span style={{ color: '#34D399', fontFamily: 'monospace', fontSize: 18, fontWeight: 700 }}>
+                  {formatCallDuration(duration)}
+                </span>
               )}
             </div>
           </div>
 
-          {/* Name & Status */}
-          <h3 className="text-2xl font-black tracking-tight text-white mb-2">
-            {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
-          </h3>
+          {/* Bottom Control Buttons */}
+          <div style={{ width: '100%' }}>
+            {callStatus === 'ringing' ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', width: '100%', padding: '0 16px', marginBottom: 16 }}>
+                <button
+                  onClick={declineCall}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: '50%', backgroundColor: '#E11D48', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(159,18,57,0.4)' }}
+                >
+                  <PhoneOff size={32} color="white" />
+                </button>
+                <button
+                  onClick={answerCall}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: '50%', backgroundColor: '#10B981', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(6,78,59,0.4)' }}
+                >
+                  <Phone size={32} color="white" fill="white" />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, textAlign: 'center', padding: '0 8px', marginBottom: 8 }}>
+                {/* Mute Toggle */}
+                <button
+                  onClick={toggleMute}
+                  disabled={callStatus !== 'connected'}
+                  style={{ padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: isMuted ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(51,65,85,0.6)', backgroundColor: isMuted ? 'rgba(245,158,11,0.2)' : 'rgba(30,41,59,0.8)', color: isMuted ? '#FCD34D' : '#CBD5E1', cursor: callStatus === 'connected' ? 'pointer' : 'not-allowed', opacity: callStatus === 'connected' ? 1 : 0.4 }}
+                >
+                  <MicOff size={24} style={{ marginBottom: 4, display: isMuted ? 'block' : 'none' }} />
+                  <Mic size={24} style={{ marginBottom: 4, display: !isMuted ? 'block' : 'none' }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>{isMuted ? 'Muted' : 'Mute'}</span>
+                </button>
 
-          <div className="text-sm font-medium tracking-wide">
-            {callStatus === 'calling' && <span className="text-blue-300 animate-pulse">Calling...</span>}
-            {callStatus === 'ringing' && <span className="text-amber-300 animate-pulse">Incoming Voice Call...</span>}
-            {callStatus === 'connected' && (
-              <span className="text-emerald-400 font-mono text-lg font-bold">
-                {formatCallDuration(duration)}
-              </span>
+                {/* End Call Button */}
+                <button
+                  onClick={endCall}
+                  style={{ padding: 16, borderRadius: 16, backgroundColor: '#E11D48', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(159,18,57,0.4)' }}
+                >
+                  <PhoneOff size={28} fill="white" style={{ marginBottom: 4 }} />
+                  <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>End</span>
+                </button>
+
+                {/* Speaker Toggle */}
+                <button
+                  onClick={toggleSpeaker}
+                  disabled={callStatus !== 'connected'}
+                  style={{ padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: isSpeakerOn ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(51,65,85,0.6)', backgroundColor: isSpeakerOn ? 'rgba(59,130,246,0.2)' : 'rgba(30,41,59,0.8)', color: isSpeakerOn ? '#93C5FD' : '#CBD5E1', cursor: callStatus === 'connected' ? 'pointer' : 'not-allowed', opacity: callStatus === 'connected' ? 1 : 0.4 }}
+                >
+                  <Volume2 size={24} color="#60A5FA" style={{ marginBottom: 4, display: isSpeakerOn ? 'block' : 'none' }} />
+                  <VolumeX size={24} style={{ marginBottom: 4, display: !isSpeakerOn ? 'block' : 'none' }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>{isSpeakerOn ? 'Speaker' : 'Speaker'}</span>
+                </button>
+              </div>
             )}
           </div>
+
         </div>
-
-        {/* Bottom Control Buttons */}
-        <div className="w-full">
-          {callStatus === 'ringing' ? (
-            <div className="flex items-center justify-around w-full px-4 mb-4">
-              <button
-                onClick={declineCall}
-                className="flex flex-col items-center justify-center p-4 rounded-full bg-rose-600 hover:bg-rose-700 transition-transform active:scale-95 shadow-lg shadow-rose-900/40"
-              >
-                <PhoneOff className="w-8 h-8 text-white" />
-              </button>
-              <button
-                onClick={answerCall}
-                className="flex flex-col items-center justify-center p-4 rounded-full bg-emerald-500 hover:bg-emerald-600 transition-transform active:scale-95 shadow-lg shadow-emerald-900/40 animate-bounce"
-              >
-                <Phone className="w-8 h-8 text-white fill-white" />
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-4 text-center px-2 mb-2">
-              {/* Mute Toggle */}
-              <button
-                onClick={toggleMute}
-                disabled={callStatus !== 'connected'}
-                className={`p-4 rounded-2xl flex flex-col items-center justify-center transition-all ${
-                  isMuted ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {isMuted ? <MicOff className="w-6 h-6 mb-1" /> : <Mic className="w-6 h-6 mb-1" />}
-                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">{isMuted ? 'Muted' : 'Mute'}</span>
-              </button>
-
-              {/* End Call Button */}
-              <button
-                onClick={endCall}
-                className="p-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white flex flex-col items-center justify-center shadow-lg shadow-rose-900/40 transition-transform active:scale-95"
-              >
-                <PhoneOff className="w-7 h-7 mb-1 fill-white" />
-                <span className="text-[10px] font-extrabold uppercase tracking-wider mt-1">End</span>
-              </button>
-
-              {/* Speaker Toggle */}
-              <button
-                onClick={toggleSpeaker}
-                disabled={callStatus !== 'connected'}
-                className={`p-4 rounded-2xl flex flex-col items-center justify-center transition-all ${
-                  isSpeakerOn ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300' : 'bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {isSpeakerOn ? <Volume2 className="w-6 h-6 mb-1 text-blue-400" /> : <VolumeX className="w-6 h-6 mb-1" />}
-                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">{isSpeakerOn ? 'Speaker' : 'Speaker'}</span>
-              </button>
-            </div>
-          )}
-        </div>
-
       </div>
-    </div>
+    </>
   );
 }

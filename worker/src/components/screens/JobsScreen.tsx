@@ -6,6 +6,7 @@ import { Booking, BookingStatus } from '../../lib/types';
 import { MapPin, Check, Clock, X, Briefcase, Navigation, Play } from 'lucide-react';
 import { JobOfferModal } from '../JobOfferModal';
 import { EmptyState } from '../ui/EmptyState';
+import CustomerMap from '../CustomerMap';
 
 const STATUS_META: Record<BookingStatus, { label: string; color: string; bg: string }> = {
   searching:   { label: 'Searching',   color: '#92400E', bg: '#FEF3C7' },
@@ -72,6 +73,11 @@ function JobCard({ booking, onUpdateStatus }: { booking: Booking; onUpdateStatus
             <Navigation size={12} /> Directions
           </button>
         </div>
+      )}
+
+      {/* ── Active Job Map ── */}
+      {booking.customer_location && ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && (
+        <CustomerMap customerLoc={booking.customer_location} />
       )}
 
       {/* ── Active Lifecycle Actions ── */}

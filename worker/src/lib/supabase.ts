@@ -85,15 +85,12 @@ export async function createWorkerProfile(params: {
   const client = getClient();
   if (!client) return false;
   try {
-    // 1. Ensure profile exists (might be auto-created by trigger, but we ensure name and role)
-    const { error: profileErr } = await client
-      .from('profiles')
-      .update({ full_name: params.name, role: 'worker' })
-      .eq('id', params.id);
-    
-    // If update fails (row doesn't exist), try insert
-    if (profileErr) {
-       await client.from('profiles').insert({ id: params.id, full_name: params.name, role: 'worker' });
+    // 1. Ensure profile exists
+    const { data: existingProf } = await client.from('profiles').select('id').eq('id', params.id).maybeSingle();
+    if (!existingProf) {
+      await client.from('profiles').insert({ id: params.id, full_name: params.name, role: 'worker' });
+    } else {
+      await client.from('profiles').update({ full_name: params.name, role: 'worker' }).eq('id', params.id);
     }
 
     // 2. Insert worker_profile
@@ -120,14 +117,18 @@ export async function updateWorkerProfileData(workerId: string, name: string, ca
   const client = getClient();
   if (!client) return false;
   try {
-    // Update name
-    const { error: profileErr } = await client.from('profiles').update({ full_name: name }).eq('id', workerId);
-    if (profileErr) {
-      console.error("Save profile name error:", profileErr.message, profileErr.details, profileErr.hint);
+    // Update name or insert if missing
+    const { data: existingProf } = await client.from('profiles').select('id').eq('id', workerId).maybeSingle();
+    if (!existingProf) {
+      const { error: profileErr } = await client.from('profiles').insert({ id: workerId, full_name: name, role: 'worker' });
+      if (profileErr) console.error("Save profile insert error:", profileErr.message);
+    } else {
+      const { error: profileErr } = await client.from('profiles').update({ full_name: name }).eq('id', workerId);
+      if (profileErr) console.error("Save profile update error:", profileErr.message);
     }
     
     // Ensure worker_profiles row exists
-    const { data: existingWorker } = await client.from('worker_profiles').select('profile_id').eq('profile_id', workerId).single();
+    const { data: existingWorker } = await client.from('worker_profiles').select('profile_id').eq('profile_id', workerId).maybeSingle();
     if (!existingWorker) {
       const { error: wpErr } = await client.from('worker_profiles').upsert({
         profile_id: workerId,
@@ -233,6 +234,7 @@ function mapBookingRow(b: any): Booking {
     customer_name: b.profiles?.full_name,
     customer_phone: b.profiles?.phone,
     category_name: b.service_categories?.name_en,
+    customer_location: b.customer_lat && b.customer_lng ? { lat: b.customer_lat, lng: b.customer_lng } : undefined,
   };
 }
 

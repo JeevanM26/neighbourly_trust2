@@ -133,8 +133,8 @@ export default function BookingsScreen() {
     setRefreshing(false);
   };
 
-  const active = bookings.filter(b => b.status === 'pending' || b.status === 'accepted');
-  const past = bookings.filter(b => b.status === 'completed' || b.status === 'cancelled');
+  const active = bookings.filter(b => ['pending', 'searching', 'accepted', 'on_the_way', 'in_progress'].includes(b.status));
+  const past = bookings.filter(b => ['completed', 'cancelled', 'rejected'].includes(b.status));
   const shown = tab === 'active' ? active : past;
 
   return (

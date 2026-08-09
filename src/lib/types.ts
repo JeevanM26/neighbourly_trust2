@@ -63,6 +63,9 @@ export interface Booking {
   category_id: string;
   status: BookingStatus;
   
+  customer_lat?: number;
+  customer_lng?: number;
+  
   // Joins
   worker_name?: string;
   worker_avatar?: string;

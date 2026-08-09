@@ -14,7 +14,6 @@ import {
 } from '../lib/supabase';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallOverlay } from '../components/CallOverlay';
-import { PermissionModal } from '../components/PermissionModal';
 import { MapPin } from 'lucide-react';
 
 // ─── Context Shape ─────────────────────────────────────────
@@ -127,9 +126,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const geoWatchRef = useRef<number | null>(null);
   const persistentNotifRef = useRef<Notification | null>(null);
 
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [hasLocationPermission, setHasLocationPermission] = useState(false);
-  const locationPromiseRef = useRef<{resolve: (val: boolean) => void, reject: () => void} | null>(null);
 
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
@@ -341,32 +337,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setWorker(prev => prev ? { ...prev, is_online: next } : null);
 
     if (next && typeof window !== 'undefined' && navigator.geolocation) {
-      // Check if permission is already granted via permissions API
-      let permissionGranted = hasLocationPermission;
-      if (!permissionGranted && navigator.permissions && navigator.permissions.query) {
-        try {
-          const result = await navigator.permissions.query({ name: 'geolocation' });
-          if (result.state === 'granted') {
-            permissionGranted = true;
-            setHasLocationPermission(true);
-          }
-        } catch (e) {}
-      }
-
-      if (!permissionGranted) {
-        // Show modal and wait
-        setShowLocationModal(true);
-        const userAllowed = await new Promise((resolve) => {
-          locationPromiseRef.current = { resolve, reject: () => resolve(false) };
-        });
-        
-        if (!userAllowed) {
-          setIsOnline(false);
-          setWorker(prev => prev ? { ...prev, is_online: false } : null);
-          return;
-        }
-      }
-
       // Request notification permission when going online
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -469,17 +439,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Derived
   const earnings = calcEarnings(completedBookings, earningsPeriod);
 
-  const handleLocationAllow = () => {
-    setShowLocationModal(false);
-    setHasLocationPermission(true);
-    if (locationPromiseRef.current) locationPromiseRef.current.resolve(true);
-  };
-
-  const handleLocationDeny = () => {
-    setShowLocationModal(false);
-    if (locationPromiseRef.current) locationPromiseRef.current.resolve(false);
-  };
-
   return (
     <WorkerContext.Provider value={{
       worker, isLoggedIn: !!worker && !isNewWorker, isNewWorker, isAuthLoading, categories,
@@ -495,14 +454,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }}>
       <CallOverlay webrtc={webrtc} />
       {children}
-      <PermissionModal 
-        isOpen={showLocationModal}
-        title="Allow Location Access"
-        description="To receive jobs nearby, we need access to your location while you are online."
-        icon={<MapPin className="w-8 h-8" />}
-        onAllow={handleLocationAllow}
-        onDeny={handleLocationDeny}
-      />
     </WorkerContext.Provider>
   );
 };

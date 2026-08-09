@@ -48,7 +48,7 @@ export async function getIceServers(): Promise<TurnCredential[]> {
     
     throw new Error('Invalid format from Metered API');
   } catch (error) {
-    console.error('Failed to fetch TURN credentials:', error);
+    console.warn('Failed to fetch TURN credentials (falling back to STUN):', error);
     return defaultStun;
   }
 }
