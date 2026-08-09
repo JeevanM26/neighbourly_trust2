@@ -89,6 +89,17 @@ export default function HomeScreen({
   const roundedLng = userLocation.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
   const hasFetchedRef = React.useRef(false);
 
+  const handleRefresh = async () => {
+    if (!roundedLat || categories.length === 0) return;
+    setIsLoadingWorkers(true);
+    const promises = categories.slice(0,3).map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
+    const results = await Promise.all(promises);
+    const allWorkers = results.flat();
+    const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
+    setNearbyWorkers(unique);
+    setIsLoadingWorkers(false);
+  };
+
   useEffect(() => {
     let isMounted = true;
     async function fetchWorkers() {
@@ -250,16 +261,21 @@ export default function HomeScreen({
                 Specialists Near You
               </h2>
               <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 16 }}>📈</span> {filteredWorkers.length > 0 ? filteredWorkers.length : '1'} verified specialist found
+                <span style={{ fontSize: 16 }}>📈</span> {filteredWorkers.length} verified specialist{filteredWorkers.length !== 1 ? 's' : ''} found
               </p>
             </div>
-            <button style={{ 
-              display: 'flex', alignItems: 'center', gap: 6, background: 'white', 
-              border: '1px solid #E2E8F0', borderRadius: 20, padding: '6px 14px',
-              fontSize: 13, fontWeight: 700, color: '#0B3D66', cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-            }}>
-              <RefreshCw size={14} /> Refresh
+            <button 
+              onClick={handleRefresh}
+              disabled={isLoadingWorkers}
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: 6, background: 'white', 
+                border: '1px solid #E2E8F0', borderRadius: 20, padding: '6px 14px',
+                fontSize: 13, fontWeight: 700, color: isLoadingWorkers ? '#94A3B8' : '#0B3D66', 
+                cursor: isLoadingWorkers ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+              }}
+            >
+              <RefreshCw size={14} className={isLoadingWorkers ? 'animate-spin' : ''} /> {isLoadingWorkers ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
 
@@ -453,6 +469,8 @@ export default function HomeScreen({
           animation: shimmer 1.5s ease-in-out infinite;
         }
         @keyframes shimmer { 0%,100% { background-position: 200% 0; } 50% { background-position: -200% 0; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
       `}</style>
     </div>
   );

@@ -4,7 +4,7 @@ import { getClient } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
-import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, X } from 'lucide-react';
+import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, X, Zap, Clock } from 'lucide-react';
 
 export default function WorkerProfileSheet({
   workerId,
@@ -150,106 +150,133 @@ export default function WorkerProfileSheet({
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
-      {/* Header Image Area */}
-      <div style={{ 
-        height: 200, background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)',
-        position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end'
-      }}>
-        <button 
-          onClick={onBack} 
-          style={{ 
-            position: 'absolute', top: 40, left: 24, 
-            background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%',
-            width: 40, height: 40, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(10px)', cursor: 'pointer'
-          }}
-        >
-          <ChevronLeft size={24} />
-        </button>
-
-        <div style={{ 
-          width: 100, height: 100, borderRadius: '50%', background: '#F1F5F9',
-          border: '4px solid white', transform: 'translateY(50%)', overflow: 'hidden',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40
-        }}>
-          {worker.avatar_url ? (
-            <img src={worker.avatar_url} alt={worker.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <User size={40} color="#64748B" />
-          )}
-        </div>
-      </div>
-
-      {/* Profile Details */}
-      <div style={{ padding: '60px 24px 24px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          {worker.full_name}
-          <div style={{ background: '#10B981', color: 'white', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldCheck size={10} strokeWidth={3} />
-          </div>
-        </h1>
-        <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 16px', fontWeight: 500 }}>
-          {category?.name_en || 'Specialist'}
-        </p>
-
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 32 }}>
-          <div style={{ background: '#F8FAFC', padding: '12px 16px', borderRadius: 16, border: '1px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#F59E0B', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>
-              <Star size={16} fill="#F59E0B" />
-              {worker.avg_rating ? worker.avg_rating.toFixed(1) : 'New'}
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Rating</div>
-          </div>
-          
-          <div style={{ background: '#F8FAFC', padding: '12px 16px', borderRadius: 16, border: '1px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#3B82F6', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>
-              <Briefcase size={16} />
-              {worker.total_jobs || 0}
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Jobs</div>
-          </div>
-
-          <div style={{ background: '#F8FAFC', padding: '12px 16px', borderRadius: 16, border: '1px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#10B981', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>
-              <Award size={16} />
-              {worker.years_experience || 1}y
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Exp</div>
-          </div>
-        </div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F4F7FB' }}>
+      
+      {/* Scrollable Content */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         
-        <div style={{ textAlign: 'left', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>About</h3>
-          <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, margin: 0 }}>
-            Hi, I'm {worker.full_name.split(' ')[0]}. I have over {worker.years_experience || 1} years of professional experience handling {category?.name_en || 'maintenance'} tasks. Fully vaccinated, background-checked, and committed to 100% customer satisfaction.
-          </p>
-        </div>
-
-        <div style={{ textAlign: 'left', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 12 }}>Featured Review</h3>
-          <div style={{ background: '#F8FAFC', borderRadius: 16, padding: 16, border: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', gap: 2, color: '#F59E0B', marginBottom: 6 }}>
-              {[1, 2, 3, 4, 5].map(i => <Star key={i} size={12} fill="#F59E0B" />)}
-            </div>
-            <p style={{ fontSize: 13, color: '#334155', fontStyle: 'italic', margin: '0 0 8px' }}>
-              "Excellent service! Arrived exactly on time and fixed the issue in under 30 minutes. Highly recommended."
-            </p>
-            <p style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, margin: 0 }}>— Verified Customer</p>
+        {/* Banner / Avatar */}
+        <div style={{ 
+          height: 280, 
+          position: 'relative', 
+          background: '#E2E8F0',
+          backgroundImage: `url(${worker.avatar_url || 'https://ui-avatars.com/api/?name=' + worker.full_name})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}>
+          {/* Back button */}
+          <button onClick={onBack} style={{
+             position: 'absolute', top: 20, left: 16,
+             width: 40, height: 40, borderRadius: 12,
+             background: 'rgba(0,0,0,0.3)', color: 'white', border: 'none',
+             display: 'flex', alignItems: 'center', justifyContent: 'center',
+             backdropFilter: 'blur(10px)', zIndex: 10, cursor: 'pointer'
+          }}>
+            <ChevronLeft size={24} />
+          </button>
+          
+          {/* Available badge */}
+          <div style={{
+             position: 'absolute', top: 20, right: 16,
+             background: '#10B981', color: 'white', borderRadius: 20,
+             padding: '6px 12px', fontSize: 13, fontWeight: 700,
+             display: 'flex', alignItems: 'center', gap: 6, zIndex: 10
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
+            Available Now
           </div>
         </div>
 
-        <div style={{ background: '#EFF6FF', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32, textAlign: 'left' }}>
-          <MapPin size={24} color="#3B82F6" />
-          <div>
-            <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: '#1E3A8A' }}>Currently Nearby</p>
-            <p style={{ margin: 0, fontSize: 12, color: '#60A5FA', fontWeight: 600 }}>{worker.distance_km.toFixed(1)} km away from your location</p>
-          </div>
+        {/* Main Card (Overlapping) */}
+        <div style={{
+          background: 'white',
+          borderRadius: 24,
+          margin: '-24px 16px 16px',
+          padding: 24,
+          position: 'relative',
+          zIndex: 20,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+        }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+             <div>
+               <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
+                 {worker.full_name}
+               </h1>
+               <div style={{ 
+                 display: 'inline-flex', alignItems: 'center', gap: 4, 
+                 background: '#FEF3C7', color: '#B45309', 
+                 padding: '4px 10px', borderRadius: 12, fontSize: 13, fontWeight: 700
+               }}>
+                 <Zap size={14} fill="#B45309" />
+                 {category?.name_en || 'Specialist'}
+               </div>
+             </div>
+             <div style={{ textAlign: 'right' }}>
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>
+                 <Star size={20} fill="#F59E0B" color="#F59E0B" />
+                 {worker.avg_rating ? worker.avg_rating.toFixed(1) : '5.0'}
+               </div>
+               <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, marginTop: 4 }}>
+                 {worker.total_jobs || 0} reviews
+               </div>
+             </div>
+           </div>
         </div>
 
+        {/* 3 Square Cards Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
+           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+             <div style={{ fontSize: 24, marginBottom: 8 }}>💰</div>
+             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>₹{worker.hourly_rate || 350}</div>
+             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Rate/Hour</div>
+           </div>
+           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MapPin size={24} color="#EF4444" /></div>
+             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.distance_km.toFixed(1)} km</div>
+             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Distance</div>
+           </div>
+           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Star size={24} color="#F59E0B" fill="#F59E0B" /></div>
+             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.total_jobs || 0}+</div>
+             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Reviews</div>
+           </div>
+        </div>
+
+        {/* Trust & Safety Card */}
+        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 24px', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', textAlign: 'left' }}>
+           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#475569', marginBottom: 16, letterSpacing: 0.5 }}>TRUST & SAFETY</h3>
+           
+           <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#DCFCE7', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               <ShieldCheck size={20} />
+             </div>
+             <div>
+               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Identity Verified</div>
+               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>Government ID checked</div>
+             </div>
+           </div>
+
+           <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#DBEAFE', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               <Award size={20} />
+             </div>
+             <div>
+               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Background Verified</div>
+               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>Local police clearance</div>
+             </div>
+           </div>
+
+           <div style={{ display: 'flex', gap: 16 }}>
+             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F3E8FF', color: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               <Clock size={20} />
+             </div>
+             <div>
+               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Punctuality Score</div>
+               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>4.8/5 — Arrives on time</div>
+             </div>
+           </div>
+        </div>
       </div>
-
-      <div style={{ flex: 1 }} />
 
       {/* Action Buttons */}
       <div style={{ padding: 24, background: 'white', borderTop: '1px solid #F1F5F9', display: 'flex', gap: 12 }}>
