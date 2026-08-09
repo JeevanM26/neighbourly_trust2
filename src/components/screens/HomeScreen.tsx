@@ -38,6 +38,30 @@ const PRESET_CHIPS = [
   { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
 ];
 
+function ProviderSkeleton() {
+  return (
+    <div style={{
+      background: 'white', border: '1px solid #E2E8F0', borderRadius: 18,
+      overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', minWidth: 240, flexShrink: 0
+    }}>
+      <div style={{
+        width: '100%', height: 140,
+        background: 'linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.4s ease-in-out infinite',
+      }} />
+      <div style={{ padding: '16px' }}>
+        <div style={{ height: 18, borderRadius: 9, background: '#F1F5F9', marginBottom: 8, width: '70%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+        <div style={{ height: 13, borderRadius: 6, background: '#F1F5F9', marginBottom: 16, width: '40%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ height: 13, borderRadius: 6, background: '#F1F5F9', width: '30%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+            <div style={{ height: 16, borderRadius: 8, background: '#F1F5F9', width: '25%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomeScreen({ 
   onSelectCategory,
   onSelectWorker
@@ -237,7 +261,13 @@ export default function HomeScreen({
 
           {/* Specialist Cards Horizontal Scroll */}
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 16 }}>
-            {filteredWorkers.length > 0 ? filteredWorkers.map(worker => (
+            {isLoadingWorkers ? (
+              <>
+                <ProviderSkeleton />
+                <ProviderSkeleton />
+                <ProviderSkeleton />
+              </>
+            ) : filteredWorkers.length > 0 ? filteredWorkers.map(worker => (
               <div 
                 key={worker.worker_id} 
                 onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id)}
@@ -325,7 +355,7 @@ export default function HomeScreen({
               </div>
             )) : (
               <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%' }}>
-                {isLoadingWorkers ? 'Finding specialists...' : 'No specialists found nearby.'}
+                No specialists found nearby.
               </div>
             )}
           </div>
@@ -386,6 +416,10 @@ export default function HomeScreen({
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes shimmer { 0%,100% { background-position: 200% 0; } 50% { background-position: -200% 0; } }
+      `}</style>
     </div>
   );
 }
