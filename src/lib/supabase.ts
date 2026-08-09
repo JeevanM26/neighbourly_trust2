@@ -61,6 +61,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
     
     return data.map((w: any, i: number) => ({
       ...w,
+      category_id: categoryId,
       is_online: true, // The RPC only returns online workers but omits the field
       location: (w.lat !== undefined && w.lng !== undefined) 
         ? { lat: w.lat, lng: w.lng }

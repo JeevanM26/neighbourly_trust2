@@ -92,7 +92,7 @@ export default function HomeScreen({
   const handleRefresh = async () => {
     if (!roundedLat || categories.length === 0) return;
     setIsLoadingWorkers(true);
-    const promises = categories.slice(0,3).map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
+    const promises = categories.map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
     const results = await Promise.all(promises);
     const allWorkers = results.flat();
     const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
@@ -110,7 +110,7 @@ export default function HomeScreen({
       }
 
       // Fetch all workers to show on home screen
-      const promises = categories.slice(0,3).map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
+      const promises = categories.map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
       const results = await Promise.all(promises);
       const allWorkers = results.flat();
       const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
@@ -224,31 +224,38 @@ export default function HomeScreen({
           <div style={{ 
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, padding: '0 20px' 
           }}>
-            {categories.slice(0, 4).map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSearchQuery(cat.name_en)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, cursor: 'pointer',
-                  background: 'transparent', border: 'none', padding: 0
-                }}
-              >
-                <div style={{ 
-                  width: '100%', aspectRatio: '1/1', borderRadius: 20, 
-                  background: '#1E293B', border: '1px solid rgba(255,255,255,0.05)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)'
-                }}>
-                  <CategoryIcon slug={cat.slug} />
-                </div>
-                <span style={{ 
-                  fontSize: 12, fontWeight: 700, color: '#94A3B8', 
-                  textAlign: 'center', lineHeight: 1.2 
-                }}>
-                  {cat.name_en === 'House Cleaning' ? 'Home Clean' : cat.name_en}
-                </span>
-              </button>
-            ))}
+            {categories.slice(0, 4).map(cat => {
+              const isSelected = searchQuery.toLowerCase() === cat.name_en.toLowerCase();
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSearchQuery(isSelected ? '' : cat.name_en)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, cursor: 'pointer',
+                    background: 'transparent', border: 'none', padding: 0
+                  }}
+                >
+                  <div style={{ 
+                    width: '100%', aspectRatio: '1/1', borderRadius: 20, 
+                    background: '#1E293B', 
+                    border: isSelected ? '2px solid #38BDF8' : '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: isSelected ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'inset 0 2px 10px rgba(0,0,0,0.2)',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <CategoryIcon slug={cat.slug} />
+                  </div>
+                  <span style={{ 
+                    fontSize: 12, fontWeight: 700, 
+                    color: isSelected ? '#38BDF8' : '#94A3B8', 
+                    textAlign: 'center', lineHeight: 1.2,
+                    transition: 'color 0.2s ease'
+                  }}>
+                    {cat.name_en === 'House Cleaning' ? 'Home Clean' : cat.name_en}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

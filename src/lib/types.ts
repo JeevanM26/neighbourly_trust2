@@ -39,6 +39,7 @@ export interface UserProfile {
 // ─── Worker Profile (Nearby Result) ───────────────────────
 export interface WorkerProfile {
   worker_id: string;
+  category_id?: string;
   full_name: string;
   avatar_url?: string;
   avg_rating: number;
