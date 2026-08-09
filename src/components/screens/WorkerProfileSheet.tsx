@@ -54,7 +54,17 @@ export default function WorkerProfileSheet({
 
   // Determine if there is an active booking related to this worker/category
   // Prioritize active states over 'searching' in case there are orphaned test bookings
-  const relevantBookings = bookings.filter(b => b.category_id === categoryId && ['searching', 'accepted', 'on_the_way', 'in_progress'].includes(b.status));
+  const relevantBookings = bookings.filter(b => {
+    if (b.category_id !== categoryId) return false;
+    if (!['searching', 'accepted', 'on_the_way', 'in_progress'].includes(b.status)) return false;
+    
+    // Ignore orphaned 'searching' bookings that are older than 5 minutes
+    if (b.status === 'searching') {
+      const ageMs = Date.now() - new Date(b.created_at).getTime();
+      if (ageMs > 5 * 60 * 1000) return false;
+    }
+    return true;
+  });
   const statusPriority: Record<string, number> = { in_progress: 1, on_the_way: 2, accepted: 3, searching: 4 };
   relevantBookings.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
   
@@ -246,6 +256,15 @@ export default function WorkerProfileSheet({
                     setBookingStatus('idle');
                     setActiveBookingId(null);
                     await getClient()?.from('bookings').update({ status: 'cancelled' }).eq('id', activeBooking.id);
+                    
+                    // Cleanup any other orphaned searching bookings for this category just in case
+                    if (user?.id) {
+                      await getClient()?.from('bookings').update({ status: 'cancelled' })
+                        .eq('customer_id', user.id)
+                        .eq('category_id', categoryId)
+                        .eq('status', 'searching');
+                    }
+                    
                     refreshBookings();
                   }}
                   style={{
