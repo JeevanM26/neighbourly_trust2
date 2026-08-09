@@ -253,7 +253,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     fetchServiceCategories().then(setCategories);
     requestLocation();
-  }, [requestLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refreshBookings = useCallback(async () => {
     if (!user?.id) return;
