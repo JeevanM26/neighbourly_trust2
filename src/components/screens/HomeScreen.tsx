@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { SearchWithVoice } from '../SearchWithVoice';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
-import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X } from 'lucide-react';
+import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X, VolumeX } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', name: 'English',  native: 'English',  flag: '🇺🇸' },
@@ -37,7 +37,7 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, setLanguage, userLocation, showToast } = useApp();
+  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
@@ -46,6 +46,17 @@ export default function HomeScreen({
   const [nearbyWorkers, setNearbyWorkers] = useState<WorkerProfile[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
+
+  const speakText = React.useCallback((text: string) => {
+    if (!settings.voice || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.rate = 0.95;
+      utt.lang = currentLangObj.code === 'hi' ? 'hi-IN' : 'en-IN'; 
+      window.speechSynthesis.speak(utt);
+    } catch { /* non-fatal */ }
+  }, [settings.voice, currentLangObj.code]);
 
   useEffect(() => {
     let isMounted = true;
@@ -88,10 +99,12 @@ export default function HomeScreen({
           </div>
           
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <button style={{ width: 40, height: 40, borderRadius: '50%', background: '#0F5762', border: '1px solid #147B88', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4BF' }}>
-              <Volume2 size={20} />
+            <button 
+              onClick={() => toggleVoice()}
+              style={{ width: 40, height: 40, borderRadius: '50%', background: settings.voice ? '#0F5762' : 'rgba(255,255,255,0.1)', border: `1px solid ${settings.voice ? '#147B88' : 'rgba(255,255,255,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: settings.voice ? '#2DD4BF' : 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+              {settings.voice ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>
-            <button onClick={() => setShowLangPicker(true)} style={{ height: 40, padding: '0 16px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', color: 'white', fontSize: 14, fontWeight: 700, gap: 4 }}>
+            <button onClick={() => setShowLangPicker(true)} style={{ cursor: 'pointer', height: 40, padding: '0 16px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', color: 'white', fontSize: 14, fontWeight: 700, gap: 4 }}>
               <span>{currentLangObj.flag}</span><span style={{ fontSize: 13 }}>{currentLangObj.native}</span>
             </button>
           </div>
@@ -226,12 +239,23 @@ export default function HomeScreen({
                   </svg>
 
                   {/* Volume Icon Float */}
-                  <button style={{ 
-                    position: 'absolute', top: 12, right: 12, width: 32, height: 32, 
-                    borderRadius: '50%', background: 'white', border: 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)', color: '#0B3D66'
-                  }}>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const categoryName = categories.find(c => c.id === worker.category_id)?.name_en || 'Specialist';
+                      speakText(
+                        `${worker.full_name}, ${categoryName}. ` +
+                        `Rate: ${worker.hourly_rate} rupees per hour. ` +
+                        `Rating: ${worker.avg_rating?.toFixed(1) || '5.0'} stars. ` +
+                        `Distance: ${worker.distance_km?.toFixed(1) || '0'} kilometres.`
+                      );
+                    }}
+                    style={{ 
+                      position: 'absolute', top: 12, right: 12, width: 32, height: 32, 
+                      borderRadius: '50%', background: 'white', border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)', color: '#0B3D66'
+                    }}>
                     <Volume2 size={16} />
                   </button>
 
