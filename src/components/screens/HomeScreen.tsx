@@ -64,7 +64,7 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast, t } = useApp();
+  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast, t, locationStatus, requestLocation } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
@@ -73,6 +73,14 @@ export default function HomeScreen({
   const [nearbyWorkers, setNearbyWorkers] = useState<WorkerProfile[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
+
+  useEffect(() => {
+    // Automatically prompt for location when the user lands on the Home Screen
+    // so they can actually find workers near their real GPS coordinates
+    if (locationStatus === 'prompt' || locationStatus === 'idle') {
+      requestLocation().catch(() => {});
+    }
+  }, [locationStatus, requestLocation]);
 
   const speakText = React.useCallback((text: string) => {
     if (!settings.voice || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
