@@ -147,7 +147,6 @@ export default function ProfileScreen() {
             label="Sound Effects"
             right={
               <div
-                onClick={toggleSounds}
                 style={{
                   width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
                   background: settings.sounds ? '#0B3D66' : '#E2E8F0',
@@ -170,7 +169,6 @@ export default function ProfileScreen() {
           label="Voice Guidance"
           right={
             <div
-              onClick={toggleVoice}
               style={{
                 width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
                 background: settings.voice ? '#0B3D66' : '#E2E8F0',
