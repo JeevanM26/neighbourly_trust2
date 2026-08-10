@@ -91,8 +91,11 @@ export default function MapScreen({
     if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
     const L = (window as any).L;
 
+    const initialLat = searchLocation ? searchLocation.lat : userLocation.lat;
+    const initialLng = searchLocation ? searchLocation.lng : userLocation.lng;
+
     mapRef.current = L.map(mapContainerRef.current, {
-      center: [userLocation.lat, userLocation.lng],
+      center: [initialLat, initialLng],
       zoom: 15,
       zoomControl: false, // Removed zoom controls for cleaner ride-hailing look
       attributionControl: false,
@@ -159,12 +162,20 @@ export default function MapScreen({
       userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
     }
 
-    // Auto-center map on user's real location when first retrieved (non-default coordinates)
-    const isDefault = userLocation.lat === DEFAULT_LOCATION.lat && userLocation.lng === DEFAULT_LOCATION.lng;
-    if (!isDefault && !hasCenteredRef.current) {
-      mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
-      setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
-      hasCenteredRef.current = true;
+    // Auto-center map when first retrieved
+    if (!hasCenteredRef.current) {
+      if (searchLocation) {
+        mapRef.current.setView([searchLocation.lat, searchLocation.lng], 15);
+        setMapCenter({ lat: searchLocation.lat, lng: searchLocation.lng });
+        hasCenteredRef.current = true;
+      } else {
+        const isDefault = userLocation.lat === DEFAULT_LOCATION.lat && userLocation.lng === DEFAULT_LOCATION.lng;
+        if (!isDefault) {
+          mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
+          setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
+          hasCenteredRef.current = true;
+        }
+      }
     }
   }, [leafletLoaded, userLocation]);
 
