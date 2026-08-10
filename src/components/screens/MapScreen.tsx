@@ -36,6 +36,36 @@ export default function MapScreen({
   const [justConfirmed, setJustConfirmed] = useState(false);
   const [isEditMode, setIsEditMode] = useState(!searchLocation);
 
+  // Address Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle Address Search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+        const data = await res.json();
+        setSearchResults(data);
+      } catch (err) {
+        console.error('Error fetching address:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600);
+  };
+
   // Sync prop categoryId to active filter state if needed, but since we are driven by props:
   const activeFilter = categoryId || 'All';
   const filters = ['All', ...categories.map(c => c.id)];
@@ -345,16 +375,18 @@ export default function MapScreen({
         pointerEvents: 'none' // Allow clicks to pass through the container itself
       }}>
         {/* Providers Count Badge */}
-        <div style={{
-          background: 'white', borderRadius: 24, padding: '8px 16px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 8,
-          pointerEvents: 'auto'
-        }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
-          <span style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.3px' }}>
-            {visibleProviders.length} Specialists
-          </span>
-        </div>
+        {!isEditMode && (
+          <div style={{
+            background: 'white', borderRadius: 24, padding: '8px 16px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 8,
+            pointerEvents: 'auto'
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.3px' }}>
+              {visibleProviders.length} Specialists
+            </span>
+          </div>
+        )}
 
         {/* Change Location Button (View Mode) */}
         {!isEditMode && (
@@ -371,6 +403,93 @@ export default function MapScreen({
           </button>
         )}
       </div>
+
+      {/* Address Search Bar (Only in Edit Mode) */}
+      {isEditMode && (
+        <div style={{ position: 'absolute', top: maxSafe(16), left: 16, right: 16, zIndex: 500 }}>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Search for a city or address..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px 12px 40px',
+                borderRadius: 24,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                fontSize: 15,
+                outline: 'none',
+                color: '#0F172A'
+              }}
+            />
+            <div style={{ position: 'absolute', left: 14, top: 12 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            {isSearching && (
+              <div style={{ position: 'absolute', right: 16, top: 14 }}>
+                <div style={{ width: 16, height: 16, border: '2px solid #0B3D66', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              </div>
+            )}
+          </div>
+
+          {/* Dropdown Results */}
+          {searchResults.length > 0 && (
+            <div style={{
+              marginTop: 8,
+              background: 'white',
+              borderRadius: 16,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              overflow: 'hidden',
+              maxHeight: 250,
+              overflowY: 'auto'
+            }}>
+              {searchResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    if (!mapRef.current) return;
+                    const lat = parseFloat(result.lat);
+                    const lon = parseFloat(result.lon);
+                    mapRef.current.flyTo([lat, lon], 15);
+                    setSearchResults([]);
+                    setSearchQuery(result.display_name.split(',')[0]); // Just show the first part
+                  }}
+                  style={{
+                    padding: '12px 16px',
+                    borderBottom: idx === searchResults.length - 1 ? 'none' : '1px solid #F1F5F9',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    color: '#0F172A'
+                  }}
+                >
+                  {result.display_name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Empty State Warning */}
+      {!isLoadingWorkers && visibleProviders.length === 0 && (
+        <div style={{
+          position: 'absolute', top: maxSafe(isEditMode ? 80 : 70), left: 16, right: 16, zIndex: 400,
+          display: 'flex', justifyContent: 'center', pointerEvents: 'none'
+        }}>
+          <div style={{
+            background: '#FEF2F2', border: '1px solid #F87171', borderRadius: 16,
+            padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: '0 4px 12px rgba(248, 113, 113, 0.2)'
+          }}>
+            <span style={{ fontSize: 18 }}>😕</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#991B1B' }}>
+              No specialists found. Try zooming out or moving the map!
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Floating GPS Button */}
       <div style={{ position: 'absolute', bottom: 180, right: 16, zIndex: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
