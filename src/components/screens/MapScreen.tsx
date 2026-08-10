@@ -55,7 +55,7 @@ export default function MapScreen({
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=5`);
         const data = await res.json();
         setSearchResults(data);
       } catch (err) {
