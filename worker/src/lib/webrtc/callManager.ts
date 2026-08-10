@@ -51,9 +51,10 @@ export class CallManager {
       } else {
         // Send busy signal back to the specific room
         const tempSignaling = new SignalingManager(client);
-        tempSignaling.joinRoom(payload.roomId, () => {});
-        tempSignaling.sendSignal('call_busy', {});
-        setTimeout(() => tempSignaling.leaveRoom(), 1000);
+        tempSignaling.joinRoom(payload.roomId, () => {}).then(() => {
+          tempSignaling.sendSignal('call_busy', {});
+          setTimeout(() => tempSignaling.leaveRoom(), 1000);
+        }).catch(e => console.error('Error joining busy room:', e));
       }
     });
   }
@@ -105,8 +106,8 @@ export class CallManager {
     return pc;
   }
 
-  private setupSignalingHandlers() {
-    this.signaling.joinRoom(this.activeRoomId!, async (event) => {
+  private async setupSignalingHandlers() {
+    await this.signaling.joinRoom(this.activeRoomId!, async (event) => {
       if ('senderId' in event && event.senderId === this.userId) return;
 
       switch (event.type) {
@@ -168,7 +169,7 @@ export class CallManager {
 
     this.activeRoomId = `call_${this.userId}_${targetUserId}_${Date.now()}`;
     this.setStatus('calling');
-    this.setupSignalingHandlers();
+    await this.setupSignalingHandlers();
 
     await this.signaling.pingUser(targetUserId, this.userId, callerName, callerAvatar, this.activeRoomId);
   }
@@ -185,7 +186,7 @@ export class CallManager {
     this.localStream = stream;
 
     this.activeRoomId = this.incomingCall.roomId;
-    this.setupSignalingHandlers();
+    await this.setupSignalingHandlers();
     
     // We setup the connection, wait for the other side to send an offer,
     // or send 'joined' to trigger them to send an offer
@@ -199,9 +200,10 @@ export class CallManager {
     if (this.incomingCall) {
       // Send directly to the room they are waiting in
       const tempSignaling = new SignalingManager(this.signaling['client']);
-      tempSignaling.joinRoom(this.incomingCall.roomId, () => {});
-      tempSignaling.sendSignal('call_declined', {});
-      setTimeout(() => tempSignaling.leaveRoom(), 1000);
+      tempSignaling.joinRoom(this.incomingCall.roomId, () => {}).then(() => {
+        tempSignaling.sendSignal('call_declined', {});
+        setTimeout(() => tempSignaling.leaveRoom(), 1000);
+      }).catch(e => console.error('Error joining decline room:', e));
     }
     this.cleanup();
   }

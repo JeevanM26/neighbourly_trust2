@@ -37,29 +37,53 @@ export class SignalingManager {
    * Ping a user to start a call
    */
   async pingUser(targetUserId: string, callerId: string, callerName: string, callerAvatar: string | undefined, roomId: string) {
-    await this.client.channel(`user_${targetUserId}`).send({
-      type: 'broadcast',
-      event: 'incoming_call',
-      payload: { callerId, callerName, callerAvatar, roomId }
-    });
+    const pingChannel = this.client.channel(`user_${targetUserId}`);
+    await new Promise<void>((resolve, reject) => {
+      pingChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          try {
+            await pingChannel.send({
+              type: 'broadcast',
+              event: 'incoming_call',
+              payload: { callerId, callerName, callerAvatar, roomId }
+            });
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        }
+      });
+      // Safety timeout
+      setTimeout(() => reject(new Error('Signaling ping timeout')), 5000);
+    }).catch(e => console.error('Error pinging user:', e));
+
+    pingChannel.unsubscribe();
   }
 
   /**
    * Join a specific call room for signaling
    */
-  joinRoom(roomId: string, onMessage: (payload: SignalingEvent) => void) {
+  async joinRoom(roomId: string, onMessage: (payload: SignalingEvent) => void): Promise<void> {
     this.onMessageCb = onMessage;
     this.channel = this.client.channel(roomId);
 
-    this.channel
-      .on('broadcast', { event: 'offer' }, (payload) => this.onMessageCb?.({ type: 'offer', ...payload.payload }))
-      .on('broadcast', { event: 'answer' }, (payload) => this.onMessageCb?.({ type: 'answer', ...payload.payload }))
-      .on('broadcast', { event: 'ice_candidate' }, (payload) => this.onMessageCb?.({ type: 'ice_candidate', ...payload.payload }))
-      .on('broadcast', { event: 'joined' }, (payload) => this.onMessageCb?.({ type: 'joined', ...payload.payload }))
-      .on('broadcast', { event: 'call_ended' }, () => this.onMessageCb?.({ type: 'call_ended' }))
-      .on('broadcast', { event: 'call_declined' }, () => this.onMessageCb?.({ type: 'call_declined' }))
-      .on('broadcast', { event: 'call_busy' }, () => this.onMessageCb?.({ type: 'call_busy' }))
-      .subscribe();
+    return new Promise((resolve, reject) => {
+      this.channel!
+        .on('broadcast', { event: 'offer' }, (payload) => this.onMessageCb?.({ type: 'offer', ...payload.payload }))
+        .on('broadcast', { event: 'answer' }, (payload) => this.onMessageCb?.({ type: 'answer', ...payload.payload }))
+        .on('broadcast', { event: 'ice_candidate' }, (payload) => this.onMessageCb?.({ type: 'ice_candidate', ...payload.payload }))
+        .on('broadcast', { event: 'joined' }, (payload) => this.onMessageCb?.({ type: 'joined', ...payload.payload }))
+        .on('broadcast', { event: 'call_ended' }, () => this.onMessageCb?.({ type: 'call_ended' }))
+        .on('broadcast', { event: 'call_declined' }, () => this.onMessageCb?.({ type: 'call_declined' }))
+        .on('broadcast', { event: 'call_busy' }, () => this.onMessageCb?.({ type: 'call_busy' }))
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            resolve();
+          }
+        });
+      // Safety timeout
+      setTimeout(() => reject(new Error('Signaling join room timeout')), 10000);
+    });
   }
 
   /**
