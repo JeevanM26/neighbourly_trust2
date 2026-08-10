@@ -581,7 +581,55 @@ export default function MapScreen({
               </button>
             );
           })}
+          <div style={{ width: 10, flexShrink: 0 }} />
         </div>
+
+        {/* Nearby Specialists List */}
+        {visibleProviders.length > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: '0 0 12px 0' }}>
+              Specialists in this area
+            </h3>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -20px', padding: '0 20px 4px' }}>
+              {visibleProviders.map(worker => {
+                const cat = categories.find(c => c.id === worker.__categoryId);
+                return (
+                  <div key={worker.worker_id} onClick={() => onSelectWorker?.(worker.worker_id, worker.__categoryId)} style={{
+                    minWidth: 240,
+                    background: 'white',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 16,
+                    padding: 12,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <img src={worker.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name)}&background=random`} alt={worker.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>{worker.name}</div>
+                        <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <span style={{ color: '#F59E0B' }}>★ {worker.rating || '4.5'}</span> • {cat?.name_en || 'Specialist'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                       <div style={{ fontSize: 11, color: '#10B981', fontWeight: 800, background: '#D1FAE5', padding: '4px 8px', borderRadius: 12 }}>
+                         Available
+                       </div>
+                       <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>
+                         ₹{worker.hourly_rate || 350}<span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>/hr</span>
+                       </div>
+                    </div>
+                  </div>
+                )
+              })}
+              <div style={{ width: 8, flexShrink: 0 }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
