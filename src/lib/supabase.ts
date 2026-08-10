@@ -51,7 +51,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
       p_category_id: categoryId,
       p_lat: lat,
       p_lng: lng,
-      p_max_distance_km: 10
+      p_max_distance_km: 500 // Increased from 10 to 500 for testing so workers in different cities appear
     });
     
     if (error || !data) {

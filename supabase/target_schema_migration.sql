@@ -235,13 +235,7 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  UPDATE public.profiles
-  SET full_name = 'Deleted User', avatar_url = NULL, preferred_language = 'en'
-  WHERE id = v_uid;
-
-  UPDATE public.worker_profiles
-  SET is_online = false, location = NULL, bio = NULL
-  WHERE profile_id = v_uid;
+  DELETE FROM auth.users WHERE id = v_uid;
 END;
 $$;
 

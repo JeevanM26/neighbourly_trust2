@@ -133,7 +133,7 @@ export default function LoginScreen() {
       // Check if profile exists
       const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).single();
       
-      if (profile && profile.role === 'customer' && profile.full_name) {
+      if (profile && profile.role === 'customer' && profile.full_name && profile.full_name !== 'Deleted User') {
         // Returning user
         loginUser(cleanPhone, profile.full_name, data.user.id);
       } else {

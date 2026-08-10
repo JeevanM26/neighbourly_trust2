@@ -237,7 +237,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Check if worker profile exists in DB
     fetchWorkerProfile(authUserId).then(profile => {
-      if (profile) {
+      if (profile && profile.full_name !== 'Deleted User') {
         setWorker({ ...profile, phone: cleanPhone });
         showToast(`Welcome back, ${profile.full_name.split(' ')[0]}! 👋`);
       } else {
