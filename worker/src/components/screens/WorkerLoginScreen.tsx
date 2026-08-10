@@ -5,7 +5,7 @@ import { ServiceCategory } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { ShieldCheck, ChevronLeft, Smartphone, MessageSquare, Check, ChevronRight } from 'lucide-react';
 
-type Step = 'phone' | 'otp' | 'skills';
+type Step = 'phone' | 'otp' | 'name' | 'skills';
 
 export default function WorkerLoginScreen() {
   const { loginWorker, completeOnboarding, isNewWorker, showToast } = useWorker();
@@ -25,7 +25,7 @@ export default function WorkerLoginScreen() {
   useEffect(() => {
     if (isNewWorker) {
       fetchServiceCategories().then(data => setCategories(data));
-      setStep('skills');
+      setStep('name');
     }
   }, [isNewWorker]);
 
@@ -37,9 +37,7 @@ export default function WorkerLoginScreen() {
 
   const handleSendOtp = async () => {
     setError('');
-    const cleanName = name.trim();
     const cleanPhone = phone.replace(/\D/g, '');
-    if (!cleanName) { setError('Please enter your full name.'); return; }
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) { setError('Enter a valid 10-digit Indian mobile number.'); return; }
     if (!consent) { setError('You must agree to the Terms of Service.'); return; }
 
@@ -109,7 +107,7 @@ export default function WorkerLoginScreen() {
         return;
       }
 
-      loginWorker(cleanPhone, name.trim(), data.user.id);
+      loginWorker(cleanPhone, data.user.id);
     } catch {
       setError('Verification failed.');
       setLoading(false);
@@ -118,7 +116,7 @@ export default function WorkerLoginScreen() {
 
   const handleCompleteOnboarding = () => {
     if (selectedCategories.size === 0) { showToast('Select at least one category.', 'error'); return; }
-    completeOnboarding(Array.from(selectedCategories));
+    completeOnboarding(name.trim(), Array.from(selectedCategories));
   };
 
   // ── Phone Step ──────────────────────────────────────────
@@ -136,12 +134,7 @@ export default function WorkerLoginScreen() {
       <div style={{ padding: '28px 20px 40px' }}>
         <div style={{ background: 'white', borderRadius: 20, padding: '24px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #D1FAE5' }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: '#065F46', marginBottom: 6, letterSpacing: '-0.3px' }}>Get started</h2>
-          <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginBottom: 20 }}>Enter your details to continue.</p>
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Full Name</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: '2px solid #E2E8F0', fontSize: 14, fontWeight: 600, color: '#0F172A', outline: 'none', fontFamily: 'Inter, sans-serif', background: '#F8FAFC', boxSizing: 'border-box' }} />
-          </div>
+          <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginBottom: 20 }}>Enter your mobile number to continue.</p>
 
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Mobile Number</label>
@@ -209,6 +202,34 @@ export default function WorkerLoginScreen() {
               Resend OTP
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Name Step ─────────────────────────────────────────────
+  if (step === 'name') return (
+    <div style={{ height: '100%', overflowY: 'auto', background: '#F0FDF4' }}>
+      <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '40px 24px 28px' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.4px' }}>Welcome!</h1>
+        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+          Let's set up your profile.
+        </p>
+      </div>
+
+      <div style={{ padding: '28px 24px' }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: '28px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #D1FAE5' }}>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Full Name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: '2px solid #E2E8F0', fontSize: 14, fontWeight: 600, color: '#0F172A', outline: 'none', fontFamily: 'Inter, sans-serif', background: '#F8FAFC', boxSizing: 'border-box' }} />
+          </div>
+
+          <button onClick={() => {
+            if (!name.trim()) { showToast('Please enter your name', 'error'); return; }
+            setStep('skills');
+          }} disabled={!name.trim()} style={{ width: '100%', padding: '15px', borderRadius: 14, background: !name.trim() ? '#E2E8F0' : 'linear-gradient(135deg, #059669, #065F46)', color: !name.trim() ? '#94A3B8' : 'white', fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer', boxShadow: name.trim() ? '0 4px 12px rgba(5,150,105,0.3)' : 'none' }}>
+            Continue →
+          </button>
         </div>
       </div>
     </div>

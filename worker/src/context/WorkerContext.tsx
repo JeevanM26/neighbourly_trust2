@@ -23,8 +23,8 @@ interface WorkerContextType {
   isNewWorker: boolean;
   categories: ServiceCategory[];
   isAuthLoading: boolean;
-  loginWorker: (phone: string, name: string, authUserId: string) => void;
-  completeOnboarding: (categoryIds: string[]) => void;
+  loginWorker: (phone: string, authUserId: string) => void;
+  completeOnboarding: (name: string, categoryIds: string[]) => void;
   logoutWorker: () => void;
   deleteAccount: () => Promise<void>;
   updateProfileData: (name: string, categoryIds: string[]) => Promise<boolean>;
@@ -263,7 +263,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [worker, refreshBookings, showToast]);
 
   // Auth
-  const loginWorker = useCallback((phone: string, name: string, authUserId: string) => {
+  const loginWorker = useCallback((phone: string, authUserId: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     
     // Check if worker profile exists in DB
@@ -275,7 +275,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // New worker — needs onboarding
         setWorker({
           id: authUserId,
-          full_name: name,
+          full_name: '', // Will be set during onboarding
           phone: cleanPhone,
           language: 'en',
           is_online: false,
@@ -291,12 +291,12 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [showToast]);
 
-  const completeOnboarding = useCallback(async (categoryIds: string[]) => {
+  const completeOnboarding = useCallback(async (name: string, categoryIds: string[]) => {
     if (!worker?.id) return;
     
     const success = await createWorkerProfile({
       id: worker.id,
-      name: worker.full_name,
+      name: name,
       categoryIds
     });
     
