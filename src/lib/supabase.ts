@@ -172,8 +172,8 @@ export async function deleteCustomerAccount(): Promise<boolean> {
   const client = getClient();
   if (!client) return false;
   try {
-    // using the same RPC since we pass the JWT which knows the UID
-    const { error } = await client.rpc('delete_worker_account');
+    // Calls a dedicated RPC for customers to clean up their bookings and profile
+    const { error } = await client.rpc('delete_customer_account');
     if (error) throw error;
     await client.auth.signOut();
     return true;
