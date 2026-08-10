@@ -230,9 +230,9 @@ export default function HomeScreen({
 
           {/* Categories Grid (Dark Theme) */}
           <div style={{ 
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, padding: '0 20px' 
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 12px', padding: '0 20px' 
           }}>
-            {categories.slice(0, 4).map(cat => {
+            {categories.map(cat => {
               const isSelected = searchQuery.toLowerCase() === cat.name_en.toLowerCase();
               return (
                 <button
@@ -288,28 +288,29 @@ export default function HomeScreen({
               {f.label}
             </button>
           ))}
+          <div style={{ width: 10, flexShrink: 0 }} />
         </div>
 
         {/* Specialists Near You */}
-        <div style={{ padding: '24px 20px' }}>
-          <div style={{ padding: '24px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ padding: '24px 0' }}>
+          <div style={{ padding: '0 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
                 {t('specialistsNearYou')}
               </h2>
               <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <MapPin size={14} /> {filteredWorkers.length} {filteredWorkers.length === 1 ? t('verifiedSpecialistFound') : t('verifiedSpecialistsFound')}
+                <MapPin size={14} /> {!roundedLat ? 0 : filteredWorkers.length} {filteredWorkers.length === 1 ? t('verifiedSpecialistFound') : t('verifiedSpecialistsFound')}
               </p>
             </div>
             
             <button 
               onClick={handleRefresh}
-              disabled={isLoadingWorkers}
+              disabled={isLoadingWorkers || !roundedLat}
               style={{ 
                 display: 'flex', alignItems: 'center', gap: 6, background: 'white', 
                 border: '1px solid #E2E8F0', borderRadius: 20, padding: '6px 14px',
-                fontSize: 13, fontWeight: 700, color: isLoadingWorkers ? '#94A3B8' : '#0B3D66', 
-                cursor: isLoadingWorkers ? 'not-allowed' : 'pointer',
+                fontSize: 13, fontWeight: 700, color: (isLoadingWorkers || !roundedLat) ? '#94A3B8' : '#0B3D66', 
+                cursor: (isLoadingWorkers || !roundedLat) ? 'not-allowed' : 'pointer',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
               }}
             >
@@ -318,7 +319,7 @@ export default function HomeScreen({
           </div>
 
           {/* Specialist Cards Horizontal Scroll */}
-          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 20px 16px' }}>
             {isLoadingWorkers ? (
               <>
                 <ProviderSkeleton />
@@ -436,11 +437,25 @@ export default function HomeScreen({
                   </div>
                 </div>
               </div>
-            )) : (
-              <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%' }}>
+            )) : !roundedLat ? (
+              <div style={{ padding: '24px', background: 'white', borderRadius: 24, border: '1px dashed #CBD5E1', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', minWidth: '280px' }}>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                  <MapPin size={24} color="#64748B" />
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 8px' }}>Location Required</h3>
+                <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 16px', lineHeight: 1.4 }}>We need your location to find nearby specialists.</p>
+                <button onClick={() => requestLocation().catch(() => {})} style={{ background: '#0B3D66', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 20, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                  Enable Location
+                </button>
+              </div>
+            ) : (
+              <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%', minWidth: '280px' }}>
                 {t('noSpecialistsFound')}
               </div>
             )}
+            
+            {/* End Spacer for horizontal scroll */}
+            {filteredWorkers.length > 0 && <div style={{ width: 4, flexShrink: 0 }} />}
           </div>
           
         </div>
