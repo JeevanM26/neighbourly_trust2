@@ -114,14 +114,20 @@ export default function MapScreen({
     // Track map dragging
     mapRef.current.on('movestart', () => {
       setIsDragging(true);
+      setIsEditMode(true); // Auto-switch to edit mode on pan
     });
     mapRef.current.on('move', () => {
       setIsDragging(true);
     });
     mapRef.current.on('moveend', () => {
       setIsDragging(false);
-      const center = mapRef.current.getCenter();
-      setMapCenter({ lat: center.lat, lng: center.lng });
+      if (mapRef.current) {
+        const size = mapRef.current.getSize();
+        // Offset by 90px upwards to account for the bottom sheet
+        const targetPoint = (window as any).L.point(size.x / 2, size.y / 2 - 90);
+        const targetLatLng = mapRef.current.containerPointToLatLng(targetPoint);
+        setMapCenter({ lat: targetLatLng.lat, lng: targetLatLng.lng });
+      }
     });
 
     return () => {
@@ -172,6 +178,8 @@ export default function MapScreen({
   // ── Fetch Workers ──
   useEffect(() => {
     let isMounted = true;
+    let timer: NodeJS.Timeout;
+
     async function fetchWorkers() {
       setIsLoadingWorkers(true);
       // If we are in edit mode, search around the map center. Otherwise search around the confirmed searchLocation.
@@ -197,8 +205,18 @@ export default function MapScreen({
         setIsLoadingWorkers(false);
       }
     }
-    if (categories.length > 0) fetchWorkers();
-    return () => { isMounted = false; };
+
+    if (categories.length > 0) {
+      // Debounce the network request by 500ms to avoid hammering the database
+      timer = setTimeout(() => {
+        fetchWorkers();
+      }, 500);
+    }
+    
+    return () => { 
+      isMounted = false; 
+      if (timer) clearTimeout(timer);
+    };
   }, [activeFilter, mapCenter, userLocation?.lat, userLocation?.lng, categories, isEditMode, searchLocation?.lat, searchLocation?.lng]);
 
   // ── Update Provider Markers ──
@@ -300,7 +318,7 @@ export default function MapScreen({
         {leafletLoaded && isEditMode && (
           <div style={{
             position: 'absolute',
-            top: '50%',
+            top: 'calc(50% - 90px)',
             left: '50%',
             transform: 'translate(-50%, -100%)',
             zIndex: 400,
