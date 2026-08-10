@@ -114,7 +114,6 @@ export default function MapScreen({
     // Track map dragging
     mapRef.current.on('movestart', () => {
       setIsDragging(true);
-      setIsEditMode(true); // Auto-switch to edit mode on pan
     });
     mapRef.current.on('move', () => {
       setIsDragging(true);
@@ -182,9 +181,10 @@ export default function MapScreen({
 
     async function fetchWorkers() {
       setIsLoadingWorkers(true);
-      // If we are in edit mode, search around the map center. Otherwise search around the confirmed searchLocation.
-      const searchLat = isEditMode ? (mapCenter ? mapCenter.lat : userLocation?.lat) : searchLocation?.lat;
-      const searchLng = isEditMode ? (mapCenter ? mapCenter.lng : userLocation?.lng) : searchLocation?.lng;
+      // Always search around the map center so users can browse freely by panning.
+      // Fallback to searchLocation or userLocation if mapCenter is not yet set.
+      const searchLat = mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
+      const searchLng = mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
       if (!searchLat || !searchLng) return;
 
       if (activeFilter === 'All') {
