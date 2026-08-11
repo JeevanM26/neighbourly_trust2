@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   UserProfile, WorkerProfile, Booking, AppSettings, LanguageCode, ToastState,
-  DEFAULT_LOCATION, OWNER_PHONES, ServiceCategory
+  OWNER_PHONES, ServiceCategory
 } from '../lib/types';
 import { fetchCustomerBookings, createBooking, upsertProfile, isConfigured, getClient, subscribeToBookingStatus, fetchServiceCategories, deleteCustomerAccount, subscribeToCustomerOffers } from '../lib/supabase';
 import confetti from 'canvas-confetti';
@@ -137,8 +137,8 @@ interface AppContextType {
   t: (key: string) => string;
 
   // Location
-  userLocation: { lat: number; lng: number };
-  setUserLocation: (loc: { lat: number; lng: number }) => void;
+  userLocation: { lat: number; lng: number } | null;
+  setUserLocation: (loc: { lat: number; lng: number } | null) => void;
   searchLocation: { lat: number; lng: number } | null;
   setSearchLocation: (loc: { lat: number; lng: number } | null) => void;
   locationStatus: 'loading' | 'granted' | 'denied' | 'idle';
@@ -206,7 +206,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [userLocation, setUserLocation] = useState(DEFAULT_LOCATION);
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [searchLocation, setSearchLocation] = useState<{lat: number, lng: number} | null>(null);
   const [locationStatus, setLocationStatus] = useState<'loading' | 'granted' | 'denied' | 'idle'>('idle');
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -422,6 +422,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) return null;
     // ensure we have latest location
     let loc = exactLocation || searchLocation || userLocation;
+    if (!loc) {
+      showToast('Location is required to book a service', 'error');
+      return null;
+    }
     if (!exactLocation && !searchLocation && locationStatus !== 'granted') {
       const newLoc = await requestLocation();
       if (newLoc) loc = newLoc;
