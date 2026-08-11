@@ -91,8 +91,8 @@ export default function MapScreen({
     if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
     const L = (window as any).L;
 
-    const initialLat = searchLocation ? searchLocation.lat : (userLocation?.lat || 0);
-    const initialLng = searchLocation ? searchLocation.lng : (userLocation?.lng || 0);
+    const initialLat = searchLocation ? searchLocation.lat : userLocation.lat;
+    const initialLng = searchLocation ? searchLocation.lng : userLocation.lng;
 
     mapRef.current = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
@@ -154,8 +154,6 @@ export default function MapScreen({
       iconAnchor: [11, 11],
     });
 
-    if (!userLocation) return;
-    
     if (!userMarkerRef.current) {
       userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
         .addTo(mapRef.current)
@@ -171,16 +169,19 @@ export default function MapScreen({
         setMapCenter({ lat: searchLocation.lat, lng: searchLocation.lng });
         hasCenteredRef.current = true;
       } else {
-        mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
-        setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
-        hasCenteredRef.current = true;
+        const isDefault = userLocation.lat === DEFAULT_LOCATION.lat && userLocation.lng === DEFAULT_LOCATION.lng;
+        if (!isDefault) {
+          mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
+          setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
+          hasCenteredRef.current = true;
+        }
       }
     }
   }, [leafletLoaded, userLocation]);
 
   // ── Center Map on User ──
   const centerOnUser = () => {
-    if (!mapRef.current || !leafletLoaded || !userLocation) return;
+    if (!mapRef.current || !leafletLoaded) return;
     mapRef.current.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 1.5 });
   };
 

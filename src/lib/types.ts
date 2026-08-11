@@ -106,3 +106,4 @@ export interface ToastState {
 }
 
 // ─── Default Location (Shivamogga, Karnataka) ─────────────
+export const DEFAULT_LOCATION = { lat: 13.9299, lng: 75.5681 };

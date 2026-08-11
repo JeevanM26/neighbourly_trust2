@@ -93,8 +93,8 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
-  const roundedLat = userLocation?.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
-  const roundedLng = userLocation?.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
+  const roundedLat = userLocation.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
+  const roundedLng = userLocation.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
   const hasFetchedRef = React.useRef(false);
 
   const handleRefresh = async () => {

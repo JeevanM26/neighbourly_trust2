@@ -29,7 +29,7 @@ export default function WorkerProfileSheet({
     let isMounted = true;
     async function loadWorker() {
       const loc = searchLocation || userLocation;
-      if (loc?.lat) {
+      if (loc.lat) {
         const data = await findNearbyWorkers(categoryId, loc.lat, loc.lng);
         if (isMounted) {
           const w = data.find(x => x.worker_id === workerId);
@@ -85,10 +85,6 @@ export default function WorkerProfileSheet({
   const handleBook = async () => {
     setBookingStatus('booking');
     const loc = searchLocation || userLocation;
-    if (!loc) {
-      alert("Location is required to book a service");
-      return;
-    }
     // Use worker's exact location to guarantee dispatch picks this worker
     const workerLat = worker?.location?.lat ?? loc.lat;
     const workerLng = worker?.location?.lng ?? loc.lng;
