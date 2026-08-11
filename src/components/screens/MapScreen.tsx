@@ -34,7 +34,7 @@ export default function MapScreen({
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number} | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [justConfirmed, setJustConfirmed] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(!searchLocation);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Address Search State
   const [searchQuery, setSearchQuery] = useState('');
