@@ -83,8 +83,8 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
       .from('bookings')
       .select(`
         *,
-        profiles:worker_id ( full_name, avatar_url, phone ),
-        service_categories:category_id ( name_en )
+        profiles!worker_id ( full_name, avatar_url, phone ),
+        service_categories!category_id ( name_en )
       `)
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
