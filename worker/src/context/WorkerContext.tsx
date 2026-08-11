@@ -184,12 +184,12 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const parsed = JSON.parse(savedWorker);
             if (parsed && parsed.id) {
               // Fire-and-forget fetch with keepalive to ensure it reaches Supabase
-              fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/worker_profiles?profile_id=eq.${parsed.id}`, {
+              fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/worker_profiles?profile_id=eq.${parsed.id}`, {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
-                  'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                  'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                  'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
                 },
                 body: JSON.stringify({ is_online: false }),
                 keepalive: true
