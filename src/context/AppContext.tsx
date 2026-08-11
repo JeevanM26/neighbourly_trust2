@@ -476,6 +476,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         onAllow={handleLocationAllow}
         onDeny={handleLocationDeny}
       />
+      
+      {locationStatus === 'denied' && !showLocationModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(4, 27, 48, 0.95)', padding: 24
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{
+              width: 64, height: 64, background: '#FEE2E2', color: '#DC2626', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
+            }}>
+              <MapPin size={32} />
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', marginBottom: 12 }}>Location Required</h2>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 24, fontWeight: 500 }}>
+              Neighborly Trust requires your precise location to connect you with nearby verified specialists. 
+              <br /><br />
+              Please turn on your device's <b>GPS / Location settings</b> and ensure your browser has permission, then try again.
+            </p>
+            <button 
+              onClick={() => {
+                setLocationStatus('loading');
+                _executeLocationRequest();
+              }}
+              style={{
+                width: '100%', padding: '16px', background: '#0F172A', color: 'white',
+                border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 800, cursor: 'pointer'
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
     </AppContext.Provider>
   );
 };
