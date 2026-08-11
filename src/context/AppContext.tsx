@@ -273,7 +273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setLocationStatus('denied');
           resolve(null);
         },
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+        { enableHighAccuracy: true, timeout: 60000, maximumAge: 10000 }
       );
     });
   }, []);
