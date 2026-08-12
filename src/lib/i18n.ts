@@ -56,6 +56,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'Booking Confirmed!',
     bookingNotification: 'Your request has been dispatched to',
     noWorkersFound: 'No specialists available matching your search.',
+    offline_message: 'No internet connection. Operating in offline mode.',
+    privacy_shield: 'End-to-end encrypted',
+    call_decline: 'Decline',
+    call_accept: 'Accept',
+    call_status_calling: 'Calling...',
+    call_status_incoming: 'Incoming Voice Call',
   },
   kn: {
     appTitle: 'ನೆರೆಹೊರೆಯ ನಂಬಿಕೆ',
@@ -99,6 +105,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'ಬುಕಿಂಗ್ ದೃಢೀಕರಿಸಲಾಗಿದೆ!',
     bookingNotification: 'ನಿಮ್ಮ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸಲಾಗಿದೆ',
     noWorkersFound: 'ಯಾವುದೇ ತಜ್ಞರು ಕಂಡುಬಂದಿಲ್ಲ.',
+    offline_message: 'ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವಿಲ್ಲ. ಆಫ್‌ಲೈನ್ ಮೋಡ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದೆ.',
+    privacy_shield: 'ಎಂಡ್-ಟು-ಎಂಡ್ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಲಾಗಿದೆ',
+    call_decline: 'ತಿರಸ್ಕರಿಸಿ',
+    call_accept: 'ಸ್ವೀಕರಿಸಿ',
+    call_status_calling: 'ಕರೆ ಮಾಡುತ್ತಿದೆ...',
+    call_status_incoming: 'ಒಳಬರುವ ಧ್ವನಿ ಕರೆ',
   },
   hi: {
     appTitle: 'पड़ोसी भरोसा',
@@ -142,6 +154,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'बुकिंग की पुष्टि हो गई!',
     bookingNotification: 'आपका अनुरोध भेज दिया गया है',
     noWorkersFound: 'कोई विशेषज्ञ उपलब्ध नहीं है।',
+    offline_message: 'कोई इंटरनेट कनेक्शन नहीं। ऑफ़लाइन मोड में काम कर रहा है।',
+    privacy_shield: 'एंड-टू-एंड एन्क्रिप्टेड',
+    call_decline: 'अस्वीकार करें',
+    call_accept: 'स्वीकार करें',
+    call_status_calling: 'कॉल कर रहे हैं...',
+    call_status_incoming: 'आने वाली वॉइस कॉल',
   },
   ta: {
     appTitle: 'அண்டை நம்பிக்கை',
@@ -185,6 +203,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'பதிவு உறுதிசெய்யப்பட்டது!',
     bookingNotification: 'உங்கள் கோரிக்கை அனுப்பப்பட்டது',
     noWorkersFound: 'வல்லுநர்கள் எதுவும் கிடைக்கவில்லை.',
+    offline_message: 'இணைய இணைப்பு இல்லை. ஆஃப்லைன் பயன்முறையில் இயங்குகிறது.',
+    privacy_shield: 'எண்ட்-டு-எண்ட் என்க்ரிப்ட் செய்யப்பட்டது',
+    call_decline: 'நிராகரிக்கவும்',
+    call_accept: 'ஏற்கவும்',
+    call_status_calling: 'அழைக்கிறது...',
+    call_status_incoming: 'உள்வரும் குரல் அழைப்பு',
   },
   te: {
     appTitle: 'పొరుగు నమ్మకం',
@@ -228,6 +252,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'బుకింగ్ ఖరారైంది!',
     bookingNotification: 'మీ అభ్యర్థన పంపబడింది',
     noWorkersFound: 'ఏ నిపుణులూ అందుబాటులో లేరు.',
+    offline_message: 'ఇంటర్నెట్ కనెక్షన్ లేదు. ఆఫ్‌లైన్ మోడ్‌లో పనిచేస్తోంది.',
+    privacy_shield: 'ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్ చేయబడింది',
+    call_decline: 'తిరస్కరించు',
+    call_accept: 'అంగీకరించు',
+    call_status_calling: 'కాల్ చేస్తోంది...',
+    call_status_incoming: 'ఇన్‌కమింగ్ వాయిస్ కాల్',
   },
   mr: {
     appTitle: 'शेजारील विश्वास',
@@ -271,6 +301,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'बुकिंग निश्चित झाले!',
     bookingNotification: 'तुमची विनंती पाठवली आहे',
     noWorkersFound: 'कोणतेही तज्ञ उपलब्ध नाहीत.',
+    offline_message: 'इंटरनेट कनेक्शन नाही. ऑफलाइन मोडमध्ये काम करत आहे.',
+    privacy_shield: 'एंड-टू-एंड एन्क्रिप्टेड',
+    call_decline: 'नकार द्या',
+    call_accept: 'स्वीकारा',
+    call_status_calling: 'कॉल करत आहे...',
+    call_status_incoming: 'येणारा व्हॉइस कॉल',
   },
   bn: {
     appTitle: 'প্রতিবেশীর বিশ্বাস',
@@ -314,6 +350,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'বুকিং নিশ্চিত হয়েছে!',
     bookingNotification: 'আপনার অনুরোধ পাঠানো হয়েছে',
     noWorkersFound: 'কোন বিশেষজ্ঞ পাওয়া যায়নি।',
+    offline_message: 'ইন্টারনেট সংযোগ নেই। অফলাইন মোডে কাজ করছে।',
+    privacy_shield: 'এন্ড-টু-এন্ড এনক্রিপ্ট করা',
+    call_decline: 'প্রত্যাখ্যান করুন',
+    call_accept: 'গ্রহণ করুন',
+    call_status_calling: 'কল করা হচ্ছে...',
+    call_status_incoming: 'ইনকামিং ভয়েস কল',
   },
   gu: {
     appTitle: 'પાડોશી વિશ્વાસ',
@@ -357,6 +399,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'બુકિંગ કન્ફર્મ થયું!',
     bookingNotification: 'તમારી વિનંતી મોકલાઈ ગઈ છે',
     noWorkersFound: 'કોઈ નિષ્ણાતો ઉપલબ્ધ નથી.',
+    offline_message: 'કોઈ ઇન્ટરનેટ કનેક્શન નથી. ઑફલાઇન મોડમાં કામ કરી રહ્યું છે.',
+    privacy_shield: 'એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ',
+    call_decline: 'નકારો',
+    call_accept: 'સ્વીકારો',
+    call_status_calling: 'કૉલ કરી રહ્યા છે...',
+    call_status_incoming: 'ઇનકમિંગ વૉઇસ કૉલ',
   },
   ml: {
     appTitle: 'അയൽപക്ക വിശ്വാസം',
@@ -400,6 +448,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'ബുക്കിംഗ് ഉറപ്പിച്ചു!',
     bookingNotification: 'നിങ്ങളുടെ അപേക്ഷ അയച്ചു',
     noWorkersFound: 'വിദഗ്ദ്ധർ ആരും ലഭ്യമല്ല.',
+    offline_message: 'ഇന്റർനെറ്റ് കണക്ഷൻ ഇല്ല. ഓഫ്‌ലൈൻ മോഡിൽ പ്രവർത്തിക്കുന്നു.',
+    privacy_shield: 'എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റ് ചെയ്തു',
+    call_decline: 'നിരസിക്കുക',
+    call_accept: 'സ്വീകരിക്കുക',
+    call_status_calling: 'കോൾ ചെയ്യുന്നു...',
+    call_status_incoming: 'ഇൻകമിംഗ് വോയ്‌സ് കോൾ',
   },
   pa: {
     appTitle: 'ਗੁਆਂਢੀ ਭਰੋਸਾ',
@@ -443,5 +497,32 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     bookingConfirmed: 'ਬੁਕਿੰਗ ਦੀ ਪੁਸ਼ਟੀ ਹੋ ਗਈ!',
     bookingNotification: 'ਤੁਹਾਡੀ ਬੇਨਤੀ ਭੇਜੀ ਗਈ ਹੈ',
     noWorkersFound: 'ਕੋਈ ਮਾਹਰ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।',
+    offline_message: 'ਕੋਈ ਇੰਟਰਨੈਟ ਕਨੈਕਸ਼ਨ ਨਹੀਂ। ਔਫਲਾਈਨ ਮੋਡ ਵਿੱਚ ਕੰਮ ਕਰ ਰਿਹਾ ਹੈ।',
+    privacy_shield: 'ਐਂਡ-टू-ਐਂਡ ਐਨਕ੍ਰਿਪਟਡ',
+    call_decline: 'ਅਸਵੀਕਾਰ ਕਰੋ',
+    call_accept: 'ਸਵੀਕਾਰ ਕਰੋ',
+    call_status_calling: 'ਕਾਲ ਕਰ ਰਿਹਾ ਹੈ...',
+    call_status_incoming: 'ਇਨਕਮਿੰਗ ਵਾਇਸ ਕਾਲ',
   },
 };
+
+/**
+ * Robust i18n Proxy / Getter
+ * Implements L1 (Native) -> L2 (English Fallback) -> L3 (Bounded String) caching
+ */
+export function getTranslation(lang: LanguageCode, key: string): string {
+  // L1: Active language
+  if (TRANSLATIONS[lang] && key in TRANSLATIONS[lang]) {
+    return TRANSLATIONS[lang][key];
+  }
+  
+  // L2: English fallback
+  if (TRANSLATIONS['en'] && key in TRANSLATIONS['en']) {
+    console.warn(`[i18n] Missing translation for key '${key}' in '${lang}'. Falling back to 'en'.`);
+    return TRANSLATIONS['en'][key];
+  }
+  
+  // L3: Bounded raw string fallback
+  console.error(`[i18n] CRITICAL MISSING KEY: '${key}' in all languages.`);
+  return `[MISSING_KEY: ${key}]`;
+}

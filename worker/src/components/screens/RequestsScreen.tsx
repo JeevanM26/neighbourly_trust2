@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useWorker } from '../../context/WorkerContext';
-import { BookingOffer } from '../../lib/types';
+import { BookingOffer, COMMISSION_RATE } from '../../lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Phone, MapPin, Clock, Check, X, IndianRupee, RefreshCw, Bell, BellOff } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
@@ -59,7 +59,7 @@ function RequestCard({ offer, onAccept, onDecline }: {
   const customerId = offer.booking?.customer_id || '';
   const addressText = offer.booking?.address_text;
   const gross = offer.booking?.price_estimate || offer.booking?.final_price || 0;
-  const commission = gross * 0.08;
+  const commission = gross * COMMISSION_RATE;
   const net = gross - commission;
 
   return (
@@ -114,7 +114,7 @@ function RequestCard({ offer, onAccept, onDecline }: {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
         {[
           { label: 'Gross', value: `₹${gross}`, color: '#0F172A' },
-          { label: 'Commission (8%)', value: `-₹${commission}`, color: '#EF4444' },
+          { label: `Commission (${COMMISSION_RATE * 100}%)`, value: `-₹${commission}`, color: '#EF4444' },
           { label: 'You Earn', value: `₹${net}`, color: '#059669' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ textAlign: 'center', background: '#F8FAFC', borderRadius: 10, padding: '8px 4px' }}>

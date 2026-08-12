@@ -13,10 +13,10 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Safety checks enabled
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // Safety checks enabled
   }
 };
 

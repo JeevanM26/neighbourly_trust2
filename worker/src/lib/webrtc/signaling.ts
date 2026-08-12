@@ -23,7 +23,8 @@ export class SignalingManager {
    * Listen to a personal channel to receive incoming calls
    */
   subscribeToPersonalChannel(userId: string, onIncomingCall: (payload: Extract<SignalingEvent, { type: 'incoming_call' }>) => void) {
-    const personalChannel = this.client.channel(`user_${userId}`);
+    const channelHash = typeof btoa !== 'undefined' ? btoa(userId + '_WEBRTC_SALT').replace(/=/g, '') : userId;
+    const personalChannel = this.client.channel(`user_${channelHash}`);
     personalChannel.on('broadcast', { event: 'incoming_call' }, (payload) => {
       onIncomingCall(payload.payload as any);
     }).subscribe();
@@ -37,7 +38,8 @@ export class SignalingManager {
    * Ping a user to start a call
    */
   async pingUser(targetUserId: string, callerId: string, callerName: string, callerAvatar: string | undefined, roomId: string) {
-    const pingChannel = this.client.channel(`user_${targetUserId}`);
+    const channelHash = typeof btoa !== 'undefined' ? btoa(targetUserId + '_WEBRTC_SALT').replace(/=/g, '') : targetUserId;
+    const pingChannel = this.client.channel(`user_${channelHash}`);
     await new Promise<void>((resolve, reject) => {
       pingChannel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {

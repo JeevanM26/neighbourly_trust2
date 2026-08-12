@@ -8,7 +8,6 @@ export interface CallSession {
   recipientCategory: string;
   recipientAvatar?: string;
   maskedPhone: string;
-  rawPhone: string;
   status: CallStatus;
   startedAt?: number;
   durationSeconds: number;

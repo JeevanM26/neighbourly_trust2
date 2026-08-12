@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { WorkerProfile } from '../../lib/types';
 
 import { useApp } from '../../context/AppContext';
-
+import { useLocation } from '../../context/LocationContext';
 import { Star, MapPin, ShieldCheck, Phone, ChevronLeft, Zap, X, Clock, Award } from 'lucide-react';
 
 
@@ -25,9 +25,8 @@ interface WorkerProfileDetailProps {
 
 
 export default function WorkerProfileDetail({ worker, onBack, onBooked }: WorkerProfileDetailProps) {
-
   const { bookWorker, user } = useApp();
-
+  const { userLocation } = useLocation();
   const [notes, setNotes] = useState('');
 
   const [showBookModal, setShowBookModal] = useState(false);
@@ -45,11 +44,8 @@ export default function WorkerProfileDetail({ worker, onBack, onBooked }: Worker
 
 
   const handleConfirmBook = async () => {
-
     setBooking(true);
-
-    await bookWorker('general');
-
+    await bookWorker('general', worker.id, userLocation);
     setBooking(false);
 
     setBooked(true);

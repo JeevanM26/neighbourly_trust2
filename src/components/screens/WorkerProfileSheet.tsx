@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, X, Zap, Clock } from 'lucide-react';
+import { useLocation } from '../../context/LocationContext';
 
 export default function WorkerProfileSheet({
   workerId,
@@ -17,7 +18,8 @@ export default function WorkerProfileSheet({
   onBack: () => void;
   onBooked: () => void;
 }) {
-  const { requestLocation, bookWorker, categories, webrtc, bookings, user, searchLocation, userLocation, refreshBookings } = useApp();
+  const { bookWorker, categories, webrtc, bookings, user, refreshBookings } = useApp();
+  const { requestLocation, searchLocation, userLocation } = useLocation();
   const [worker, setWorker] = useState<WorkerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'booking' | 'success'>('idle');

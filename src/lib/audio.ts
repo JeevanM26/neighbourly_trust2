@@ -159,13 +159,6 @@ export function speakAudio(text: string, langName: string = 'English') {
       console.warn('Native speech error, fallback to audio stream', e);
     }
   }
-
-  try {
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${shortLang}&client=tw-ob`;
-    const audio = new Audio(ttsUrl);
-    audio.playbackRate = 1.0;
-    audio.play().catch(() => {});
-  } catch (e) {}
 }
 
 export function stopAudio() {

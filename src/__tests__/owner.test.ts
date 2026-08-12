@@ -1,11 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { OWNER_PHONE_NUMBERS } from '../lib/types';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { sortProvidersByDistanceAndFeatured } from '../lib/commission';
 
 describe('Owner Access & Control System', () => {
-  it('recognizes designated owner phone numbers', () => {
-    expect(OWNER_PHONE_NUMBERS).toContain('7975182162');
-    expect(OWNER_PHONE_NUMBERS).toContain('8867269712');
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_OWNER_PHONES', '9999999999,8888888888');
+    vi.resetModules();
+  });
+
+  it('recognizes designated owner phone numbers', async () => {
+    const { OWNER_PHONE_NUMBERS } = await import('../lib/types');
+    expect(OWNER_PHONE_NUMBERS).toContain('9999999999');
+    expect(OWNER_PHONE_NUMBERS).toContain('8888888888');
   });
 
   it('filters out blacklisted providers from search results', () => {

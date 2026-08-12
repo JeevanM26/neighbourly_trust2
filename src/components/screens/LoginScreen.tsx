@@ -33,6 +33,7 @@ export default function LoginScreen() {
     useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null),
   ];
+  const lastOtpTime = useRef<number>(0);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -46,6 +47,13 @@ export default function LoginScreen() {
 
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) { setError('Enter a valid 10-digit mobile number.'); return; }
     if (!consent) { setError('Please accept the privacy consent to continue.'); return; }
+
+    const now = Date.now();
+    if (now - lastOtpTime.current < 60000) {
+      setError('Please wait 60 seconds before requesting another OTP.');
+      return;
+    }
+    lastOtpTime.current = now;
 
     setLoading(true);
 
@@ -70,7 +78,7 @@ export default function LoginScreen() {
 
       showToast('OTP sent to your number!', 'info');
       setStep('otp');
-      setCountdown(30);
+      setCountdown(60);
       setOtp(['', '', '', '', '', '']);
       setTimeout(() => otpRefs[0].current?.focus(), 100);
     } catch {

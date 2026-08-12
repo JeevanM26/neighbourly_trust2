@@ -29,11 +29,10 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
       if (!leafletMap.current) {
         leafletMap.current = L.map(mapRef.current as HTMLElement).setView([userLoc.lat, userLoc.lng], 13);
 
-        // Google Maps Roadmap tile layer
-        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
+        // OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(leafletMap.current);
       } else {
         leafletMap.current.setView([userLoc.lat, userLoc.lng], 13);
@@ -54,8 +53,10 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
       workers.forEach((w) => {
         // We use any assertions here to allow compilation for fields not in WorkerProfile yet (Phase 2 constraint)
         const workerAny = w as any;
+        if (!workerAny.lat || !workerAny.lng) return; // Skip if no coords
+        
         const markerColor = workerAny.featured ? '#F5A623' : '#0B3D66';
-        const providerMarker = L.circleMarker([workerAny.lat || userLoc.lat, workerAny.lng || userLoc.lng], {
+        const providerMarker = L.circleMarker([workerAny.lat, workerAny.lng], {
           radius: 8,
           fillColor: markerColor,
           color: '#FFFFFF',

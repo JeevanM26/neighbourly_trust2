@@ -30,10 +30,10 @@ export default function CustomerMap({ customerLoc }: CustomerMapProps) {
           dragging: true,
         }).setView([customerLoc.lat, customerLoc.lng], 15);
 
-        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps'
+        // OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(leafletMap.current);
 
         // Add customer pin

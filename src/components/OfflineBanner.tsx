@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";import { useApp } from "@/context/AppContext";
 
 export const OfflineBanner: React.FC = () => {
   const [isOffline, setIsOffline] = useState(false);
+  const { t } = useApp();
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -28,7 +29,7 @@ export const OfflineBanner: React.FC = () => {
   return (
     <div className="fixed top-0 left-0 right-0 z-[10000] bg-red-500 text-white p-2 text-center text-sm font-semibold flex items-center justify-center gap-2 animate-slide-down">
       <WifiOff className="w-4 h-4" />
-      You are currently offline. Check your internet connection.
+      {t('offline_message')}
     </div>
   );
 };

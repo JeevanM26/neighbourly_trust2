@@ -11,19 +11,10 @@ export default function OwnerPanel({ onClose }: { onClose: () => void }) {
   const { user, showToast, bookings } = useApp();
   const [providers, setProviders] = useState<any[]>([]);
   const [tab, setTab] = useState<OwnerTab>('providers');
-  const [ownerNumbers, setOwnerNumbers] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('nt_owner_numbers') ?? 'null') ?? OWNER_PHONES; }
-    catch { return OWNER_PHONES; }
-  });
-  const [newOwnerPhone, setNewOwnerPhone] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  const ownerNumbers = OWNER_PHONES;
   const isPrimary = user?.phone?.replace(/\D/g, '') === PRIMARY_SUPER_OWNER;
-
-  const saveOwnerNumbers = (nums: string[]) => {
-    setOwnerNumbers(nums);
-    localStorage.setItem('nt_owner_numbers', JSON.stringify(nums));
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -209,42 +200,10 @@ export default function OwnerPanel({ onClose }: { onClose: () => void }) {
                       <div style={{ fontSize: 10, fontWeight: 700, color: '#F59E0B' }}>⭐ Super Owner</div>
                     )}
                   </div>
-                  {isPrimary && num !== PRIMARY_SUPER_OWNER && (
-                    <button
-                      onClick={() => { saveOwnerNumbers(ownerNumbers.filter((_, j) => j !== i)); showToast('Removed', 'info'); }}
-                      style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, padding: '6px', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={14} color="#DC2626" />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
 
-            {isPrimary && (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="New owner phone"
-                  value={newOwnerPhone}
-                  onChange={e => setNewOwnerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  style={{ flex: 1, padding: '12px 14px', borderRadius: 12, border: '1.5px solid #E2E8F0', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none' }}
-                />
-                <button
-                  onClick={() => {
-                    if (!/^[6-9]\d{9}$/.test(newOwnerPhone)) { showToast('Invalid phone number', 'error'); return; }
-                    if (ownerNumbers.includes(newOwnerPhone)) { showToast('Already added', 'error'); return; }
-                    saveOwnerNumbers([...ownerNumbers, newOwnerPhone]);
-                    setNewOwnerPhone('');
-                    showToast('Owner added!');
-                  }}
-                  style={{ background: '#0B3D66', border: 'none', borderRadius: 12, padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <Plus size={18} color="white" />
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>

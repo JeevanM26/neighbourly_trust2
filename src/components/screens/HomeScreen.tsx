@@ -1,11 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { SearchWithVoice } from '../SearchWithVoice';
+import { useLocation } from '../../context/LocationContext';
 import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { detectIntent } from '../../lib/intentEngine';
-import { Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, Wrench, Scissors, Wrench as Tool, Volume2, RefreshCw, MapPin, X, VolumeX, Star } from 'lucide-react';
+import { SearchWithVoice } from '../SearchWithVoice';
+import { Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, Volume2, VolumeX } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', name: 'English',  native: 'English',  flag: '🇺🇸' },
@@ -21,7 +22,7 @@ const LANGUAGES = [
 const CategoryIcon = ({ slug, size = 32 }: { slug: string, size?: number }) => {
   switch (slug.toLowerCase()) {
     case 'electrician': return <Zap size={size} color="#F59E0B" />;
-    case 'plumber': return <Wrench size={size} color="#94A3B8" />;
+    case 'plumber': return <Tool size={size} color="#94A3B8" />;
     case 'carpenter': return <Hammer size={size} color="#94A3B8" />;
     case 'painter': return <Paintbrush size={size} color="#94A3B8" />;
     case 'house-cleaning': return <Sparkles size={size} color="#94A3B8" />;
@@ -38,25 +39,6 @@ const PRESET_CHIPS = [
   { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
 ];
 
-function ProviderSkeleton() {
-  return (
-    <div style={{
-      background: 'white', border: '1px solid #E2E8F0', borderRadius: 18,
-      overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', minWidth: 240, flexShrink: 0
-    }}>
-      <div className="shimmer-loading" style={{ width: '100%', height: 140 }} />
-      <div style={{ padding: '16px' }}>
-        <div className="shimmer-loading" style={{ height: 18, borderRadius: 9, marginBottom: 8, width: '70%' }} />
-        <div className="shimmer-loading" style={{ height: 13, borderRadius: 6, marginBottom: 16, width: '40%' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div className="shimmer-loading" style={{ height: 13, borderRadius: 6, width: '30%' }} />
-            <div className="shimmer-loading" style={{ height: 16, borderRadius: 8, width: '25%' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function HomeScreen({ 
   onSelectCategory,
   onSelectWorker
@@ -64,7 +46,8 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, setLanguage, toggleVoice, userLocation, showToast, t, locationStatus, requestLocation } = useApp();
+  const { categories, user, settings, toggleVoice, t } = useApp();
+  const { userLocation, locationStatus, requestLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
@@ -93,18 +76,18 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
-  const roundedLat = userLocation.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
-  const roundedLng = userLocation.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
+  const roundedLat = userLocation?.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
+  const roundedLng = userLocation?.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
   const hasFetchedRef = React.useRef(false);
 
   const handleRefresh = async () => {
     if (!roundedLat || categories.length === 0) return;
     setIsLoadingWorkers(true);
-    const promises = categories.map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
-    const results = await Promise.all(promises);
-    const allWorkers = results.flat();
-    const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
-    setNearbyWorkers(unique);
+    const targetCategory = categories.find(c => c.id === (activeCategory || 'plumber')) || categories[0];
+    if (targetCategory) {
+      const results = await findNearbyWorkers(targetCategory.id, roundedLat, roundedLng);
+      setNearbyWorkers(results);
+    }
     setIsLoadingWorkers(false);
   };
 
@@ -117,21 +100,21 @@ export default function HomeScreen({
         setIsLoadingWorkers(true);
       }
 
-      // Fetch all workers to show on home screen
-      const promises = categories.map(c => findNearbyWorkers(c.id, roundedLat, roundedLng));
-      const results = await Promise.all(promises);
-      const allWorkers = results.flat();
-      const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
+      const targetCategory = categories.find(c => c.id === (activeCategory || 'plumber')) || categories[0];
+      let results: any[] = [];
+      if (targetCategory) {
+        results = await findNearbyWorkers(targetCategory.id, roundedLat, roundedLng);
+      }
       
       if (isMounted) {
-        setNearbyWorkers(unique);
+        setNearbyWorkers(results);
         setIsLoadingWorkers(false);
         hasFetchedRef.current = true;
       }
     }
     if (categories.length > 0) fetchWorkers();
     return () => { isMounted = false; };
-  }, [categories, roundedLat, roundedLng]);
+  }, [categories, roundedLat, roundedLng, activeCategory]);
 
   const filteredWorkers = React.useMemo(() => {
     let result = nearbyWorkers;

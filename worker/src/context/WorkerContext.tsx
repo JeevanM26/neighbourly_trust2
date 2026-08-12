@@ -15,6 +15,7 @@ import {
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallOverlay } from '../components/CallOverlay';
 import { MapPin } from 'lucide-react';
+import { WorkerLocationProvider } from './WorkerLocationContext';
 
 // ─── Context Shape ─────────────────────────────────────────
 interface WorkerContextType {
@@ -123,8 +124,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const realtimeRef = useRef<any>(null);
-  const geoWatchRef = useRef<number | null>(null);
-  const persistentNotifRef = useRef<Notification | null>(null);
 
 
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -169,10 +168,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setActiveBookings([]);
           setCompletedBookings([]);
           localStorage.removeItem('nt_worker');
-          if (geoWatchRef.current !== null && typeof window !== 'undefined' && navigator.geolocation) {
-            navigator.geolocation.clearWatch(geoWatchRef.current);
-            geoWatchRef.current = null;
-          }
         }
         setIsAuthLoading(false);
       });
@@ -346,16 +341,6 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsOnline(false);
     if (typeof window !== 'undefined') localStorage.removeItem('nt_worker');
     
-    if (geoWatchRef.current !== null && typeof window !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.clearWatch(geoWatchRef.current);
-      geoWatchRef.current = null;
-    }
-    
-    if (persistentNotifRef.current) {
-      persistentNotifRef.current.close();
-      persistentNotifRef.current = null;
-    }
-    
     const client = getClient();
     if (client) {
       client.auth.signOut().catch(() => {});
@@ -382,55 +367,9 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setWorker(prev => prev ? { ...prev, is_online: next } : null);
 
     if (next && typeof window !== 'undefined' && navigator.geolocation) {
-      // Request notification permission when going online
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-
-      // First position update immediately
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
-      }, () => {
-        setWorkerOnline(worker.id, true, null, null);
-      }, { timeout: 10000 });
-
-      // Start watching position (foreground streaming)
-      let lastUpdate = 0;
-      geoWatchRef.current = navigator.geolocation.watchPosition(async (pos) => {
-        const now = Date.now();
-        // Throttle updates to Supabase (e.g. max once every 20s)
-        if (now - lastUpdate > 20000) {
-          lastUpdate = now;
-          await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
-        }
-      }, (err) => {
-        console.warn("Location watch error", err);
-      }, {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-      });
-
-      // Show persistent notification
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        persistentNotifRef.current = new Notification('Neighborly Trust', {
-          body: "You're online and visible to nearby customers",
-          icon: '/icon-192.png',
-          requireInteraction: true,
-          tag: 'nt-worker-online'
-        });
-      }
-
       showToast('You\'re online — ready for bookings! ✅', 'success');
     } else {
       // Offline
-      if (geoWatchRef.current !== null && typeof window !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-        geoWatchRef.current = null;
-      }
-      if (persistentNotifRef.current) {
-        persistentNotifRef.current.close();
-        persistentNotifRef.current = null;
-      }
       await setWorkerOnline(worker.id, false, null, null);
       showToast('You\'re offline', 'info');
     }
@@ -497,8 +436,10 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       toast, showToast, dismissToast,
       webrtc,
     }}>
-      <CallOverlay webrtc={webrtc} />
-      {children}
+      <WorkerLocationProvider>
+        <CallOverlay webrtc={webrtc} />
+        {children}
+      </WorkerLocationProvider>
     </WorkerContext.Provider>
   );
 };

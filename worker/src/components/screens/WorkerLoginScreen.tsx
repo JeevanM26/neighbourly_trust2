@@ -21,6 +21,7 @@ export default function WorkerLoginScreen() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const otpRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+  const lastOtpTime = useRef<number>(0);
 
   useEffect(() => {
     if (isNewWorker) {
@@ -40,6 +41,13 @@ export default function WorkerLoginScreen() {
     const cleanPhone = phone.replace(/\D/g, '');
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) { setError('Enter a valid 10-digit Indian mobile number.'); return; }
     if (!consent) { setError('You must agree to the Terms of Service.'); return; }
+    
+    const now = Date.now();
+    if (now - lastOtpTime.current < 60000) {
+      setError('Please wait 60 seconds before requesting another OTP.');
+      return;
+    }
+    lastOtpTime.current = now;
 
     setLoading(true);
     
@@ -62,7 +70,7 @@ export default function WorkerLoginScreen() {
 
       showToast('OTP sent to your number', 'info');
       setStep('otp');
-      setCountdown(30);
+      setCountdown(60);
       setOtp(['', '', '', '', '', '']);
       setTimeout(() => otpRefs[0].current?.focus(), 100);
     } catch {

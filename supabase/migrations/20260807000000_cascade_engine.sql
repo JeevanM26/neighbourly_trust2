@@ -120,6 +120,17 @@ AS $$
 DECLARE
     v_rows_affected INT;
 BEGIN
+    -- Verify caller owns the offer, and is a verified worker
+    IF NOT EXISTS (
+        SELECT 1 FROM public.booking_offers bo
+        JOIN public.worker_profiles wp ON bo.worker_id = wp.profile_id
+        WHERE bo.id = p_offer_id 
+          AND bo.worker_id = auth.uid()
+          AND wp.is_verified = true
+    ) THEN
+        RETURN FALSE;
+    END IF;
+
     -- Atomically update booking if it's still 'searching'
     UPDATE public.bookings 
     SET status = 'accepted', worker_id = auth.uid(), accepted_at = now()

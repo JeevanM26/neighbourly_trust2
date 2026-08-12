@@ -22,20 +22,31 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
+export const ServiceCategoryKeys = {
+  Electrician: 'Electrician',
+  Plumber: 'Plumber',
+  Carpenter: 'Carpenter',
+  'Home Clean': 'Home Clean',
+  Painter: 'Painter',
+  'Pest Control': 'Pest Control',
+} as const;
+
+export type ServiceCategory = keyof typeof ServiceCategoryKeys;
+
 export interface IntentResult {
-  category: string;
+  category: ServiceCategory;
   confidence: number;   // 0–1 (1 = perfect match)
   matchedOn: string[];  // debug: which keywords fired
 }
 
 // Minimum score to auto-select a category (avoids false positives)
-const CONFIDENCE_THRESHOLD = 0.25;
+const CONFIDENCE_THRESHOLD = 0.55;
 
 // ─── Weighted keyword dictionary ─────────────────────────────────
 // Each entry: [keyword, weight]
 // Weight 3 = strong signal (problem phrase), 2 = moderate, 1 = weak
 // ─────────────────────────────────────────────────────────────────
-const INTENT_DICTIONARY: Record<string, Array<[string, number]>> = {
+const INTENT_DICTIONARY: Record<ServiceCategory, Array<[string, number]>> = {
 
   Electrician: [
     // ─── Problem phrases (weight 3) ───
@@ -262,7 +273,7 @@ export function detectIntent(rawInput: string): IntentResult | null {
   const input = normalize(rawInput);
   if (!input) return null;
 
-  let bestCategory = '';
+  let bestCategory: ServiceCategory | null = null;
   let bestScore    = 0;
   let bestMatched: string[] = [];
   let totalScore   = 0;
@@ -272,7 +283,7 @@ export function detectIntent(rawInput: string): IntentResult | null {
     totalScore += score;
     if (score > bestScore) {
       bestScore    = score;
-      bestCategory = category;
+      bestCategory = category as ServiceCategory;
       bestMatched  = matched;
     }
   }
@@ -283,6 +294,8 @@ export function detectIntent(rawInput: string): IntentResult | null {
   // Clamp to 0–1, then apply threshold
   const confidence = Math.min(bestScore / (totalScore || 1), 1);
   if (confidence < CONFIDENCE_THRESHOLD) return null;
+
+  if (!bestCategory) return null;
 
   return {
     category:   bestCategory,

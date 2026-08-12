@@ -26,11 +26,20 @@ export class CallManager {
   private onStateChange: () => void;
   private autoDeclineTimeout: any = null;
   private personalSubCleanup: (() => void) | null = null;
+  private beforeUnloadHandler = () => {
+    // Immediately terminate call state if user reloads or closes tab
+    if (this.status !== 'idle') {
+      this.endCall(); // Broadcast closure
+      this.cleanup(); // Local teardown
+    }
+  };
 
   constructor(client: SupabaseClient, userId: string, onStateChange: () => void) {
     this.signaling = new SignalingManager(client);
     this.userId = userId;
     this.onStateChange = onStateChange;
+
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
 
     this.personalSubCleanup = this.signaling.subscribeToPersonalChannel(userId, (payload) => {
       if (this.status === 'idle') {
@@ -98,7 +107,9 @@ export class CallManager {
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      const state = pc.connectionState;
+      if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+        console.warn(`[WebRTC] Connection state is ${state}, tearing down call FSM.`);
         this.cleanup();
       }
     };
@@ -168,6 +179,16 @@ export class CallManager {
     this.localStream = stream;
 
     this.activeRoomId = `call_${this.userId}_${targetUserId}_${Date.now()}`;
+    
+    // Timeout if unanswered
+    if (this.autoDeclineTimeout) clearTimeout(this.autoDeclineTimeout);
+    this.autoDeclineTimeout = setTimeout(() => {
+      if (this.status === 'calling') {
+        this.endCall();
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: 'Call timed out' }));
+      }
+    }, 30000);
+
     this.setStatus('calling');
     await this.setupSignalingHandlers();
 
@@ -255,6 +276,7 @@ export class CallManager {
   }
 
   destroy() {
+    window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     this.cleanup();
     if (this.personalSubCleanup) {
       this.personalSubCleanup();

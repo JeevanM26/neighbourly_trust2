@@ -1,9 +1,14 @@
 
 
+const ENV_COMMISSION_RATE = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_COMMISSION_PERCENTAGE
+  ? parseFloat(process.env.NEXT_PUBLIC_COMMISSION_PERCENTAGE) / 100
+  : 0.08;
+
 /**
- * Calculates the platform commission (default 8%) for a given booking total amount.
+ * Calculates the platform commission for a given booking total amount.
+ * Reads rate from NEXT_PUBLIC_COMMISSION_PERCENTAGE env var (default 8%).
  */
-export function calculateCommission(totalAmount: number, rate: number = 0.08): number {
+export function calculateCommission(totalAmount: number, rate: number = ENV_COMMISSION_RATE): number {
   if (totalAmount <= 0) return 0;
   return Math.round(totalAmount * rate * 100) / 100;
 }

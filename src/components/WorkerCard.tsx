@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import { WorkerProfile } from '../lib/types';
 import { useApp } from '../context/AppContext';
+import { useLocation } from '../context/LocationContext';
 import { Star, ShieldCheck, MapPin, Phone, Info, Zap, X } from 'lucide-react';
 import Image from 'next/image';
 
 export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
   const { t, webrtc, user, bookWorker } = useApp();
+  const { userLocation } = useLocation();
   const [showDetails, setShowDetails] = useState(false);
 
   const nameStr = worker.full_name || 'Specialist';
@@ -40,7 +42,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
               </h3>
               <div className="flex items-center space-x-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-200/60">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>{(worker.avg_rating || 5.0).toFixed(1)}</span>
+                <span>{worker.total_jobs > 0 ? (worker.avg_rating || 0).toFixed(1) : 'New'}</span>
                 <span className="text-[10px] text-amber-600 font-normal">({worker.total_jobs ?? 0})</span>
               </div>
             </div>
@@ -55,7 +57,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
                 <span>{worker.distance_km ? `${worker.distance_km.toFixed(1)} km away` : 'Nearby'}</span>
               </span>
               <span className="font-semibold text-slate-900">
-                ₹350 <span className="text-[10px] text-slate-500 font-normal">/ hr</span>
+                ₹{worker.hourly_rate || 350} <span className="text-[10px] text-slate-500 font-normal">/ hr</span>
               </span>
             </div>
           </div>
@@ -80,7 +82,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
           </button>
 
           <button
-            onClick={() => bookWorker('general')}
+            onClick={() => bookWorker(worker.category_id || 'general', worker.worker_id, userLocation)}
             className="w-full py-2 px-2 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-semibold text-xs flex items-center justify-center space-x-1 shadow-sm transition-colors"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
@@ -114,19 +116,23 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
             <div className="mt-4 space-y-3">
               <div className="bg-blue-50/70 p-3 rounded-xl text-xs text-slate-700 leading-relaxed border border-blue-100">
                 <p className="font-medium text-blue-900 mb-1">About Specialist:</p>
-                { 'Verified neighborhood specialist with background security clearance.'}
+                {worker.description || `Independent community professional with ${worker.years_experience || 'several'} years of experience.`}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
                   <span className="text-slate-500 text-[10px] block">Hourly Rate</span>
-                  <span className="font-bold text-slate-900 text-sm">₹350 / hr</span>
+                  <span className="font-bold text-slate-900 text-sm">₹{worker.hourly_rate || 350} / hr</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                  <span className="text-slate-500 text-[10px] block">Verification</span>
-                  <span className="font-bold text-emerald-600 text-xs flex items-center space-x-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Background Checked</span>
+                  <span className="text-slate-500 text-[10px] block">Community Rating</span>
+                  <span className="font-bold text-amber-500 text-xs flex items-center space-x-1 mt-0.5">
+                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                    <span>
+                      {worker.total_jobs > 0 
+                        ? `${(worker.avg_rating || 0).toFixed(1)} (${worker.total_jobs} reviews)` 
+                        : 'No reviews yet'}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -156,7 +162,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
               <button
                 onClick={() => {
                   setShowDetails(false);
-                  bookWorker('general');
+                  bookWorker(worker.category_id || 'general', worker.worker_id, userLocation);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-blue-800 text-white font-semibold text-xs flex items-center justify-center space-x-1"
               >

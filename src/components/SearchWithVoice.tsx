@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Mic, X, Volume2, Sparkles, Mic as MicIcon } from "lucide-react";
+import { Search, Mic, X, Volume2, Sparkles } from "lucide-react";
 import { PermissionModal } from "./PermissionModal";
+import { useApp } from "../context/AppContext";
 
 import { Capacitor } from "@capacitor/core";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
@@ -23,6 +24,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
   placeholder = "Search 'electrician', 'water leak'...",
   listeningPlaceholder = "Listening... बोलिए...",
 }) => {
+  const { showToast } = useApp();
   const [query, setQuery] = useState(value);
   
   useEffect(() => {
@@ -97,7 +99,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
         await SpeechRecognition.start({
           language: selectedLanguage,
           maxResults: 2,
-          prompt: "Say what you are looking for...",
+          prompt: listeningPlaceholder,
           partialResults: true,
           popup: false,
         });
@@ -135,7 +137,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
       if (Capacitor.isNativePlatform()) {
         const { available } = await SpeechRecognition.available();
         if (!available) {
-          alert("Voice speech recognition is not supported on this device.");
+          showToast("Voice speech recognition is not supported on this device.", "error");
           return;
         }
 
@@ -148,7 +150,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
         }
       } else {
         if (!recognitionRef.current) {
-          alert("Voice speech recognition is not supported on this browser.");
+          showToast("Voice speech recognition is not supported on this browser.", "error");
           return;
         }
         
@@ -184,13 +186,6 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
     onSearchChange("");
   };
 
-  const speakResult = (text: string) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = selectedLanguage;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
 
   return (
     <div style={{ width: '100%', margin: '0 auto', marginTop: '-20px' }}>

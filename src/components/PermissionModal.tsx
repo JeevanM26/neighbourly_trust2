@@ -7,10 +7,12 @@ interface PermissionModalProps {
   icon: React.ReactNode;
   onAllow: () => void;
   onDeny: () => void;
+  allowLabel?: string;
+  denyLabel?: string;
 }
 
 export const PermissionModal: React.FC<PermissionModalProps> = ({
-  isOpen, title, description, icon, onAllow, onDeny
+  isOpen, title, description, icon, onAllow, onDeny, allowLabel = 'Continue', denyLabel = 'Not Now'
 }) => {
   if (!isOpen) return null;
 
@@ -42,7 +44,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
               borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
             }}
           >
-            Continue
+            {allowLabel}
           </button>
           <button 
             onClick={onDeny}
@@ -51,7 +53,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
               borderRadius: 12, border: 'none', cursor: 'pointer'
             }}
           >
-            Not Now
+            {denyLabel}
           </button>
         </div>
       </div>

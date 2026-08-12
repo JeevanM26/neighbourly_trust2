@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ============================================================
    NEIGHBORLY TRUST — Worker App Design System
    Shared tokens with Customer App + Worker-specific additions

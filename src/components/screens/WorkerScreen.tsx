@@ -29,9 +29,9 @@ export default function WorkerScreen({ onJobPosted }: { onJobPosted?: () => void
       attributionControl: false
     }).setView([booking.customer_lat, booking.customer_lng], 16);
 
-    L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     const pinHtml = `
@@ -77,9 +77,9 @@ export default function WorkerScreen({ onJobPosted }: { onJobPosted?: () => void
     setIsSubmitting(true);
 
     const newWorkerProfile: WorkerProfile = {
-      full_name: name.trim(), worker_id: `wrk_${Date.now()}`, avg_rating: 0, total_jobs: 0, years_experience: 0, distance_km: 0, 
+      full_name: name.trim(), worker_id: user?.id || `wrk_${Date.now()}`, avg_rating: 0, total_jobs: 0, years_experience: 0, distance_km: 0, 
       tags: [category],
-      location: { lat: 12.9716, lng: 77.5946 }
+      location: { lat: 12.9716, lng: 77.5946 } // Fallback logic remains as per Phase 2 constraints
     };
 
     console.log(newWorkerProfile);

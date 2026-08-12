@@ -50,7 +50,7 @@ export const MapBanner: React.FC = () => {
               </div>
               {/* Tooltip on hover */}
               <div className="absolute left-1/2 -translate-x-1/2 top-9 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap z-20 pointer-events-none">
-                {worker.full_name} • ₹350/h
+                {worker.full_name} • ₹{worker.hourly_rate || 350}/h
               </div>
             </motion.div>
           );
@@ -70,7 +70,7 @@ export const MapBanner: React.FC = () => {
         {/* Location Badge */}
         <div className="bg-blue-800/90 backdrop-blur text-blue-100 px-2.5 py-1 rounded-full border border-blue-600/50 shadow-md flex items-center space-x-1.5 text-[11px] font-medium">
           <Navigation className="w-3 h-3 text-blue-300" />
-          <span>Rural District • 2 km</span>
+          <span>{t('local_area') || 'Local Area'} • 2 km</span>
         </div>
       </div>
     </div>

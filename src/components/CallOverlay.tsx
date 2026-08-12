@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, ShieldCheck } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallAudioSynthesizer, formatCallDuration } from '../lib/callEngine';
+import { useApp } from '../context/AppContext';
 
 export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }) {
+  const { t } = useApp();
   const { callStatus, incomingCall, answerCall, declineCall, endCall, toggleMute, toggleSpeaker, isMuted, isSpeakerOn, audioRef } = webrtc;
   
   const [duration, setDuration] = useState(0);
@@ -18,7 +20,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
       synthRef.current?.stop();
     } else if (callStatus === 'idle') {
       synthRef.current?.stop();
-      if (synthRef.current) synthRef.current.playEndCall(); // assuming we want an end call tone
+      if (synthRef.current && duration > 0) synthRef.current.playEndCall(); 
     }
     
     return () => {
@@ -57,9 +59,9 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
           
           {/* Top Header */}
           <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ShieldCheck size={16} color="#10B981" />
-              <span style={{ fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>End-to-end encrypted</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'rgba(30,41,59,0.8)', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(51,65,85,0.5)' }}>
+              <ShieldCheck size={14} color="#34D399" />
+              <span style={{ fontWeight: 500, color: '#E2E8F0' }}>{t('privacy_shield') || 'End-to-end encrypted'}</span>
             </div>
           </div>
 
@@ -84,8 +86,8 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
             </h3>
 
             <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.5, color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>
-              {callStatus === 'calling' && <span>Calling...</span>}
-              {callStatus === 'ringing' && <span>Incoming Voice Call</span>}
+              {callStatus === 'calling' && <span>{t('call_status_calling') || 'Calling...'}</span>}
+              {callStatus === 'ringing' && <span>{t('call_status_incoming') || 'Incoming Voice Call'}</span>}
               {callStatus === 'connected' && (
                 <span style={{ color: 'white', fontFamily: 'monospace', fontSize: 18, fontWeight: 300 }}>
                   {formatCallDuration(duration)}
@@ -105,7 +107,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
                   >
                     <PhoneOff size={32} color="white" />
                   </button>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>Decline</span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>{t('call_decline') || 'Decline'}</span>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -115,7 +117,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
                   >
                     <Phone size={32} color="white" fill="white" />
                   </button>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>Accept</span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>{t('call_accept') || 'Accept'}</span>
                 </div>
               </div>
             ) : (

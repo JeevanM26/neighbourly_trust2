@@ -40,6 +40,18 @@ export function useWebRTC(userId: string) {
     }
   }, [remoteStream, callStatus]);
 
+  // Handle speaker toggle actual audio routing
+  useEffect(() => {
+    if (audioRef.current && 'setSinkId' in HTMLMediaElement.prototype) {
+      navigator.mediaDevices.enumerateDevices().then(devices => {
+        // Attempt to find a loud speaker vs earpiece
+        const speaker = devices.find(d => d.kind === 'audiooutput' && d.label.toLowerCase().includes('speaker'));
+        const deviceId = isSpeakerOn ? (speaker ? speaker.deviceId : 'default') : 'default';
+        (audioRef.current as any).setSinkId(deviceId).catch((e: any) => console.warn('setSinkId failed:', e));
+      }).catch(() => {});
+    }
+  }, [isSpeakerOn]);
+
   const startCall = (targetUserId: string, targetName: string, callerName: string, callerAvatar?: string) => {
     if (audioRef.current) {
       audioRef.current.play().catch(() => {});

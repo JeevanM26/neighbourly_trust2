@@ -3,13 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { format } from 'date-fns';
 import { Zap, Bell, Star, TrendingUp, Clock, CheckCircle, IndianRupee, RefreshCw, ChevronRight, Briefcase, MapPin } from 'lucide-react';
-import JobOfferModal from './JobOfferModal';
+import { JobOfferModal } from '../JobOfferModal';
 
 export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   onGoToRequests: () => void;
   onGoToJobs: () => void;
 }) {
-  const { worker, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings } = useWorker();
+  const { worker, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer } = useWorker();
   const [toggling, setToggling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -52,7 +52,7 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   return (
     <div style={{ background: '#F0FDF4', height: '100%', overflowY: 'auto', paddingBottom: 80 }}>
       {/* ── Job Offer Alert Modal ── */}
-      {offers.length > 0 && <JobOfferModal offer={offers[0]} />}
+      {offers.length > 0 && <JobOfferModal offer={offers[0]} onAccept={acceptOffer} onDecline={declineOffer} />}
 
       {/* ── Location Rationale Modal ── */}
       {showRationale && (

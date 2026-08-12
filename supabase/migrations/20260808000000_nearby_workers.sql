@@ -41,7 +41,7 @@ AS $$
   JOIN public.worker_categories wc ON wp.profile_id = wc.worker_id
   WHERE 
     wp.is_online = true 
-    -- AND wp.is_verified = true -- commented out for testing so new workers appear
+    AND wp.is_verified = true
     AND wc.category_id = p_category_id
     AND wp.location IS NOT NULL
     AND ST_DWithin(

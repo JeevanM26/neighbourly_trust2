@@ -11,90 +11,7 @@ import { CallOverlay } from '../components/CallOverlay';
 import { PermissionModal } from '../components/PermissionModal';
 import { MapPin } from 'lucide-react';
 
-export const T: Record<string, Record<string, string>> = {
-  en: {
-    goodMorning: 'Good morning',
-    goodAfternoon: 'Good afternoon',
-    searchPlaceholder: "Search 'electrician', 'water leak'...",
-    allServices: 'All Services',
-    specialistsNearYou: 'Specialists Near You',
-    refresh: 'Refresh',
-    filterAll: 'All',
-    filterTopRated: '⭐ Top Rated',
-    filterAvailableNow: '📅 Available Now',
-    filterUnder350: '💰 Under ₹350',
-    noSpecialistsFound: 'No specialists found nearby.',
-    verifiedSpecialistFound: 'verified specialist found',
-    verifiedSpecialistsFound: 'verified specialists found',
-    refreshing: 'Refreshing...',
-    listening: 'Listening... बोलिए...',
-    findService:    'Find a Service',
-    nearbyWorkers:  'Verified Specialists Near You',
-    myBookings:     'My Bookings',
-    profile:        'My Profile',
-    bookNow:        'Book Now',
-    bookingSuccess: 'Booking Confirmed!',
-    loading:        'Loading…',
-    noProviders:    'No specialists found in your area yet.',
-    noBookings:     'No bookings yet. Book your first service!',
-  },
-  hi: {
-    goodMorning: 'सुप्रभात',
-    goodAfternoon: 'शुभ दोपहर',
-    searchPlaceholder: "'इलेक्ट्रीशियन', 'पानी का रिसाव' खोजें...",
-    allServices: 'सभी सेवाएं',
-    specialistsNearYou: 'आपके आस-पास के विशेषज्ञ',
-    refresh: 'रिफ्रेश',
-    filterAll: 'सभी',
-    filterTopRated: '⭐ टॉप रेटेड',
-    filterAvailableNow: '📅 अभी उपलब्ध',
-    filterUnder350: '💰 ₹350 से कम',
-    noSpecialistsFound: 'आस-पास कोई विशेषज्ञ नहीं मिला।',
-    verifiedSpecialistFound: 'सत्यापित विशेषज्ञ मिला',
-    verifiedSpecialistsFound: 'सत्यापित विशेषज्ञ मिले',
-    refreshing: 'रीफ़्रेश हो रहा है...',
-    listening: 'सुन रहा हूँ... बोलिए...',
-    findService:    'सेवा खोजें',
-    nearbyWorkers:  'आपके आस-पास के विशेषज्ञ',
-    myBookings:     'मेरी बुकिंग',
-    profile:        'मेरी प्रोफ़ाइल',
-    bookNow:        'अभी बुक करें',
-    bookingSuccess: 'बुकिंग की पुष्टि हो गई!',
-    loading:        'लोड हो रहा है…',
-    noProviders:    'आपके क्षेत्र में कोई विशेषज्ञ नहीं मिला।',
-    noBookings:     'कोई बुकिंग नहीं। अपनी पहली सेवा बुक करें!',
-  },
-  kn: {
-    goodMorning: 'ಶುಭೋದಯ',
-    goodAfternoon: 'ಶುಭ ಮಧ್ಯಾಹ್ನ',
-    searchPlaceholder: "'ಎಲೆಕ್ಟ್ರಿಷಿಯನ್', 'ನೀರು ಸೋರುವಿಕೆ' ಹುಡುಕಿ...",
-    allServices: 'ಎಲ್ಲಾ ಸೇವೆಗಳು',
-    specialistsNearYou: 'ನಿಮ್ಮ ಹತ್ತಿರದ ತಜ್ಞರು',
-    refresh: 'ರಿಫ್ರೆಶ್',
-    filterAll: 'ಎಲ್ಲಾ',
-    filterTopRated: '⭐ ಟಾಪ್ ರೇಟೆಡ್',
-    filterAvailableNow: '📅 ಈಗ ಲಭ್ಯವಿದೆ',
-    filterUnder350: '💰 ₹350 ಕ್ಕಿಂತ ಕಡಿಮೆ',
-    noSpecialistsFound: 'ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ತಜ್ಞರು ಕಂಡುಬಂದಿಲ್ಲ.',
-    verifiedSpecialistFound: 'ಪರಿಶೀಲಿಸಿದ ತಜ್ಞರು ಕಂಡುಬಂದಿದ್ದಾರೆ',
-    verifiedSpecialistsFound: 'ಪರಿಶೀಲಿಸಿದ ತಜ್ಞರು ಕಂಡುಬಂದಿದ್ದಾರೆ',
-    refreshing: 'ರಿಫ್ರೆಶ್ ಮಾಡಲಾಗುತ್ತಿದೆ...',
-    listening: 'ಆಲಿಸಲಾಗುತ್ತಿದೆ... ಮಾತನಾಡಿ...',
-    findService:    'ಸೇವೆ ಹುಡುಕಿ',
-    nearbyWorkers:  'ನಿಮ್ಮ ಹತ್ತಿರದ ತಜ್ಞರು',
-    myBookings:     'ನನ್ನ ಬುಕಿಂಗ್‌ಗಳು',
-    profile:        'ನನ್ನ ಪ್ರೊಫೈಲ್',
-    bookNow:        'ಈಗ ಬುಕ್ ಮಾಡಿ',
-    bookingSuccess: 'ಬುಕಿಂಗ್ ದೃಢೀಕರಿಸಲಾಗಿದೆ!',
-    loading:        'ಲೋಡ್ ಆಗುತ್ತಿದೆ…',
-    noProviders:    'ನಿಮ್ಮ ಪ್ರದೇಶದಲ್ಲಿ ಯಾವುದೇ ತಜ್ಞರು ಕಂಡುಬಂದಿಲ್ಲ.',
-    noBookings:     'ಯಾವುದೇ ಬುಕಿಂಗ್ ಇಲ್ಲ. ನಿಮ್ಮ ಮೊದಲ ಸೇವೆಯನ್ನು ಬುಕ್ ಮಾಡಿ!',
-  }
-};
-
-function t(key: string, lang: LanguageCode): string {
-  return T[lang]?.[key] ?? T['en'][key] ?? key;
-}
+import { getTranslation } from '../lib/i18n';
 
 export function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -135,14 +52,7 @@ interface AppContextType {
   dismissToast: () => void;
   translate: (key: string) => string;
   t: (key: string) => string;
-
-  // Location
-  userLocation: { lat: number; lng: number };
-  setUserLocation: (loc: { lat: number; lng: number }) => void;
-  searchLocation: { lat: number; lng: number } | null;
-  setSearchLocation: (loc: { lat: number; lng: number } | null) => void;
-  locationStatus: 'loading' | 'granted' | 'denied' | 'idle';
-  requestLocation: () => Promise<{lat: number, lng: number} | null>;
+  
   webrtc: ReturnType<typeof useWebRTC>;
 
   workers: WorkerProfile[];
@@ -167,6 +77,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedSettings = localStorage.getItem('nt_settings');
       if (savedSettings) setSettings(JSON.parse(savedSettings));
     } catch {}
+
+    const errorHandler = (e: any) => {
+      showToast(e.detail || 'An unexpected error occurred.', 'error');
+    };
+    window.addEventListener('app-error', errorHandler);
 
 
 
@@ -198,21 +113,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           localStorage.removeItem('nt_user');
         }
       });
-      return () => subscription.unsubscribe();
+
+      return () => {
+        subscription.unsubscribe();
+        window.removeEventListener('app-error', errorHandler);
+      };
     } else {
       setIsAuthLoading(false);
+      return () => {
+        window.removeEventListener('app-error', errorHandler);
+      };
     }
   }, []);
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [userLocation, setUserLocation] = useState(DEFAULT_LOCATION);
-  const [searchLocation, setSearchLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'loading' | 'granted' | 'denied' | 'idle'>('idle');
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [hasLocationPermission, setHasLocationPermission] = useState(false);
-  const locationPromiseRef = useRef<{resolve: (val: any) => void, reject: () => void} | null>(null);
-  const geoWatchRef = useRef<number | null>(null);
+  const realtimeChannelRef = useRef<any>(null);
+  const realtimeOfferRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -224,102 +141,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nt_settings', JSON.stringify(settings));
   }, [settings]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) return;
-
-    if (locationStatus === 'granted') {
-      if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-      }
-      
-      geoWatchRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          console.log(`Real-time location updated: ${pos.coords.latitude}, ${pos.coords.longitude} (Accuracy: ${pos.coords.accuracy} meters)`);
-          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        (err) => {
-          console.warn("Real-time location watch error:", err);
-        },
-        { enableHighAccuracy: true, maximumAge: 10000 }
-      );
-    }
-
-    return () => {
-      if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-        geoWatchRef.current = null;
-      }
-    };
-  }, [locationStatus]);
-
-  // Internal request location function
-  const _executeLocationRequest = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      setLocationStatus('denied');
-      return null;
-    }
-    setLocationStatus('loading');
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          console.log(`Initial location: ${pos.coords.latitude}, ${pos.coords.longitude} (Accuracy: ${pos.coords.accuracy} meters)`);
-          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setUserLocation(coords);
-          setLocationStatus('granted');
-          resolve(coords);
-        },
-        (err) => {
-          console.warn("Initial location fetch error:", err);
-          setLocationStatus('denied');
-          resolve(null);
-        },
-        { enableHighAccuracy: true, timeout: 60000, maximumAge: 10000 }
-      );
-    });
-  }, []);
-
-  // Public request location function wrapped with Modal
-  const requestLocation = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
-    if (hasLocationPermission || locationStatus === 'granted') {
-      return _executeLocationRequest();
-    }
-    
-    // Check if permission is already granted via permissions API (modern browsers)
-    if (navigator.permissions && navigator.permissions.query) {
-      try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        if (result.state === 'granted') {
-          setHasLocationPermission(true);
-          return _executeLocationRequest();
-        }
-      } catch (e) {}
-    }
-
-    // Show modal and wait for user action
-    setShowLocationModal(true);
-    return new Promise((resolve, reject) => {
-      locationPromiseRef.current = { resolve, reject };
-    });
-  }, [hasLocationPermission, locationStatus, _executeLocationRequest]);
-
-  const handleLocationAllow = () => {
-    setShowLocationModal(false);
-    setHasLocationPermission(true);
-    _executeLocationRequest().then(res => {
-      if (locationPromiseRef.current) locationPromiseRef.current.resolve(res);
-    });
-  };
-
-  const handleLocationDeny = () => {
-    setShowLocationModal(false);
-    setLocationStatus('denied');
-    if (locationPromiseRef.current) locationPromiseRef.current.resolve(null);
-  };
-
   // Fetch initial data
   useEffect(() => {
     fetchServiceCategories().then(setCategories);
-    requestLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -336,7 +160,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Real-time booking updates
   useEffect(() => {
     if (!isConfigured() || !user?.id) return;
-    const channel = subscribeToBookingStatus(user.id, (updatedBooking) => {
+    
+    // Clean up existing subscriptions if any
+    if (realtimeChannelRef.current) realtimeChannelRef.current.unsubscribe();
+    if (realtimeOfferRef.current) realtimeOfferRef.current.unsubscribe();
+    
+    realtimeChannelRef.current = subscribeToBookingStatus(user.id, (updatedBooking) => {
       setBookings(prev => {
         const exists = prev.find(b => b.id === updatedBooking.id);
         if (!exists) return [updatedBooking, ...prev];
@@ -354,7 +183,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
-    const offerChannel = subscribeToCustomerOffers(user.id, (offer) => {
+    realtimeOfferRef.current = subscribeToCustomerOffers(user.id, (offer) => {
       // If we see a declined offer, we notify the customer that a specific worker passed.
       if (offer.status === 'declined') {
         showToast('A worker declined your request. Finding another...', 'error');
@@ -362,8 +191,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     return () => { 
-      channel?.unsubscribe(); 
-      offerChannel?.unsubscribe();
+      if (realtimeChannelRef.current) realtimeChannelRef.current.unsubscribe(); 
+      if (realtimeOfferRef.current) realtimeOfferRef.current.unsubscribe();
+      realtimeChannelRef.current = null;
+      realtimeOfferRef.current = null;
     };
   }, [user?.id]); // eslint-disable-line
 
@@ -420,24 +251,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const bookWorker = useCallback(async (categoryId: string, workerId: string, exactLocation?: { lat: number, lng: number }) => {
     if (!user) return null;
-    // ensure we have latest location
-    let loc = exactLocation || searchLocation || userLocation;
-    if (!exactLocation && !searchLocation && locationStatus !== 'granted') {
-      const newLoc = await requestLocation();
-      if (newLoc) loc = newLoc;
-    }
     
-    // Fallback if loc is still somehow empty
-    if (!loc || !loc.lat) {
-      loc = { lat: 12.9715987, lng: 77.5945627 };
+    // Caller must provide exact location
+    if (!exactLocation || !exactLocation.lat) {
+      showToast('Location is required to book a worker.', 'error');
+      return null;
     }
     
     const id = await createBooking({
       customerId: user.id,
       categoryId,
       workerId,
-      lat: loc.lat,
-      lng: loc.lng
+      lat: exactLocation.lat,
+      lng: exactLocation.lng
     });
     
     if (id) {
@@ -449,12 +275,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('Failed to create booking.', 'error');
       return null;
     }
-  }, [user, userLocation, locationStatus, requestLocation, refreshBookings, showToast]);
+  }, [user, refreshBookings, showToast]);
 
   const setLanguage = useCallback((lang: LanguageCode) => setSettings(s => ({ ...s, language: lang })), []);
   const toggleSounds = useCallback(() => setSettings(s => ({ ...s, sounds: !s.sounds })), []);
   const toggleVoice = useCallback(() => setSettings(s => ({ ...s, voice: !s.voice })), []);
-  const translate = useCallback((key: string) => t(key, settings.language), [settings.language]);
+  const translate = useCallback((key: string) => getTranslation(settings.language, key), [settings.language]);
 
   return (
     <AppContext.Provider value={{
@@ -463,56 +289,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       bookWorker,
       settings, setLanguage, toggleSounds, toggleVoice,
       toast, showToast, dismissToast, translate, t: translate,
-      userLocation, setUserLocation, searchLocation, setSearchLocation, locationStatus, requestLocation, webrtc,
+      webrtc,
       workers: [], // Provide empty array to satisfy type
     }}>
       {children}
       <CallOverlay webrtc={webrtc} />
-      <PermissionModal 
-        isOpen={showLocationModal}
-        title="Allow Location Access"
-        description="Neighborly Trust needs location access to find verified specialists near you and guide them to your doorstep accurately."
-        icon={<MapPin className="w-8 h-8" />}
-        onAllow={handleLocationAllow}
-        onDeny={handleLocationDeny}
-      />
-      
-      {locationStatus === 'denied' && !showLocationModal && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(4, 27, 48, 0.95)', padding: 24
-        }}>
-          <div style={{
-            background: 'white', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-          }}>
-            <div style={{
-              width: 64, height: 64, background: '#FEE2E2', color: '#DC2626', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
-            }}>
-              <MapPin size={32} />
-            </div>
-            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', marginBottom: 12 }}>Location Required</h2>
-            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, marginBottom: 24, fontWeight: 500 }}>
-              Neighborly Trust requires your precise location to connect you with nearby verified specialists. 
-              <br /><br />
-              Please turn on your device's <b>GPS / Location settings</b> and ensure your browser has permission, then try again.
-            </p>
-            <button 
-              onClick={() => {
-                setLocationStatus('loading');
-                _executeLocationRequest();
-              }}
-              style={{
-                width: '100%', padding: '16px', background: '#0F172A', color: 'white',
-                border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 800, cursor: 'pointer'
-              }}
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      )}
     </AppContext.Provider>
   );
 };

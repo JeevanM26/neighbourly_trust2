@@ -3,60 +3,58 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useApp } from '../context/AppContext';
-import { Home, Wrench, Briefcase, Settings } from 'lucide-react';
+import { Home, Map, BookOpen, User } from 'lucide-react';
 
-export const BottomNav: React.FC = () => {
+const NAV_ITEMS = [
+  { key: 'home',     label: 'Home',     icon: Home,     path: '/home' },
+  { key: 'map',      label: 'Map',      icon: Map,      path: '/map' },
+  { key: 'bookings', label: 'Bookings', icon: BookOpen, path: '/bookings' },
+  { key: 'profile',  label: 'Profile',  icon: User,     path: '/profile' },
+];
+
+export function BottomNav({ pendingCount }: { pendingCount: number }) {
   const pathname = usePathname();
-  const { t, bookings } = useApp();
-
-  // Hide nav on login screen
-  if (pathname === '/') return null;
-
-  const pendingCount = bookings.filter((b) => b.status === 'pending').length;
-
-  const navItems = [
-    { href: '/home', label: t('homeNav'), icon: Home },
-    { href: '/services', label: t('servicesNav'), icon: Wrench },
-    {
-      href: '/worker-dashboard',
-      label: t('workerNav'),
-      icon: Briefcase,
-      badge: pendingCount > 0 ? pendingCount : null,
-    },
-    { href: '/settings', label: t('settingsNav'), icon: Settings },
-  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg max-w-md mx-auto">
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                isActive ? 'text-blue-800 font-medium' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <div className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
-                {item.badge && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full border-2 border-white animate-pulse">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] mt-1 tracking-tight">{item.label}</span>
-              {isActive && (
-                <div className="absolute bottom-0 w-8 h-1 bg-blue-800 rounded-t-full" />
+    <nav
+      className="bottom-nav"
+      style={{ gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)` }}
+      aria-label="Main navigation"
+    >
+      {NAV_ITEMS.map(item => {
+        const isActive = pathname?.startsWith(item.path) || (pathname === '/' && item.path === '/home');
+        return (
+          <Link
+            href={item.path}
+            key={item.key}
+            className={`nav-item${isActive ? ' active' : ''}`}
+            aria-current={isActive ? 'page' : undefined}
+            style={{ textDecoration: 'none' }}
+          >
+            <div style={{ position: 'relative' }}>
+              <item.icon
+                size={22}
+                strokeWidth={isActive ? 2.5 : 1.8}
+              />
+              {item.key === 'bookings' && pendingCount > 0 && (
+                <div style={{
+                  position: 'absolute', top: -4, right: -4,
+                  background: '#EF4444', color: 'white', borderRadius: '50%',
+                  width: 14, height: 14, fontSize: 8, fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1.5px solid white',
+                }}>
+                  {pendingCount > 9 ? '9+' : pendingCount}
+                </div>
               )}
-            </Link>
-          );
-        })}
-      </div>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>
+              {item.label}
+            </span>
+            <div className="nav-item-dot" />
+          </Link>
+        );
+      })}
     </nav>
   );
-};
+}

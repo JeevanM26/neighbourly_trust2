@@ -96,9 +96,11 @@ export interface ToastState {
 }
 
 // ─── Owner Config ─────────────────────────────────────────
-export const PRIMARY_SUPER_OWNER = '7975182162';
-export const OWNER_PHONES: string[] = ['7975182162', '8867269712'];
-export const COMMISSION_RATE = 0.08; // 8%
+export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '';
+export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') : [];
+export const COMMISSION_RATE = process.env.NEXT_PUBLIC_COMMISSION_PERCENTAGE 
+  ? parseFloat(process.env.NEXT_PUBLIC_COMMISSION_PERCENTAGE) / 100 
+  : 0.08;
 
 // ─── Default Location ─────────────────────────────────────
 export const DEFAULT_LOCATION = { lat: 13.9299, lng: 75.5681 };

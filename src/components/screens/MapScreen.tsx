@@ -7,20 +7,13 @@ import { Navigation, Crosshair } from 'lucide-react';
 import { findNearbyWorkers } from '../../lib/supabase';
 
 // ─── Map Screen ───────────────────────────────────────────
-export default function MapScreen({
-  categoryId,
-  onSelectWorker,
-  onSelectCategory,
-  onClearCategory,
-  onLocationConfirmed
-}: {
+export default function MapScreen({ categoryId, onBack, onSelectWorker }: {
   categoryId: string | null;
+  onBack?: () => void;
   onSelectWorker?: (workerId: string, categoryId?: string) => void;
-  onSelectCategory?: (categoryId: string) => void;
-  onClearCategory?: () => void;
-  onLocationConfirmed?: () => void;
 }) {
-  const { categories, userLocation, locationStatus, requestLocation, searchLocation, setSearchLocation, showToast } = useApp();
+  const { categories, showToast } = useApp();
+  const { userLocation, locationStatus, requestLocation, searchLocation, setSearchLocation } = useLocation();
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
@@ -91,8 +84,8 @@ export default function MapScreen({
     if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
     const L = (window as any).L;
 
-    const initialLat = searchLocation ? searchLocation.lat : userLocation.lat;
-    const initialLng = searchLocation ? searchLocation.lng : userLocation.lng;
+    const initialLat = searchLocation ? searchLocation.lat : (userLocation?.lat || 28.6139);
+    const initialLng = searchLocation ? searchLocation.lng : (userLocation?.lng || 77.2090);
 
     mapRef.current = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
@@ -101,11 +94,10 @@ export default function MapScreen({
       attributionControl: false,
     });
 
-    // Google Maps Roadmap tile layer
-    L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps'
+    // OpenStreetMap tile layer (free, no API key, TOS compliant)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapRef.current);
 
     // Resize observer to handle window resizing
@@ -134,6 +126,10 @@ export default function MapScreen({
 
     return () => {
       resizeObserver.disconnect();
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [leafletLoaded]);
 
@@ -153,6 +149,8 @@ export default function MapScreen({
       iconSize: [22, 22],
       iconAnchor: [11, 11],
     });
+
+    if (!userLocation) return;
 
     if (!userMarkerRef.current) {
       userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
@@ -181,7 +179,7 @@ export default function MapScreen({
 
   // ── Center Map on User ──
   const centerOnUser = () => {
-    if (!mapRef.current || !leafletLoaded) return;
+    if (!mapRef.current || !leafletLoaded || !userLocation) return;
     mapRef.current.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 1.5 });
   };
 
@@ -197,22 +195,23 @@ export default function MapScreen({
       const searchLat = mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
       const searchLng = mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
       if (!searchLat || !searchLng) return;
-
+      
+      let results: any[] = [];
       if (activeFilter === 'All') {
-        const promises = categories.map(c => findNearbyWorkers(c.id, searchLat, searchLng).then(workers => workers.map(w => ({...w, __categoryId: c.id}))));
-        const results = await Promise.all(promises);
-        const allWorkers = results.flat();
-        const unique = Array.from(new Map(allWorkers.map(w => [w.worker_id, w])).values());
-        if (isMounted) {
-          setVisibleProviders(unique);
-          setIsLoadingWorkers(false);
+        // To prevent PostGIS query flooding, if "All", just pick the first category available
+        const targetCategory = categories.length > 0 ? categories[0] : null;
+        if (targetCategory) {
+          const res = await findNearbyWorkers(targetCategory.id, searchLat, searchLng);
+          results = res.map(w => ({...w, __categoryId: targetCategory.id}));
         }
-        return;
+      } else {
+        const res = await findNearbyWorkers(activeFilter, searchLat, searchLng);
+        results = res.map(w => ({...w, __categoryId: activeFilter}));
       }
-      const workers = await findNearbyWorkers(activeFilter, searchLat, searchLng);
-      const taggedWorkers = workers.map(w => ({...w, __categoryId: activeFilter}));
+
       if (isMounted) {
-        setVisibleProviders(taggedWorkers);
+        const unique = Array.from(new Map(results.map(w => [w.worker_id, w])).values());
+        setVisibleProviders(unique);
         setIsLoadingWorkers(false);
       }
     }

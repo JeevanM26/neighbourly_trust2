@@ -29,7 +29,6 @@ export interface LanguageOption {
 export interface UserProfile {
   id: string;
   full_name: string;
-  phone: string; // From auth.users primarily
   role: UserRole;
   language: LanguageCode;
   consent_given: boolean;
@@ -76,7 +75,6 @@ export interface Booking {
   // Joins
   worker_name?: string;
   worker_avatar?: string;
-  worker_phone?: string;
   category_name?: string;
 
   total_amount?: number;
@@ -93,8 +91,8 @@ export interface AppSettings {
 }
 
 // ─── Owner Config ─────────────────────────────────────────
-export const PRIMARY_SUPER_OWNER = '7975182162';
-export const OWNER_PHONES: string[] = ['7975182162', '8867269712'];
+export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '';
+export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') : [];
 export const OWNER_PHONE_NUMBERS = OWNER_PHONES;
 export const DEFAULT_OWNER_PHONE_NUMBERS = OWNER_PHONES;
 
