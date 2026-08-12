@@ -213,24 +213,24 @@ export default function LoginScreen() {
 
   if (step === 'otp') {
     return (
-      <div style={{ height: '100%', overflowY: 'auto', background: '#F0F7FF' }}>
-        <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '40px 24px 28px' }}>
-          <button onClick={() => setStep('phone')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 20, padding: 0 }}>
-            <ChevronLeft size={16} /> Back
+      <div style={{ height: '100%', overflowY: 'auto', background: '#F0F7FF', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '48px 24px 32px' }}>
+          <button onClick={() => setStep('phone')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, fontWeight: 600, marginBottom: 24, padding: 0, transition: 'opacity 0.2s' }}>
+            <ChevronLeft size={18} /> Back
           </button>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.4px' }}>Verify your number</h1>
-          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.5px' }}>Verify your number</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8, fontWeight: 500 }}>
             {`Code sent to +91 ${phone}`}
           </p>
         </div>
 
-        <div style={{ padding: '28px 24px' }}>
-          <div style={{ background: 'white', borderRadius: 20, padding: '28px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #F1F5F9' }}>
-            <p style={{ textAlign: 'center', fontSize: 13, color: '#64748B', fontWeight: 500, marginBottom: 20 }}>
+        <div style={{ padding: '32px 24px', flex: 1 }}>
+          <div style={{ background: 'white', borderRadius: 24, padding: '32px 24px', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', border: '1px solid #F1F5F9' }}>
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#475569', fontWeight: 500, marginBottom: 24 }}>
               Enter the 6-digit verification code
             </p>
 
-            <div className="otp-group" style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 28 }}>
               {otp.map((digit, idx) => (
                 <input
                   key={idx}
@@ -241,24 +241,68 @@ export default function LoginScreen() {
                   value={digit}
                   onChange={e => handleOtpChange(e.target.value, idx)}
                   onKeyDown={e => handleOtpKey(e, idx)}
-                  className={`otp-box${digit ? ' filled' : ''}`}
+                  style={{
+                    width: 44,
+                    height: 52,
+                    borderRadius: 12,
+                    border: digit ? '2px solid #0B3D66' : '1.5px solid #E2E8F0',
+                    background: digit ? '#F0F7FF' : '#F8FAFC',
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: '#0F172A',
+                    textAlign: 'center',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                    boxShadow: digit ? '0 4px 12px rgba(11, 61, 102, 0.08)' : 'none',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '2px solid #0B3D66';
+                    e.target.style.background = 'white';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(11, 61, 102, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = digit ? '2px solid #0B3D66' : '1.5px solid #E2E8F0';
+                    e.target.style.background = digit ? '#F0F7FF' : '#F8FAFC';
+                    e.target.style.boxShadow = digit ? '0 4px 12px rgba(11, 61, 102, 0.08)' : 'none';
+                  }}
                 />
               ))}
             </div>
 
-            {error && <p style={{ color: '#EF4444', fontSize: 12, fontWeight: 600, textAlign: 'center', marginBottom: 14 }}>{error}</p>}
+            {error && <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, textAlign: 'center', marginBottom: 16 }}>{error}</p>}
 
             <button
               onClick={() => verifyOtp()}
               disabled={loading || otp.join('').length < 6}
               style={{
-                width: '100%', padding: '15px', borderRadius: 14,
-                background: loading || otp.join('').length < 6 ? '#94A3B8' : 'linear-gradient(135deg, #0B3D66, #041B30)',
-                color: 'white', fontWeight: 800, fontSize: 15, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                width: '100%', padding: '16px', borderRadius: 14,
+                background: loading || otp.join('').length < 6 ? '#E2E8F0' : 'linear-gradient(135deg, #0B3D66, #041B30)',
+                color: loading || otp.join('').length < 6 ? '#94A3B8' : 'white', 
+                fontWeight: 700, fontSize: 16, border: 'none', 
+                cursor: loading || otp.join('').length < 6 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: loading || otp.join('').length < 6 ? 'none' : '0 4px 14px rgba(11, 61, 102, 0.25)',
               }}
             >
-              {loading ? 'Verifying…' : 'Verify & Continue →'}
+              {loading ? 'Verifying...' : 'Verify & Continue →'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <button
+                onClick={countdown === 0 ? handleSendOtp : undefined}
+                disabled={countdown > 0}
+                style={{
+                  background: 'none', border: 'none', padding: 0,
+                  color: countdown > 0 ? '#94A3B8' : '#0B3D66',
+                  fontSize: 14, fontWeight: 600,
+                  cursor: countdown > 0 ? 'default' : 'pointer',
+                  textDecoration: countdown > 0 ? 'none' : 'underline',
+                  transition: 'color 0.2s ease'
+                }}
+              >
+                {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -353,7 +397,7 @@ export default function LoginScreen() {
                 onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(''); }}
                 autoComplete="tel"
                 style={{
-                  flex: 1, padding: '13px 14px', borderRadius: 12,
+                  flex: 1, minWidth: 0, padding: '13px 14px', borderRadius: 12,
                   border: '1.5px solid #E2E8F0', fontSize: 15, fontWeight: 600,
                   fontFamily: 'Inter, sans-serif', color: '#0F172A', outline: 'none',
                   background: '#F8FAFC', boxSizing: 'border-box', letterSpacing: '0.5px',

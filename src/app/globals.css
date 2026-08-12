@@ -373,41 +373,6 @@ body {
 
 .search-bar input::placeholder { color: var(--slate-400); }
 
-/* ============================================================
-   OTP Input
-   ============================================================ */
-.otp-group {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.otp-box {
-  width: 56px;
-  height: 60px;
-  text-align: center;
-  font-family: var(--font);
-  font-size: 24px;
-  font-weight: 800;
-  border: 2px solid var(--slate-200);
-  border-radius: var(--radius-lg);
-  background: var(--slate-50);
-  color: var(--navy-deep);
-  outline: none;
-  transition: all 0.15s ease;
-  caret-color: var(--amber);
-}
-
-.otp-box:focus {
-  border-color: var(--navy);
-  background: white;
-  box-shadow: 0 0 0 3px rgba(11, 61, 102, 0.1);
-}
-
-.otp-box.filled {
-  border-color: var(--navy);
-  background: var(--sky);
-}
 
 /* ============================================================
    Star Rating

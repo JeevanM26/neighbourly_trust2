@@ -106,18 +106,6 @@ body {
 .online-toggle.online .toggle-knob { left: 39px; }
 .online-toggle.offline .toggle-knob { left: 3px; }
 
-/* ── OTP Inputs ── */
-.otp-group { display: flex; gap: 12px; justify-content: center; }
-.otp-box {
-  width: 56px; height: 60px; border-radius: 14px;
-  border: 2px solid var(--slate-200); background: var(--slate-50);
-  text-align: center; font-size: 24px; font-weight: 900;
-  color: var(--navy-900); outline: none;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.15s ease;
-}
-.otp-box:focus { border-color: var(--worker-primary); background: white; box-shadow: 0 0 0 3px rgba(5,150,105,0.12); }
-.otp-box.filled { border-color: var(--worker-primary); background: #ECFDF5; }
 
 /* ── Skill Pill ── */
 .skill-pill {
