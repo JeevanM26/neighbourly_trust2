@@ -11,7 +11,7 @@ interface InteractiveMapProps {
 
 export default function InteractiveMap({ userLoc, workers, onSelectWorker }: InteractiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const leafletMap = useRef<any>(null);
+  const leafletMap = useRef<object | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return;
@@ -19,6 +19,7 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
     // Dynamically load Leaflet to avoid SSR issues in Next.js
     import('leaflet').then((L) => {
       // Fix default marker icon issues in Leaflet Webpack/Next builds
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -52,6 +53,7 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
       // Add provider markers
       workers.forEach((w) => {
         // We use any assertions here to allow compilation for fields not in WorkerProfile yet (Phase 2 constraint)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const workerAny = w as any;
         if (!workerAny.lat || !workerAny.lng) return; // Skip if no coords
         

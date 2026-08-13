@@ -28,6 +28,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
   const [query, setQuery] = useState(value);
   
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(value);
   }, [value]);
 
@@ -40,7 +41,9 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
   useEffect(() => {
     // Setup for Web Fallback
     if (!Capacitor.isNativePlatform()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const WebSpeechRecognition =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (WebSpeechRecognition) {

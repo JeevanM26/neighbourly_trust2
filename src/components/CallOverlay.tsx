@@ -31,6 +31,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
   // Handle duration timer
   useEffect(() => {
     if (callStatus !== 'connected') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDuration(0);
       return;
     }

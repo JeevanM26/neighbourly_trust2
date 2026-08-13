@@ -3,7 +3,10 @@ import React, { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";import { useApp } from "@/context/AppContext";
 
 export const OfflineBanner: React.FC = () => {
-  const [isOffline, setIsOffline] = useState(false);
+  // Lazy initializer reads navigator.onLine once at mount without a sync setState in an effect
+  const [isOffline, setIsOffline] = useState(() =>
+    typeof window !== "undefined" ? !navigator.onLine : false
+  );
   const { t } = useApp();
 
   useEffect(() => {
@@ -11,7 +14,6 @@ export const OfflineBanner: React.FC = () => {
     const handleOffline = () => setIsOffline(true);
 
     if (typeof window !== "undefined") {
-      setIsOffline(!navigator.onLine);
       window.addEventListener("online", handleOnline);
       window.addEventListener("offline", handleOffline);
     }
