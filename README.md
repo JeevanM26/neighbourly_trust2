@@ -2,7 +2,11 @@
 
 **Neighborly Trust** connects rural customers with nearby verified service providers (electricians, plumbers, carpenters, home cleaners).
 
-Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (PostgreSQL + PostGIS, Auth, RLS, Realtime)**, **Leaflet / OpenStreetMap**, and **Metered.ca WebRTC**.
+The ecosystem consists of two separate frontend interfaces sharing a common Supabase backend:
+1. **Customer App** (Root directory: [`/`](file:///c:/Users/DELL/OneDrive/Desktop/2the/neighborly-trust)): Designed for rural/hyperlocal customers to find, call, and book nearby service providers. Available at `http://localhost:3000`.
+2. **Worker App** (Sub-directory: [`/worker`](file:///c:/Users/DELL/OneDrive/Desktop/2the/neighborly-trust/worker)): Designed for skilled service providers to receive real-time job dispatches, broadcast location updates, and manage earnings. Available at `http://localhost:3001`.
+
+Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (PostgreSQL + PostGIS, Auth, RLS, Realtime)**, **Leaflet / OpenStreetMap**, **Fast2SMS** (OTP alerts), and **Metered.ca WebRTC** (P2P audio connection with TURN fallback).
 
 ---
 

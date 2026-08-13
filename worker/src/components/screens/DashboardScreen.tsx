@@ -9,9 +9,8 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   onGoToRequests: () => void;
   onGoToJobs: () => void;
 }) {
-  const { worker, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer } = useWorker();
+  const { worker, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer, isLoading } = useWorker();
   const [toggling, setToggling] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   
   // Location Rationale State
@@ -39,11 +38,6 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
     setToggling(false);
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refreshBookings();
-    setRefreshing(false);
-  };
 
   const hour = currentTime.getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -85,8 +79,8 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
               {format(currentTime, 'EEEE, d MMM · h:mm a')}
             </p>
           </div>
-          <button onClick={handleRefresh} disabled={refreshing} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <RefreshCw size={16} color="white" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+          <button onClick={refreshBookings} disabled={isLoading} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <RefreshCw size={16} color="white" style={{ animation: isLoading ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
         </div>
 

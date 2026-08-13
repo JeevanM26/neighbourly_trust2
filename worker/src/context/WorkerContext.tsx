@@ -124,7 +124,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const realtimeRef = useRef<any>(null);
-
+  const accessTokenRef = useRef<string | null>(null);
 
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
@@ -151,6 +151,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (client) {
       client!.auth.getSession().then(({ data }) => {
         if (data.session?.user) {
+          accessTokenRef.current = data.session.access_token;
           const savedWorker = localStorage.getItem('nt_worker');
           if (savedWorker) {
             try { setWorker(JSON.parse(savedWorker)); } catch {}
@@ -163,6 +164,11 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       const { data: { subscription } } = client!.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          accessTokenRef.current = session.access_token;
+        } else {
+          accessTokenRef.current = null;
+        }
         if (event === 'SIGNED_OUT' || !session) {
           setWorker(null);
           setActiveBookings([]);
@@ -178,13 +184,14 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           try {
             const parsed = JSON.parse(savedWorker);
             if (parsed && parsed.id) {
+              const token = accessTokenRef.current || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
               // Fire-and-forget fetch with keepalive to ensure it reaches Supabase
               fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/worker_profiles?profile_id=eq.${parsed.id}`, {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
                   'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                  'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                  'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ is_online: false }),
                 keepalive: true

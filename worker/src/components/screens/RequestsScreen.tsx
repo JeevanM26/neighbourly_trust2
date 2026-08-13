@@ -139,9 +139,6 @@ function RequestCard({ offer, onAccept, onDecline }: {
 
 export default function RequestsScreen() {
   const { offers, activeBookings, acceptOffer, declineOffer, updateJobStatus, isLoading, refreshBookings, isOnline, webrtc, worker } = useWorker();
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => { setRefreshing(true); await refreshBookings(); setRefreshing(false); };
 
   return (
     <div style={{ background: '#F0FDF4', minHeight: '100%' }}>
@@ -154,8 +151,8 @@ export default function RequestsScreen() {
               {offers.length > 0 ? `${offers.length} pending · respond before timer runs out` : 'No pending requests right now'}
             </p>
           </div>
-          <button onClick={handleRefresh} disabled={refreshing} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <RefreshCw size={16} color="white" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+          <button onClick={refreshBookings} disabled={isLoading} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <RefreshCw size={16} color="white" style={{ animation: isLoading ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
         </div>
       </div>

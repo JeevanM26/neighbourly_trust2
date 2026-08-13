@@ -19,12 +19,24 @@ const LANGUAGES = [
   { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી',  flag: '🇮🇳' },
 ];
 
+const isCategoryMatch = (catName: string, intentCat: string) => {
+  const normCat = catName.toLowerCase();
+  const normIntent = intentCat.toLowerCase();
+  if (normCat === normIntent) return true;
+  if (normCat === 'house cleaning' && normIntent === 'home clean') return true;
+  if (normCat === 'home clean' && normIntent === 'house cleaning') return true;
+  if (normCat === 'pest control' && normIntent === 'pest control') return true;
+  return false;
+};
+
 const CategoryIcon = ({ slug, size = 32 }: { slug: string, size?: number }) => {
   switch (slug.toLowerCase()) {
     case 'electrician': return <Zap size={size} color="#F59E0B" />;
     case 'plumber': return <Tool size={size} color="#94A3B8" />;
     case 'carpenter': return <Hammer size={size} color="#94A3B8" />;
     case 'painter': return <Paintbrush size={size} color="#94A3B8" />;
+    case 'home-clean':
+    case 'home clean':
     case 'house-cleaning': return <Sparkles size={size} color="#94A3B8" />;
     default: return <Tool size={size} color="#94A3B8" />;
   }
@@ -103,7 +115,7 @@ export default function HomeScreen({
     if (searchQuery.trim()) {
       const intent = detectIntent(searchQuery);
       if (intent?.category) {
-        const matchedCat = categories.find(c => c.name_en.toLowerCase() === intent.category.toLowerCase());
+        const matchedCat = categories.find(c => isCategoryMatch(c.name_en, intent.category));
         if (matchedCat) {
           setActiveCategory(matchedCat.id);
         }
@@ -142,11 +154,13 @@ export default function HomeScreen({
     // 1. Search Query Filter
     if (searchQuery.trim()) {
       const intent = detectIntent(searchQuery);
-      const categoryMatch = intent?.category.toLowerCase() || searchQuery.toLowerCase();
-      
       result = result.filter(w => {
-        const cat = categories.find(c => c.id === w.category_id)?.name_en?.toLowerCase() || '';
-        return w.full_name?.toLowerCase().includes(categoryMatch) || cat.includes(categoryMatch);
+        const catName = categories.find(c => c.id === w.category_id)?.name_en || '';
+        const nameMatch = w.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+        const catMatch = intent?.category 
+          ? isCategoryMatch(catName, intent.category) 
+          : catName.toLowerCase().includes(searchQuery.toLowerCase());
+        return nameMatch || catMatch;
       });
     }
 
