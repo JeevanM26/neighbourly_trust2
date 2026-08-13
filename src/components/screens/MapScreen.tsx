@@ -66,26 +66,24 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
   const activeFilter = categoryId || 'All';
   const filters = ['All', ...categories.map(c => c.id)];
 
-  // ── Load Leaflet ──
+  // ── Load Leaflet (Bundled npm import, offline & native safe) ──
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if ((window as any).L) { setLeafletLoaded(true); return; }
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    document.head.appendChild(link);
-
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.onload = () => setLeafletLoaded(true);
-    document.head.appendChild(script);
+    let isMounted = true;
+    import('leaflet').then((LModule) => {
+      if (isMounted) {
+        (window as any).L = LModule.default || LModule;
+        setLeafletLoaded(true);
+      }
+    }).catch(err => console.error('Failed to load Leaflet:', err));
+    return () => { isMounted = false; };
   }, []);
 
   // ── Init Map ──
   useEffect(() => {
     if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
     const L = (window as any).L;
+    if (!L) return;
 
     const initialLat = searchLocation ? searchLocation.lat : (userLocation?.lat || 28.6139);
     const initialLng = searchLocation ? searchLocation.lng : (userLocation?.lng || 77.2090);
@@ -93,7 +91,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     mapRef.current = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
       zoom: 15,
-      zoomControl: false, // Removed zoom controls for cleaner ride-hailing look
+      zoomControl: false, // Cleaner ride-hailing look
       attributionControl: false,
     });
 
@@ -121,7 +119,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       if (mapRef.current) {
         const size = mapRef.current.getSize();
         // Offset by 90px upwards to account for the bottom sheet
-        const targetPoint = (window as any).L.point(size.x / 2, size.y / 2 - 90);
+        const targetPoint = L.point(size.x / 2, size.y / 2 - 90);
         const targetLatLng = mapRef.current.containerPointToLatLng(targetPoint);
         setMapCenter({ lat: targetLatLng.lat, lng: targetLatLng.lng });
       }
@@ -129,8 +127,18 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
 
     return () => {
       resizeObserver.disconnect();
+      if (markersRef.current) {
+        markersRef.current.forEach(m => {
+          try { m.remove(); } catch {}
+        });
+        markersRef.current = [];
+      }
+      if (userMarkerRef.current) {
+        try { userMarkerRef.current.remove(); } catch {}
+        userMarkerRef.current = null;
+      }
       if (mapRef.current) {
-        mapRef.current.remove();
+        try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
       }
     };

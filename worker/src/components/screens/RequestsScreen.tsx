@@ -92,7 +92,7 @@ function RequestCard({ offer, onAccept, onDecline }: {
             <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{customerName}</div>
             <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 500 }}>Verified customer</div>
           </div>
-          {customerPhone && (
+          {customerId && (
             <button 
               onClick={() => webrtc.startCall(customerId, customerName, worker?.full_name || 'Worker', worker?.avatar_url)}
               style={{ marginLeft: 'auto', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 8, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}

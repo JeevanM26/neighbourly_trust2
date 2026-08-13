@@ -244,6 +244,41 @@ export default function WorkerProfileSheet({
            </div>
         </div>
 
+        {/* Transparent Pricing Card */}
+        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 16px', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            Price Breakdown
+          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#334155', marginBottom: 8 }}>
+            <span>Specialist Hourly Rate</span>
+            <span style={{ fontWeight: 700 }}>₹{worker.hourly_rate || 350}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#334155', marginBottom: 8 }}>
+            <span>Safety & Platform Fee</span>
+            <span style={{ fontWeight: 700, color: '#059669' }}>+₹10</span>
+          </div>
+          <div style={{ height: 1, background: '#F1F5F9', margin: '8px 0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 900, color: '#0F172A' }}>
+            <span>Estimated Total</span>
+            <span style={{ color: '#0B3D66' }}>₹{(worker.hourly_rate || 350) + 10}</span>
+          </div>
+        </div>
+
+        {/* Special Instructions / Notes */}
+        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 16px', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 8, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            Job Notes / Instructions
+          </h3>
+          <textarea
+            placeholder="Describe issue (e.g. tap leaking in kitchen, 2nd floor)..."
+            style={{
+              width: '100%', minHeight: 70, padding: 12, borderRadius: 14,
+              border: '1.5px solid #E2E8F0', fontSize: 13, color: '#0F172A', outline: 'none',
+              boxSizing: 'border-box', fontFamily: 'inherit',
+            }}
+          />
+        </div>
+
         {/* Trust & Safety Card */}
         <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 24px', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', textAlign: 'left' }}>
            <h3 style={{ fontSize: 14, fontWeight: 800, color: '#475569', marginBottom: 16, letterSpacing: 0.5 }}>TRUST & SAFETY</h3>

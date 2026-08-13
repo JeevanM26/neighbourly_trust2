@@ -125,6 +125,33 @@ export default function EarningsScreen() {
             ))}
           </div>
         </div>
+
+        {/* Lead Credits & Wallet Card (Monetization Engine) */}
+        <div style={{ 
+          marginTop: 14, background: 'linear-gradient(135deg, #042F24 0%, #064E3B 100%)', 
+          borderRadius: 18, padding: '16px', border: '1px solid rgba(52, 211, 153, 0.3)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#6EE7B7', letterSpacing: '0.4px' }}>⚡ JOB LEAD PASS</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: 'white', marginTop: 2 }}>5 Active Leads Remaining</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>₹0 platform fee on first 5 jobs</div>
+          </div>
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = 'upi://pay?pa=neighborly@upi&pn=NeighborlyTrust&am=49&cu=INR&tn=LeadCreditsPack';
+              }
+            }}
+            style={{
+              background: '#10B981', color: 'white', border: 'none', borderRadius: 12,
+              padding: '10px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(16, 185, 129, 0.4)', flexShrink: 0
+            }}
+          >
+            Buy 5 Leads ₹49
+          </button>
+        </div>
       </div>
 
       <div style={{ padding: '20px 16px' }}>

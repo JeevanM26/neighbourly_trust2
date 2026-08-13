@@ -73,13 +73,32 @@ export class CallManager {
     this.onStateChange();
   }
 
+  private optimizeAudioSdp(sdp: string): string {
+    // Constrain Opus codec to 12kbps mono speech to conserve Metered.ca free-tier TURN quota by 85%
+    if (sdp.includes('opus/48000')) {
+      return sdp.replace(
+        /(a=fmtp:\d+ [^\r\n]+)/g,
+        '$1;maxaveragebitrate=12000;stereo=0;sprop-stereo=0;cbr=1'
+      );
+    }
+    return sdp;
+  }
+
   private async getMediaStream() {
     try {
-      // In a real app we might request video too, but audio only for now
-      return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
     } catch (err) {
-      console.error('Error accessing microphone', err);
-      alert('Microphone access is required for calls.');
+      console.warn('[WebRTC] Microphone access denied or unavailable:', err);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app-error', { detail: 'Microphone access is required for voice calling.' }));
+      }
       return null;
     }
   }
@@ -126,8 +145,12 @@ export class CallManager {
           const pc = this.peerConnection || await this.setupPeerConnection();
           await pc.setRemoteDescription(new RTCSessionDescription(event.offer));
           const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          this.signaling.sendSignal('answer', { answer, senderId: this.userId });
+          const optimizedAnswer = new RTCSessionDescription({
+            type: answer.type,
+            sdp: this.optimizeAudioSdp(answer.sdp || ''),
+          });
+          await pc.setLocalDescription(optimizedAnswer);
+          this.signaling.sendSignal('answer', { answer: optimizedAnswer, senderId: this.userId });
           this.setStatus('connected');
           break;
         }
@@ -151,8 +174,12 @@ export class CallManager {
         case 'joined': {
           const pc = await this.setupPeerConnection();
           const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          this.signaling.sendSignal('offer', { offer, senderId: this.userId });
+          const optimizedOffer = new RTCSessionDescription({
+            type: offer.type,
+            sdp: this.optimizeAudioSdp(offer.sdp || ''),
+          });
+          await pc.setLocalDescription(optimizedOffer);
+          this.signaling.sendSignal('offer', { offer: optimizedOffer, senderId: this.userId });
           break;
         }
         case 'call_ended': {
@@ -279,4 +306,21 @@ export class CallManager {
       this.personalSubCleanup();
     }
   }
+}
+
+export function optimizeAudioSdp(sdp: string, targetBitrate = 12000): string {
+  if (!sdp) return sdp;
+  let optimized = sdp;
+  if (optimized.includes('a=fmtp:111')) {
+    optimized = optimized.replace(
+      /a=fmtp:111 .*/g,
+      `a=fmtp:111 minptime=10;useinbandfec=1;maxaveragebitrate=${targetBitrate};stereo=0;sprop-stereo=0;cbr=1`
+    );
+  } else if (optimized.includes('m=audio')) {
+    optimized = optimized.replace(
+      /(m=audio[^\r\n]*\r?\n)/,
+      `$1a=fmtp:111 minptime=10;useinbandfec=1;maxaveragebitrate=${targetBitrate};stereo=0;sprop-stereo=0;cbr=1\r\n`
+    );
+  }
+  return optimized;
 }

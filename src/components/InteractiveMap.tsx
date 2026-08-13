@@ -11,7 +11,8 @@ interface InteractiveMapProps {
 
 export default function InteractiveMap({ userLoc, workers, onSelectWorker }: InteractiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const leafletMap = useRef<object | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const leafletMap = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return;
@@ -99,13 +100,6 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
 
   return (
     <div className="w-full h-full min-h-[220px] rounded-2xl overflow-hidden shadow-inner relative border border-slate-200">
-      {/* Include Leaflet CSS via CDN link element dynamically */}
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossOrigin=""
-      />
       <div ref={mapRef} className="w-full h-full min-h-[220px] z-0" />
     </div>
   );

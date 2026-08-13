@@ -192,7 +192,7 @@ export default function HomeScreen({
               {greeting},
             </p>
             <h1 style={{ fontSize: 28, fontWeight: 900, margin: '2px 0 0', letterSpacing: '-0.5px' }}>
-              {user?.full_name?.split(' ')[0] || 'jj'} 👋
+              {user?.full_name?.split(' ')[0] || 'Friend'} 👋
             </h1>
           </div>
           
@@ -249,8 +249,8 @@ export default function HomeScreen({
           <div style={{ 
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, padding: '0 20px' 
           }}>
-            {categories.slice(0, 4).map(cat => {
-              const isSelected = searchQuery.toLowerCase() === cat.name_en.toLowerCase();
+            {categories.map(cat => {
+              const isSelected = (searchQuery.toLowerCase() === cat.name_en.toLowerCase()) || activeCategory === cat.id;
               return (
                 <button
                   key={cat.id}
@@ -265,7 +265,7 @@ export default function HomeScreen({
                 >
                   <div style={{ 
                     width: '100%', aspectRatio: '1/1', borderRadius: 20, 
-                    background: '#1E293B', 
+                    background: isSelected ? 'rgba(56, 189, 248, 0.15)' : '#1E293B', 
                     border: isSelected ? '2px solid #38BDF8' : '1px solid rgba(255,255,255,0.05)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: isSelected ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'inset 0 2px 10px rgba(0,0,0,0.2)',

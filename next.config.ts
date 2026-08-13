@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const isGithubActions = process.env.GITHUB_ACTIONS || false;
 const repoName = process.env.NEXT_PUBLIC_BASE_PATH || 'neighborly-trust';
@@ -8,15 +9,12 @@ const nextConfig: NextConfig = {
   output: 'export',
   basePath: basePath,
   assetPrefix: basePath ? `${basePath}/` : undefined,
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },
-  typescript: {
-    // TypeScript safety checks remain enabled
-  },
-  eslint: {
-    // ESLint runs as a dedicated CI step, not during build
-    ignoreDuringBuilds: true,
+  turbopack: {
+    root: path.resolve(__dirname),
   },
 };
 

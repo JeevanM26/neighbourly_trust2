@@ -7,8 +7,7 @@ import { WorkerLocationProvider } from '../context/WorkerLocationContext';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
   themeColor: '#059669',
 };
 
@@ -31,12 +30,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <WorkerProvider>
-          <WorkerLocationProvider>
-            <div className="app-shell">
-              <OfflineBanner />
-              {children}
-            </div>
-          </WorkerLocationProvider>
+          <div className="app-shell">
+            <OfflineBanner />
+            {children}
+          </div>
         </WorkerProvider>
       </body>
     </html>
