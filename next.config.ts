@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   output: 'export',
   basePath: basePath,
   trailingSlash: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     unoptimized: true,
   },

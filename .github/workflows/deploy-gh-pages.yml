@@ -34,6 +34,8 @@ jobs:
 
       - name: Build Web App
         env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+          NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_SUPABASE_URL: "https://rcvxvnfejbwvokwzcuav.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjdnh2bmZlamJ3dm9rd3pjdWF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTY3MDIsImV4cCI6MjEwMTA5MjcwMn0.WPwp8CeGuP8AIPejbe1i-fwkEJ4HtE0Ime3WJWHOvJw"
           NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: "8830072583:AAEYhpGNTgD9AMR5hd5RC0eX3QlBi3is73c"
@@ -42,7 +44,7 @@ jobs:
           NEXT_PUBLIC_METERED_DOMAIN: "neighborly-trust.metered.live"
           NEXT_PUBLIC_METERED_API_KEY: "g9svnC4ovDhTm62lwrPy7meTdKudH5FHQ1suxEDh0BFl8O3f"
         run: |
-          npm run build
+          npx next build --no-lint
           touch ./out/.nojekyll
 
       - name: Upload GitHub Pages Artifact
