@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node --max-old-space-size=1536 ./node_modules/next/dist/bin/next dev",
-    "build": "node --max-old-space-size=1536 ./node_modules/next/dist/bin/next build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
     "test": "vitest run"
   },
   "dependencies": {

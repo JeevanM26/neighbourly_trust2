@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd worker && npm install && npm run build",
+  "outputDirectory": "worker/out",
+  "cleanUrls": true,
+  "trailingSlash": true
+}
