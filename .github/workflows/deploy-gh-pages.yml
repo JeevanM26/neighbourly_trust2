@@ -44,7 +44,7 @@ jobs:
           NEXT_PUBLIC_METERED_DOMAIN: "neighborly-trust.metered.live"
           NEXT_PUBLIC_METERED_API_KEY: "g9svnC4ovDhTm62lwrPy7meTdKudH5FHQ1suxEDh0BFl8O3f"
         run: |
-          npx next build --no-lint
+          npm run build
           touch ./out/.nojekyll
 
       - name: Upload GitHub Pages Artifact
