@@ -9,8 +9,8 @@ function MapScreenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const categoryId = searchParams?.get('category') || undefined;
-  const workerId = searchParams?.get('worker') || undefined;
+  const categoryId = searchParams?.get('category') || null;
+  const workerId = searchParams?.get('worker') || null;
 
   const handleBackToResults = () => {
     if (categoryId) {
@@ -22,6 +22,23 @@ function MapScreenContent() {
 
   const handleBooked = () => {
     router.push('/bookings');
+  };
+
+  const handleSelectWorker = (wId: string, catId?: string) => {
+    const finalCatId = catId || categoryId || '';
+    if (finalCatId) {
+      router.push(`/map?category=${finalCatId}&worker=${wId}`);
+    } else {
+      router.push(`/map?worker=${wId}`);
+    }
+  };
+
+  const handleClearCategory = () => {
+    router.push('/map');
+  };
+
+  const handleSelectCategory = (catId: string) => {
+    router.push(`/map?category=${catId}`);
   };
 
   if (workerId && categoryId) {
@@ -37,7 +54,14 @@ function MapScreenContent() {
     );
   }
 
-  return <MapScreen selectedCategoryId={categoryId} selectedWorkerId={workerId} />;
+  return (
+    <MapScreen 
+      categoryId={categoryId} 
+      onSelectWorker={handleSelectWorker}
+      onClearCategory={handleClearCategory}
+      onSelectCategory={handleSelectCategory}
+    />
+  );
 }
 
 export default function MapPage() {

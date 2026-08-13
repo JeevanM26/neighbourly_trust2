@@ -17,7 +17,7 @@ const LANGUAGES: { code: LanguageCode; label: string; native: string }[] = [
   { code: 'pa', label: 'Punjabi',   native: 'ਪੰਜਾਬੀ'    },
 ];
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?: () => void }) {
   const { user, logoutUser, deleteAccount, settings, setLanguage, toggleSounds, toggleVoice, bookings, showToast } = useApp();
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -185,6 +185,21 @@ export default function ProfileScreen() {
           onClick={toggleVoice}
         />
       </div>
+
+      {/* Owner Admin Tools */}
+      {user?.role === 'owner' && (
+        <div style={{ margin: '12px 16px 0', background: 'white', borderRadius: 20, padding: '4px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '14px 0 4px' }}>
+            Admin Tools
+          </p>
+          <SettingRow
+            icon={<Shield size={18} color="#F59E0B" />}
+            label="Owner Dashboard"
+            right={<ChevronRight size={14} color="#94A3B8" />}
+            onClick={onOpenOwnerPanel}
+          />
+        </div>
+      )}
 
       {/* Help */}
       <div style={{ margin: '12px 16px 0', background: 'white', borderRadius: 20, padding: '4px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>

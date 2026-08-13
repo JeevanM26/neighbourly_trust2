@@ -287,7 +287,7 @@ export const SearchWithVoice: React.FC<SearchProps> = ({
         isOpen={showPermissionModal}
         title="Allow Microphone Access"
         description="Neighborly Trust needs microphone access to enable voice search. Your audio is only used for search purposes and is never recorded."
-        icon={<MicIcon className="w-8 h-8" />}
+        icon={<Mic className="w-8 h-8" />}
         onAllow={handlePermissionAllow}
         onDeny={handlePermissionDeny}
       />

@@ -57,7 +57,7 @@ export default function WorkerTabsLayout({ children }: { children: React.ReactNo
     );
   }
 
-  const pendingCount = offers.filter(o => o.status === 'pending').length;
+  const pendingCount = offers.filter(o => o.status === 'offered').length;
 
   return (
     <>

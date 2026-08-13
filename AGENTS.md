@@ -3,7 +3,6 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
-```markdown
 # Neighborly Trust — Agent Ground Rules
 
 ## Non-negotiables
@@ -44,6 +43,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 3. Location may never actually be written — confirm the online toggle
    requests permission, starts a location stream, AND persists to the DB,
    not just flips a local UI switch.
-4. WebRTC calls almost certainly lack a TURN server — verify `iceServers`
-   before touching anything else in the calling code.
-```
+4. WebRTC TURN credentials are dynamically fetched via Metered.ca — verify
+   `NEXT_PUBLIC_METERED_DOMAIN` and API key configuration in `.env.local` if calls fail.
+

@@ -22,8 +22,12 @@ export function formatINR(amount: number): string {
 
 /**
  * Calculates haversine distance in kilometers between two lat/lng pairs.
+ * Returns Infinity if coordinates are missing or invalid.
  */
-export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+export function distanceKm(lat1?: number | null, lng1?: number | null, lat2?: number | null, lng2?: number | null): number {
+  if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) return Infinity;
+  if (isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2)) return Infinity;
+
   const R = 6371; // Earth radius in kilometers
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -39,6 +43,7 @@ export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: numbe
  * Formats distance into m or km string.
  */
 export function formatDistance(km: number): string {
+  if (!isFinite(km) || km < 0) return 'Location unavailable';
   return km < 1 ? `${Math.round(km * 1000)} m away` : `${km.toFixed(1)} km away`;
 }
 
@@ -52,8 +57,9 @@ export function sortProvidersByDistanceAndFeatured(
   userLat: number,
   userLng: number
 ): any[] {
+  if (!Array.isArray(providers)) return [];
   return providers
-    .filter((w) => !w.is_blacklisted)
+    .filter((w) => w && w.is_blacklisted !== true)
     .map((w) => {
       const km = distanceKm(userLat, userLng, w.lat, w.lng);
       return {
@@ -68,6 +74,8 @@ export function sortProvidersByDistanceAndFeatured(
         return a.featured ? -1 : 1;
       }
       // 2. Otherwise sort by distance ascending
-      return (a.distanceKm || 0) - (b.distanceKm || 0);
+      const distA = isFinite(a.distanceKm) ? a.distanceKm : Infinity;
+      const distB = isFinite(b.distanceKm) ? b.distanceKm : Infinity;
+      return distA - distB;
     });
 }

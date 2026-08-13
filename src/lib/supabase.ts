@@ -32,7 +32,7 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
     const { data, error } = await client.from('service_categories').select('*').eq('is_active', true);
     if (error) {
       console.error("fetchServiceCategories query error:", error.message, error.details, error.hint);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof error.message, error.details, error.hint === 'string' ? error.message, error.details, error.hint : error.message, error.details, error.hint?.message || 'Database error occurred' }));
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: error.message || 'Database error occurred' }));
     }
     return data || [];
   } catch (e) { 
@@ -57,7 +57,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
     
     if (error || !data) {
       console.error("findNearbyWorkers error details:", error?.message, error?.details, error?.hint);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof error?.message, error?.details, error?.hint === 'string' ? error?.message, error?.details, error?.hint : error?.message, error?.details, error?.hint?.message || 'Database error occurred' }));
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: error?.message || 'Database error occurred' }));
       return [];
     }
     
@@ -73,7 +73,6 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
   } catch (e: any) { 
     console.error("findNearbyWorkers exception:", e?.message || e);
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: e?.message || 'Error finding nearby workers' }));
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof e?.message || e === 'string' ? e?.message || e : e?.message || e?.message || 'Database error occurred' }));
     return []; 
   }
 }
@@ -108,7 +107,7 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
     }));
   } catch (err) {
     console.error("fetchCustomerBookings exception:", err);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof err === 'string' ? err : err?.message || 'Database error occurred' }));
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof err === 'string' ? err : (err as any)?.message || 'Database error occurred' }));
     return []; 
   }
 }
@@ -166,8 +165,10 @@ export async function upsertProfile(profile: {
         preferred_language: profile.language,
         // Ensure avatar_url is explicitly handled if present, else undefined is fine
       });
-    if (error) console.error("upsert profile error details:", error.message, error.details, error.hint);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof error.message, error.details, error.hint === 'string' ? error.message, error.details, error.hint : error.message, error.details, error.hint?.message || 'Database error occurred' }));
+    if (error) {
+      console.error("upsert profile error details:", error.message, error.details, error.hint);
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: error.message || 'Database error occurred' }));
+    }
     return !error;
   } catch (e) { 
     console.error(e);
@@ -187,7 +188,7 @@ export async function deleteCustomerAccount(): Promise<boolean> {
     return true;
   } catch (err: any) { 
     console.error("Delete Account RPC Error details:", err?.message || err);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof err?.message || err === 'string' ? err?.message || err : err?.message || err?.message || 'Database error occurred' }));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: err?.message || 'Database error occurred' }));
     return false; 
   }
 }

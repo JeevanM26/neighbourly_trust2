@@ -45,7 +45,7 @@ export default function WorkerProfileDetail({ worker, onBack, onBooked }: Worker
 
   const handleConfirmBook = async () => {
     setBooking(true);
-    await bookWorker('general', worker.id, userLocation);
+    await bookWorker(worker.category_id || 'general', worker.worker_id, userLocation || undefined);
     setBooking(false);
 
     setBooked(true);

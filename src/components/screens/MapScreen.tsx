@@ -3,14 +3,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { WorkerProfile, ServiceCategory, DEFAULT_LOCATION } from '../../lib/types';
 import { Navigation, Crosshair } from 'lucide-react';
+import { useLocation } from '../../context/LocationContext';
 
 import { findNearbyWorkers } from '../../lib/supabase';
 
 // ─── Map Screen ───────────────────────────────────────────
-export default function MapScreen({ categoryId, onBack, onSelectWorker }: {
+export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearCategory, onSelectCategory }: {
   categoryId: string | null;
   onBack?: () => void;
   onSelectWorker?: (workerId: string, categoryId?: string) => void;
+  onClearCategory?: () => void;
+  onSelectCategory?: (categoryId: string) => void;
 }) {
   const { categories, showToast } = useApp();
   const { userLocation, locationStatus, requestLocation, searchLocation, setSearchLocation } = useLocation();
@@ -591,9 +594,9 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker }: {
             </h3>
             <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -20px', padding: '0 20px 4px' }}>
               {visibleProviders.map(worker => {
-                const cat = categories.find(c => c.id === worker.__categoryId);
+                const cat = categories.find(c => c.id === worker.category_id);
                 return (
-                  <div key={worker.worker_id} onClick={() => onSelectWorker?.(worker.worker_id, worker.__categoryId)} style={{
+                  <div key={worker.worker_id} onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id)} style={{
                     minWidth: 240,
                     background: 'white',
                     border: '1px solid #E2E8F0',
@@ -606,11 +609,11 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker }: {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src={worker.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name)}&background=random`} alt={worker.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
+                      <img src={worker.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.full_name)}&background=random`} alt={worker.full_name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>{worker.name}</div>
+                        <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>{worker.full_name}</div>
                         <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                          <span style={{ color: '#F59E0B' }}>★ {worker.rating || '4.5'}</span> • {cat?.name_en || 'Specialist'}
+                          <span style={{ color: '#F59E0B' }}>★ {worker.avg_rating || '4.5'}</span> • {cat?.name_en || 'Specialist'}
                         </div>
                       </div>
                     </div>

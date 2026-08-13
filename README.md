@@ -2,7 +2,7 @@
 
 **Neighborly Trust** connects rural customers with nearby verified service providers (electricians, plumbers, carpenters, home cleaners).
 
-Built with **Next.js 14+ (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (Postgres, Auth, RLS, Storage, Realtime)**, **Leaflet OpenStreetMap**, and **HTML5 GPS WatchPosition**.
+Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (PostgreSQL + PostGIS, Auth, RLS, Realtime)**, **Leaflet / OpenStreetMap**, and **Metered.ca WebRTC**.
 
 ---
 
@@ -26,9 +26,8 @@ Because Next.js bakes `NEXT_PUBLIC_*` environment variables into the static bund
    - Secret Name: `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Value: *(Your Supabase Anon Key)*
 
 ### 3️⃣ Step 3: Push Code & Enable GitHub Pages
-Run in PowerShell:
-```powershell
-cd C:\Users\DELL\.gemini\antigravity-ide\scratch\neighborly-trust
+Run in terminal:
+```bash
 git remote add origin https://github.com/YOUR_GITHUB_USERNAME/neighborly-trust.git
 git push -u origin main
 ```

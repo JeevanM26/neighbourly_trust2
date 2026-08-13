@@ -89,7 +89,10 @@ CREATE TABLE IF NOT EXISTS public.payouts (
 CREATE OR REPLACE FUNCTION compute_booking_commission()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.commission_amount := ROUND(NEW.total_amount * 0.08, 2);
+    -- Preserve commission_amount if already specified (> 0) by client/application logic, else default to 8%
+    IF NEW.commission_amount IS NULL OR NEW.commission_amount = 0.00 THEN
+        NEW.commission_amount := ROUND(NEW.total_amount * 0.08, 2);
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

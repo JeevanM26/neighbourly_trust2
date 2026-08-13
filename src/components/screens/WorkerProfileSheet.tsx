@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { getClient } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
-import { WorkerProfile } from '../../lib/types';
+import { WorkerProfile, DEFAULT_LOCATION } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, X, Zap, Clock } from 'lucide-react';
 import { useLocation } from '../../context/LocationContext';
@@ -31,7 +31,7 @@ export default function WorkerProfileSheet({
     let isMounted = true;
     async function loadWorker() {
       const loc = searchLocation || userLocation;
-      if (loc.lat) {
+      if (loc && loc.lat) {
         const data = await findNearbyWorkers(categoryId, loc.lat, loc.lng);
         if (isMounted) {
           const w = data.find(x => x.worker_id === workerId);
@@ -88,8 +88,8 @@ export default function WorkerProfileSheet({
     setBookingStatus('booking');
     const loc = searchLocation || userLocation;
     // Use worker's exact location to guarantee dispatch picks this worker
-    const workerLat = worker?.location?.lat ?? loc.lat;
-    const workerLng = worker?.location?.lng ?? loc.lng;
+    const workerLat = worker?.location?.lat ?? loc?.lat ?? DEFAULT_LOCATION.lat;
+    const workerLng = worker?.location?.lng ?? loc?.lng ?? DEFAULT_LOCATION.lng;
 
     const id = await bookWorker(categoryId, workerId, {
         lat: workerLat,
@@ -120,7 +120,7 @@ export default function WorkerProfileSheet({
     );
   }
 
-  const isSearching = activeBooking?.status === 'searching' || (bookingStatus === 'success' && (!activeBooking || activeBooking.status === 'searching'));
+  const isSearching = (activeBooking?.status as string) === 'searching' || (bookingStatus === 'success' && (!activeBooking || (activeBooking.status as string) === 'searching'));
   const isAccepted = activeBooking ? ['accepted', 'on_the_way', 'in_progress'].includes(activeBooking.status) : false;
   const isCompleted = activeBooking?.status === 'completed';
   const noWorkers = activeBooking?.status === 'no_workers_found';

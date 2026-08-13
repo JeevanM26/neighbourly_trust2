@@ -11,12 +11,6 @@ const nextConfig: NextConfig = {
   assetPrefix: basePath ? `${basePath}/` : undefined,
   images: {
     unoptimized: true,
-  },
-  typescript: {
-    // Safety checks enabled
-  },
-  eslint: {
-    // Safety checks enabled
   }
 };
 

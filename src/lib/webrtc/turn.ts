@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { getClient } from '../supabase';
 
 export interface TurnCredential {
   urls: string | string[];
@@ -26,7 +26,10 @@ export async function getIceServers(): Promise<TurnCredential[]> {
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('get-turn-credentials');
+    const client = getClient();
+    if (!client) throw new Error('Supabase client not configured');
+
+    const { data, error } = await client.functions.invoke('get-turn-credentials');
     
     if (error) throw error;
     

@@ -37,7 +37,7 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
             lastUpdate = now;
             let lat = pos.coords.latitude;
             let lng = pos.coords.longitude;
-            const isActivelyAssigned = activeBookingsRef.current.some(b => b.status === 'assigned' || b.status === 'in_progress' || b.status === 'arrived');
+            const isActivelyAssigned = activeBookingsRef.current.some(b => b.status === 'accepted' || b.status === 'on_the_way' || b.status === 'in_progress');
             if (!isActivelyAssigned) {
               lat = Math.round(lat * 1000) / 1000;
               lng = Math.round(lng * 1000) / 1000;

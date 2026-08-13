@@ -6,7 +6,7 @@ import { WorkerProfile } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { detectIntent } from '../../lib/intentEngine';
 import { SearchWithVoice } from '../SearchWithVoice';
-import { Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, Volume2, VolumeX } from 'lucide-react';
+import { Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, Volume2, VolumeX, RefreshCw, MapPin, Star, X } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', name: 'English',  native: 'English',  flag: '🇺🇸' },
@@ -46,7 +46,7 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, toggleVoice, t } = useApp();
+  const { categories, user, settings, toggleVoice, t, setLanguage, showToast } = useApp();
   const { userLocation, locationStatus, requestLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
@@ -56,11 +56,12 @@ export default function HomeScreen({
   const [nearbyWorkers, setNearbyWorkers] = useState<WorkerProfile[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     // Automatically prompt for location when the user lands on the Home Screen
     // so they can actually find workers near their real GPS coordinates
-    if (locationStatus === 'prompt' || locationStatus === 'idle') {
+    if (locationStatus === 'idle') {
       requestLocation().catch(() => {});
     }
   }, [locationStatus, requestLocation]);
@@ -90,6 +91,25 @@ export default function HomeScreen({
     }
     setIsLoadingWorkers(false);
   };
+
+  useEffect(() => {
+    if (categories.length > 0 && !activeCategory) {
+      const plumberCat = categories.find(c => c.slug.includes('plumb')) || categories[0];
+      if (plumberCat) setActiveCategory(plumberCat.id);
+    }
+  }, [categories, activeCategory]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const intent = detectIntent(searchQuery);
+      if (intent?.category) {
+        const matchedCat = categories.find(c => c.name_en.toLowerCase() === intent.category.toLowerCase());
+        if (matchedCat) {
+          setActiveCategory(matchedCat.id);
+        }
+      }
+    }
+  }, [searchQuery, categories]);
 
   useEffect(() => {
     let isMounted = true;
@@ -220,7 +240,10 @@ export default function HomeScreen({
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSearchQuery(isSelected ? '' : cat.name_en)}
+                  onClick={() => {
+                    setSearchQuery(isSelected ? '' : cat.name_en);
+                    setActiveCategory(isSelected ? null : cat.id);
+                  }}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, cursor: 'pointer',
                     background: 'transparent', border: 'none', padding: 0
@@ -311,7 +334,7 @@ export default function HomeScreen({
             ) : filteredWorkers.length > 0 ? filteredWorkers.map(worker => (
               <div 
                 key={worker.worker_id} 
-                onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id)}
+                onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id || '')}
                 style={{
                   background: 'white', borderRadius: 24, overflow: 'hidden',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.05)', position: 'relative',
@@ -493,6 +516,24 @@ export default function HomeScreen({
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin { animation: spin 1s linear infinite; }
       `}</style>
+    </div>
+  );
+}
+
+function ProviderSkeleton() {
+  return (
+    <div style={{
+      background: 'white', borderRadius: 24, padding: 16,
+      minWidth: 260, maxWidth: 300, flexShrink: 0,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+    }}>
+      <div className="shimmer-loading" style={{ width: '100%', height: 140, borderRadius: 16, marginBottom: 12 }} />
+      <div className="shimmer-loading" style={{ width: '60%', height: 16, borderRadius: 4, marginBottom: 8 }} />
+      <div className="shimmer-loading" style={{ width: '40%', height: 12, borderRadius: 4, marginBottom: 16 }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="shimmer-loading" style={{ width: '30%', height: 14, borderRadius: 4 }} />
+        <div className="shimmer-loading" style={{ width: '25%', height: 18, borderRadius: 4 }} />
+      </div>
     </div>
   );
 }

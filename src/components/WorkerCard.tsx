@@ -82,7 +82,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
           </button>
 
           <button
-            onClick={() => bookWorker(worker.category_id || 'general', worker.worker_id, userLocation)}
+            onClick={() => bookWorker(worker.category_id || 'general', worker.worker_id, userLocation || undefined)}
             className="w-full py-2 px-2 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-semibold text-xs flex items-center justify-center space-x-1 shadow-sm transition-colors"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
@@ -162,7 +162,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
               <button
                 onClick={() => {
                   setShowDetails(false);
-                  bookWorker(worker.category_id || 'general', worker.worker_id, userLocation);
+                  bookWorker(worker.category_id || 'general', worker.worker_id, userLocation || undefined);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-blue-800 text-white font-semibold text-xs flex items-center justify-center space-x-1"
               >

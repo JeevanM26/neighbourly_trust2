@@ -29,6 +29,7 @@ export interface LanguageOption {
 export interface UserProfile {
   id: string;
   full_name: string;
+  phone?: string;
   role: UserRole;
   language: LanguageCode;
   consent_given: boolean;
