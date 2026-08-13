@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Neighborly Trust — Find Local Service Specialists",
   description:
     "Book verified local electricians, plumbers, carpenters, and home cleaners in your area. Fast, reliable, and trustworthy service at your doorstep.",
-  keywords: "electrician, plumber, carpenter, home cleaning, local services, book service, Shivamogga, Karnataka",
+  keywords: "electrician, plumber, carpenter, home cleaning, local services, book service, nearby workers, trusted providers",
   authors: [{ name: "Neighborly Trust" }],
   openGraph: {
     title: "Neighborly Trust",
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="theme-color" content="#0B3D66" />
+        {/* theme-color is set via viewport export above */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />

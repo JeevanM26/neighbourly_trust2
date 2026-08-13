@@ -22,6 +22,9 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
+// ⚠️ DRIFT WARNING: These keys MUST match the `name` column in
+// the Supabase `service_categories` table. If you rename a category
+// in the DB, update this map AND the INTENT_DICTIONARY entries below.
 export const ServiceCategoryKeys = {
   Electrician: 'Electrician',
   Plumber: 'Plumber',
