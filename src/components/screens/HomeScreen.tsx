@@ -151,24 +151,29 @@ export default function HomeScreen({
             full_name: 'Ramesh Kumar',
             category_id: catObj?.id || 'plumber',
             avg_rating: 4.9,
-            total_jobs_completed: 142,
+            total_jobs: 142,
+            years_experience: 8,
+            distance_km: 0.6,
             hourly_rate: 350,
-            avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
+            avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
             location: { lat: roundedLat + 0.003, lng: roundedLng + 0.002 },
-            bio: 'Certified specialist with 8+ years experience. Quick response & fair rates.',
+            description: 'Master plumber with 8+ years experience in fittings & leak fixing.',
             is_online: true,
             is_verified: true,
+            featured: true,
           },
           {
             worker_id: 'mock-home-2',
             full_name: 'Suresh Sharma',
             category_id: catObj?.id || 'electrician',
             avg_rating: 4.8,
-            total_jobs_completed: 98,
+            total_jobs: 98,
+            years_experience: 6,
+            distance_km: 1.1,
             hourly_rate: 400,
-            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
             location: { lat: roundedLat - 0.002, lng: roundedLng + 0.003 },
-            bio: 'Expert technician. 5-star quality and warranty on service.',
+            description: 'Certified electrical expert for wiring, switches & emergency tripping.',
             is_online: true,
             is_verified: true,
           },
@@ -177,13 +182,16 @@ export default function HomeScreen({
             full_name: 'Anita Patel',
             category_id: catObj?.id || 'home-clean',
             avg_rating: 4.95,
-            total_jobs_completed: 215,
+            total_jobs: 215,
+            years_experience: 7,
+            distance_km: 0.9,
             hourly_rate: 300,
-            avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+            avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
             location: { lat: roundedLat + 0.001, lng: roundedLng - 0.003 },
-            bio: 'Deep home cleaning specialist. 5-star verified neighbor.',
+            description: 'Deep home cleaning & sanitization specialist. Background checked.',
             is_online: true,
             is_verified: true,
+            featured: true,
           }
         ];
       }
@@ -396,125 +404,149 @@ export default function HomeScreen({
           </div>
 
           {/* Specialist Cards Horizontal Scroll */}
-          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', padding: '4px 0 16px', scrollSnapType: 'x mandatory' }}>
             {isLoadingWorkers ? (
               <>
                 <ProviderSkeleton />
                 <ProviderSkeleton />
                 <ProviderSkeleton />
               </>
-            ) : filteredWorkers.length > 0 ? filteredWorkers.map(worker => (
-              <div 
-                key={worker.worker_id} 
-                onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id || '')}
-                style={{
-                  background: 'white', borderRadius: 24, overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)', position: 'relative',
-                  minWidth: 260, maxWidth: 300, flexShrink: 0, cursor: 'pointer'
-                }}
-              >
-                {/* Card Header Image Area */}
-                <div style={{ 
-                  height: 140, background: '#FEF3C7', position: 'relative',
-                  display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
-                }}>
-                  {/* Dummy SVG Avatar */}
-                  <svg viewBox="0 0 100 100" style={{ width: 140, height: 140, marginBottom: -20 }}>
-                    <path d="M20,100 Q20,60 50,60 Q80,60 80,100" fill="#B45309" />
-                    <circle cx="50" cy="45" r="25" fill="#D97706" />
-                    <path d="M35,35 Q50,15 65,35" fill="none" stroke="#78350F" strokeWidth="4" />
-                    <circle cx="40" cy="40" r="4" fill="white" />
-                    <circle cx="60" cy="40" r="4" fill="white" />
-                  </svg>
+            ) : filteredWorkers.length > 0 ? filteredWorkers.map(worker => {
+              const cat = categories.find(c => c.id === worker.category_id);
+              const catName = cat?.name_en || 'Specialist';
+              const avatar = worker.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.full_name)}&background=0B3D66&color=fff&size=200`;
 
-                  {/* Volume Icon Float */}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const categoryName = categories.find(c => c.id === worker.category_id)?.name_en || 'Specialist';
-                      speakText(
-                        `${worker.full_name}, ${categoryName}. ` +
-                        `Rate: ${worker.hourly_rate} rupees per hour. ` +
-                        `Rating: ${worker.avg_rating?.toFixed(1) || '5.0'} stars. ` +
-                        `Distance: ${worker.distance_km?.toFixed(1) || '0'} kilometres.`
-                      );
-                    }}
-                    style={{ 
-                      position: 'absolute', top: 12, right: 12, width: 32, height: 32, 
-                      borderRadius: '50%', background: 'white', border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)', color: '#0B3D66'
-                    }}>
-                    <Volume2 size={16} />
-                  </button>
-
-                  {/* TOP PRO badge */}
-                  {worker.featured && (
-                    <div style={{
-                      position: 'absolute', top: 12, left: 12,
-                      background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
-                      color: '#92400E', fontSize: 10, fontWeight: 900,
-                      padding: '4px 10px', borderRadius: 20, letterSpacing: '0.4px',
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                    }}>
-                      <Sparkles size={12} color="#92400E" /> TOP PRO
-                    </div>
-                  )}
-
-                  {/* Presence indicator */}
-                  <div style={{
-                    position: 'absolute', bottom: 12, right: 12,
-                    background: worker.is_online ? 'rgba(16,185,129,0.92)' : 'rgba(100,116,139,0.8)',
-                    color: 'white', padding: '4px 10px', borderRadius: 20,
-                    fontSize: 11, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    backdropFilter: 'blur(6px)'
+              return (
+                <div 
+                  key={worker.worker_id} 
+                  onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id || '')}
+                  style={{
+                    background: 'white', borderRadius: 22, overflow: 'hidden',
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)', position: 'relative',
+                    width: 270, minWidth: 270, flexShrink: 0, cursor: 'pointer',
+                    scrollSnapAlign: 'start',
+                    display: 'flex', flexDirection: 'column',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                  }}
+                >
+                  {/* Card Header Image Area */}
+                  <div style={{ 
+                    height: 150, background: '#0F172A', position: 'relative',
+                    overflow: 'hidden'
                   }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />
-                    {worker.is_online ? 'Available' : 'Offline'}
-                  </div>
-                </div>
+                    <img 
+                      src={avatar} 
+                      alt={worker.full_name} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.2) 50%, transparent 100%)'
+                    }} />
 
-                {/* Card Body */}
-                <div style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div>
-                      <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 4px', color: '#0F172A', letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {worker.full_name}
-                      </h3>
+                    {/* TOP PRO badge */}
+                    {worker.featured && (
+                      <div style={{
+                        position: 'absolute', top: 10, left: 10,
+                        background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                        color: 'white', fontSize: 10, fontWeight: 900,
+                        padding: '3px 8px', borderRadius: 14, letterSpacing: '0.4px',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        boxShadow: '0 2px 8px rgba(245,158,11,0.4)'
+                      }}>
+                        <Sparkles size={11} color="white" /> TOP PRO
+                      </div>
+                    )}
+
+                    {/* Volume Audio Intro Button */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speakText(
+                          `${worker.full_name}, ${catName}. ` +
+                          `Rate: ${worker.hourly_rate || 350} rupees per hour. ` +
+                          `Rating: ${Number(worker.avg_rating || 4.9).toFixed(1)} stars. ` +
+                          `Completed ${worker.total_jobs || 120} verified jobs.`
+                        );
+                      }}
+                      style={{ 
+                        position: 'absolute', top: 10, right: 10, width: 32, height: 32, 
+                        borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)', color: '#0B3D66',
+                        backdropFilter: 'blur(4px)'
+                      }}>
+                      <Volume2 size={15} />
+                    </button>
+
+                    {/* Name & Verification on image */}
+                    <div style={{ position: 'absolute', bottom: 10, left: 12, right: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', background: '#FEF3C7', padding: '2px 8px', borderRadius: 12 }}>
-                          <Star size={12} color="#D97706" fill="#D97706" style={{ marginRight: 4 }} />
-                          <span style={{ fontSize: 12, fontWeight: 800, color: '#92400E' }}>{worker.avg_rating?.toFixed(1) || '4.5'}</span>
-                        </div>
-                        <span style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>
-                          ({worker.total_jobs || 0} jobs)
+                        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.2px', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                          {worker.full_name}
+                        </h3>
+                        <span style={{ background: '#10B981', color: 'white', fontSize: 9, fontWeight: 900, padding: '1px 5px', borderRadius: 10 }}>
+                          ✓ KYC
                         </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, marginTop: 2 }}>
+                        {catName} Specialist
                       </div>
                     </div>
                   </div>
-                  
-                  <p style={{
-                    fontSize: 13, color: '#64748B', margin: '0 0 16px', fontWeight: 500,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
-                    {worker.description || `${categories.find(c => c.id === worker.category_id)?.name_en || 'Service'} Specialist`}
-                  </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#475569', fontSize: 13, fontWeight: 600 }}>
-                      <MapPin size={14} />
-                      {worker.distance_km ? `${worker.distance_km.toFixed(1)} km` : 'Near you'}
+                  {/* Card Body */}
+                  <div style={{ padding: '14px 14px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    {/* Ratings & Jobs Metas */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', background: '#FEF3C7', padding: '3px 7px', borderRadius: 10 }}>
+                          <Star size={12} color="#D97706" fill="#D97706" style={{ marginRight: 3 }} />
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#92400E' }}>
+                            {Number(worker.avg_rating || 4.9).toFixed(1)}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+                          ({worker.total_jobs || 120}+ jobs)
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: 8 }}>
+                        {worker.years_experience ? `${worker.years_experience}y exp` : '8y exp'}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>
-                      ₹{worker.hourly_rate || 350}<span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>/hr</span>
+                    
+                    {/* Distance & Rate Bar */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, background: '#F8FAFC', padding: '8px 10px', borderRadius: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#475569', fontSize: 12, fontWeight: 600 }}>
+                        <MapPin size={13} color="#0B3D66" />
+                        {worker.distance_km ? `${Number(worker.distance_km).toFixed(1)} km` : '0.6 km'}
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>
+                        ₹{worker.hourly_rate || 350}<span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>/hr</span>
+                      </div>
                     </div>
+
+                    {/* 1-Tap Book Button CTA */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectWorker?.(worker.worker_id, worker.category_id || '');
+                      }}
+                      style={{
+                        width: '100%', background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)',
+                        color: 'white', border: 'none', borderRadius: 12, padding: '9px',
+                        fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        boxShadow: '0 4px 10px rgba(11,61,102,0.2)'
+                      }}
+                    >
+                      Book Specialist ➔
+                    </button>
                   </div>
                 </div>
-              </div>
-            )) : (
+              );
+            }) : (
               <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%' }}>
                 {t('noSpecialistsFound')}
               </div>
