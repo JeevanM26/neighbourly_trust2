@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { format } from 'date-fns';
-import { Zap, Bell, Star, TrendingUp, Clock, CheckCircle, IndianRupee, RefreshCw, ChevronRight, Briefcase, MapPin } from 'lucide-react';
+import { Zap, Bell, Star, TrendingUp, Clock, CheckCircle, IndianRupee, RefreshCw, ChevronRight, Briefcase, MapPin, Phone } from 'lucide-react';
 import { JobOfferModal } from '../JobOfferModal';
 
 export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   onGoToRequests: () => void;
   onGoToJobs: () => void;
 }) {
-  const { worker, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer, isLoading } = useWorker();
+  const { worker, webrtc, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer, isLoading } = useWorker();
   const [toggling, setToggling] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -165,6 +165,24 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
                 </div>
               </div>
               {b.address_text && <p style={{ fontSize: 11, color: '#64748B', margin: '8px 0 0', fontWeight: 500, background: '#F8FAFC', borderRadius: 8, padding: '6px 10px' }}>📍 {b.address_text}</p>}
+              
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url);
+                  }}
+                  style={{ flex: 1, background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 10, padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#059669' }}
+                >
+                  <Phone size={12} color="#059669" /> Call Customer
+                </button>
+                <button
+                  onClick={onGoToJobs}
+                  style={{ flex: 1, background: '#059669', border: 'none', borderRadius: 10, padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'white' }}
+                >
+                  Manage Job →
+                </button>
+              </div>
             </div>
           ))}
         </div>

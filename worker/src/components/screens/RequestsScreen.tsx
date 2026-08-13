@@ -196,18 +196,42 @@ export default function RequestsScreen() {
                 {b.customer_location && ['accepted', 'on_the_way', 'in_progress'].includes(b.status) && (
                   <CustomerMap customerLoc={b.customer_location} />
                 )}
-                {b.customer_phone && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-                    <button onClick={() => webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url)} style={{ background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
-                      <Phone size={14} color="#059669" />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>Call Customer</span>
+
+                {/* Action Controls: Call Customer + Status Transition */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                  <button 
+                    onClick={() => webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url)} 
+                    style={{ background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+                  >
+                    <Phone size={14} color="#059669" />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>Call Customer</span>
+                  </button>
+                  {b.status === 'accepted' && (
+                    <button 
+                      onClick={() => updateJobStatus(b.id, 'on_the_way')} 
+                      style={{ background: 'linear-gradient(135deg, #0369A1, #075985)', border: 'none', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>🚗 On The Way</span>
                     </button>
-                    <button onClick={() => updateJobStatus(b.id, 'completed')} style={{ background: 'linear-gradient(135deg, #059669, #065F46)', border: 'none', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                  )}
+                  {b.status === 'on_the_way' && (
+                    <button 
+                      onClick={() => updateJobStatus(b.id, 'in_progress')} 
+                      style={{ background: 'linear-gradient(135deg, #1E40AF, #1E3A8A)', border: 'none', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>▶️ Start Job</span>
+                    </button>
+                  )}
+                  {b.status === 'in_progress' && (
+                    <button 
+                      onClick={() => updateJobStatus(b.id, 'completed')} 
+                      style={{ background: 'linear-gradient(135deg, #059669, #065F46)', border: 'none', borderRadius: 10, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+                    >
                       <Check size={14} color="white" />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Mark Done</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Complete Job</span>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
           </>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { format } from 'date-fns';
 import { Booking, BookingStatus } from '../../lib/types';
-import { MapPin, Check, Clock, X, Briefcase, Navigation, Play } from 'lucide-react';
+import { MapPin, Check, Clock, X, Briefcase, Navigation, Play, Phone } from 'lucide-react';
 import { JobOfferModal } from '../JobOfferModal';
 import { EmptyState } from '../ui/EmptyState';
 import CustomerMap from '../CustomerMap';
@@ -20,8 +20,17 @@ const STATUS_META: Record<BookingStatus, { label: string; color: string; bg: str
   no_workers_found: { label: 'No Workers', color: '#475569', bg: '#F1F5F9' },
 };
 
-function JobCard({ booking, onUpdateStatus }: { booking: Booking; onUpdateStatus: (s: BookingStatus) => void }) {
+function JobCard({ 
+  booking, 
+  onUpdateStatus, 
+  onCall 
+}: { 
+  booking: Booking; 
+  onUpdateStatus: (s: BookingStatus) => void;
+  onCall: () => void;
+}) {
   const meta = STATUS_META[booking.status] ?? STATUS_META.pending;
+  const isActive = ['accepted', 'on_the_way', 'in_progress'].includes(booking.status);
 
   const handleDirections = () => {
     if (booking.customer_location) {
@@ -51,7 +60,9 @@ function JobCard({ booking, onUpdateStatus }: { booking: Booking; onUpdateStatus
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid #F8FAFC' }}>
         <div style={{ display: 'flex', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>Est. Earnings</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>
+              {isActive ? 'Est. Earnings' : 'Earned'}
+            </div>
             <div style={{ fontSize: 14, fontWeight: 900, color: '#059669' }}>
               ₹{booking.final_price || booking.price_estimate ? Math.round((booking.final_price || booking.price_estimate || 0) * 0.92) : '--'}
             </div>
@@ -63,7 +74,8 @@ function JobCard({ booking, onUpdateStatus }: { booking: Booking; onUpdateStatus
         </div>
       </div>
 
-      {(booking.address_text || booking.customer_location) && (
+      {/* Address & Directions (Active jobs only) */}
+      {isActive && (booking.address_text || booking.customer_location) && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 12, background: '#F8FAFC', padding: 10, borderRadius: 12 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
             <MapPin size={14} color="#059669" style={{ marginTop: 2, flexShrink: 0 }} />
@@ -75,33 +87,44 @@ function JobCard({ booking, onUpdateStatus }: { booking: Booking; onUpdateStatus
         </div>
       )}
 
-      {/* ── Active Job Map ── */}
-      {booking.customer_location && ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && (
+      {/* ── Active Job Map (ONLY for active jobs — removed once completed/cancelled) ── */}
+      {isActive && booking.customer_location && (
         <CustomerMap customerLoc={booking.customer_location} />
       )}
 
-      {/* ── Active Lifecycle Actions ── */}
-      {booking.status === 'accepted' && (
-        <button onClick={() => onUpdateStatus('on_the_way')} style={{ width: '100%', marginTop: 12, background: 'linear-gradient(135deg, #0369A1, #075985)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Navigation size={16} /> Arrived
-        </button>
-      )}
-      {booking.status === 'on_the_way' && (
-        <button onClick={() => onUpdateStatus('in_progress')} style={{ width: '100%', marginTop: 12, background: 'linear-gradient(135deg, #1E40AF, #1E3A8A)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Play size={16} /> Start Job
-        </button>
-      )}
-      {booking.status === 'in_progress' && (
-        <button onClick={() => onUpdateStatus('completed')} style={{ width: '100%', marginTop: 12, background: 'linear-gradient(135deg, #059669, #065F46)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Check size={16} /> Complete Job
-        </button>
+      {/* ── Active Lifecycle Actions & Calling (ONLY for active jobs) ── */}
+      {isActive && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+          <button 
+            onClick={onCall} 
+            style={{ background: '#F0FDF4', border: '1px solid #A7F3D0', color: '#059669', padding: 12, borderRadius: 12, fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+          >
+            <Phone size={14} color="#059669" /> Call Customer
+          </button>
+
+          {booking.status === 'accepted' && (
+            <button onClick={() => onUpdateStatus('on_the_way')} style={{ background: 'linear-gradient(135deg, #0369A1, #075985)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Navigation size={14} /> On The Way
+            </button>
+          )}
+          {booking.status === 'on_the_way' && (
+            <button onClick={() => onUpdateStatus('in_progress')} style={{ background: 'linear-gradient(135deg, #1E40AF, #1E3A8A)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Play size={14} /> Start Job
+            </button>
+          )}
+          {booking.status === 'in_progress' && (
+            <button onClick={() => onUpdateStatus('completed')} style={{ background: 'linear-gradient(135deg, #059669, #065F46)', color: 'white', padding: 12, borderRadius: 12, border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Check size={14} /> Complete Job
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
 export default function JobsScreen() {
-  const { activeBookings, completedBookings, updateJobStatus, offers, acceptOffer, declineOffer } = useWorker();
+  const { worker, webrtc, activeBookings, completedBookings, updateJobStatus, offers, acceptOffer, declineOffer } = useWorker();
   const [tab, setTab] = useState<'active' | 'completed'>('active');
 
   const tabs = [
@@ -143,7 +166,14 @@ export default function JobsScreen() {
             />
           </div>
         ) : (
-          list.map(b => <JobCard key={b.id} booking={b} onUpdateStatus={(s) => updateJobStatus(b.id, s)} />)
+          list.map(b => (
+            <JobCard 
+              key={b.id} 
+              booking={b} 
+              onUpdateStatus={(s) => updateJobStatus(b.id, s)}
+              onCall={() => webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url)}
+            />
+          ))
         )}
       </div>
 
