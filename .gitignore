@@ -34,6 +34,30 @@ yarn-error.log*
 .pnpm-debug.log*
 
 
+# APKs and Mobile Builds
+*.apk
+*.aab
+*.dex
+*.aar
+apks/
+/apks/
+
+# Android & Gradle
+.gradle/
+**/.gradle/
+build/
+**/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+worker/android/app/build/
+worker/android/capacitor-cordova-android-plugins/build/
+local.properties
+**/local.properties
+.cxx/
+**/.cxx/
+captures/
+.navigation/
+
 # env files
 .env*.local
 !.env.production
@@ -44,3 +68,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
