@@ -284,7 +284,7 @@ export async function deleteWorkerAccount(workerId: string): Promise<boolean> {
   if (!client) return true;
   try {
     // 1. Attempt server RPC
-    await client.rpc('delete_worker_account').catch(() => {});
+    try { await client.rpc('delete_worker_account'); } catch {}
 
     // 2. Direct cascade delete from all worker tables
     if (workerId) {
@@ -296,7 +296,7 @@ export async function deleteWorkerAccount(workerId: string): Promise<boolean> {
       await client.from('profiles').delete().eq('id', workerId);
     }
     
-    await client.auth.signOut().catch(() => {});
+    try { await client.auth.signOut(); } catch {}
     return true;
   } catch (err) {
     console.warn("Delete Worker Account notice:", err);

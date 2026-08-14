@@ -4,7 +4,7 @@ import { getClient } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { WorkerProfile, DEFAULT_LOCATION } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
-import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, X, Zap, Clock } from 'lucide-react';
+import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, Shield, X, Zap, Clock } from 'lucide-react';
 import { useLocation } from '../../context/LocationContext';
 
 export default function WorkerProfileSheet({

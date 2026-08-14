@@ -2,7 +2,6 @@
 	"appId": "com.neighborly.trust",
 	"appName": "Neighborly Trust",
 	"webDir": "out",
-	"bundledWebRuntime": false,
 	"server": {
 		"androidScheme": "https"
 	},

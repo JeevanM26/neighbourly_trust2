@@ -50,6 +50,7 @@ export interface WorkerProfile {
   // From old schema / dummy data
   hourly_rate?: number;
   is_online?: boolean;
+  is_verified?: boolean;
   description?: string;
   featured?: boolean;
   

@@ -186,7 +186,7 @@ export async function deleteCustomerAccount(userId?: string): Promise<boolean> {
   if (!client) return true;
   try {
     // 1. Attempt server RPC if present
-    await client.rpc('delete_customer_account').catch(() => {});
+    try { await client.rpc('delete_customer_account'); } catch {}
 
     // 2. Direct cascade delete from all tables
     const targetId = userId || (await client.auth.getUser()).data.user?.id;
@@ -197,7 +197,7 @@ export async function deleteCustomerAccount(userId?: string): Promise<boolean> {
       await client.from('profiles').delete().eq('id', targetId);
     }
     
-    await client.auth.signOut().catch(() => {});
+    try { await client.auth.signOut(); } catch {}
     return true;
   } catch (err: any) { 
     console.warn("Delete Account notice:", err?.message || err);

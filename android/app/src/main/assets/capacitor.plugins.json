@@ -1,1 +1,10 @@
-[]
+[
+	{
+		"pkg": "@capacitor-community/speech-recognition",
+		"classpath": "com.getcapacitor.community.speechrecognition.SpeechRecognition"
+	},
+	{
+		"pkg": "@capacitor/push-notifications",
+		"classpath": "com.capacitorjs.plugins.pushnotifications.PushNotificationsPlugin"
+	}
+]

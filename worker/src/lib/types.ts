@@ -57,6 +57,7 @@ export interface Booking {
   started_at?: string;
   completed_at?: string;
   cancelled_reason?: string;
+  completion_pin?: string;
   customer_location?: { lat: number; lng: number }; // parsed from geography
 }
 
