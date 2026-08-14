@@ -66,7 +66,23 @@ export const useWorker = () => {
   return ctx;
 };
 
-// ─── Earnings Calculator ───────────────────────────────────
+// ─── Default Category Base Rates & Earnings Calculator ─────────────────
+const DEFAULT_CATEGORY_RATES: Record<string, number> = {
+  Electrician: 350,
+  Plumber: 350,
+  Carpenter: 400,
+  'Home Clean': 500,
+  Painter: 600,
+  'Pest Control': 750,
+};
+
+export function getBookingAmount(b: Booking): number {
+  if (b.final_price && b.final_price > 0) return b.final_price;
+  if (b.price_estimate && b.price_estimate > 0) return b.price_estimate;
+  const name = b.category_name || '';
+  return DEFAULT_CATEGORY_RATES[name] || 350;
+}
+
 function calcEarnings(bookings: Booking[], period: 'today' | 'week' | 'month'): EarningsSummary {
   const now = new Date();
   const start = new Date();
@@ -78,15 +94,15 @@ function calcEarnings(bookings: Booking[], period: 'today' | 'week' | 'month'): 
     b.status === 'completed' && new Date(b.created_at) >= start
   );
 
-  const gross = filtered.reduce((s, b) => s + (b.final_price || b.price_estimate || 0), 0);
-  const commission = gross * COMMISSION_RATE;
+  const gross = filtered.reduce((s, b) => s + getBookingAmount(b), 0);
+  const commission = Math.round(gross * COMMISSION_RATE);
 
   const byCat: Record<string, { amount: number; count: number }> = {};
   filtered.forEach(b => {
-    const key = b.category_name || b.category_id;
+    const key = b.category_name || b.category_id || 'Services';
     if (!byCat[key]) byCat[key] = { amount: 0, count: 0 };
-    const price = b.final_price || b.price_estimate || 0;
-    byCat[key].amount += price * (1 - COMMISSION_RATE);
+    const price = getBookingAmount(b);
+    byCat[key].amount += Math.round(price * (1 - COMMISSION_RATE));
     byCat[key].count += 1;
   });
 

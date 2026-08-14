@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { useWorker } from '../../context/WorkerContext';
+import { useWorker, getBookingAmount } from '../../context/WorkerContext';
 import { COMMISSION_RATE } from '../../lib/types';
 
 import {
@@ -29,7 +29,7 @@ export default function EarningsScreen() {
     const completed = completedBookings.filter(b => b.status === 'completed');
     
     // helper to calc net
-    const getNet = (b: any) => (b.final_price || b.price_estimate || 0) * (1 - COMMISSION_RATE);
+    const getNet = (b: any) => Math.round(getBookingAmount(b) * (1 - COMMISSION_RATE));
 
     if (earningsPeriod === 'today') {
       const hours: Record<number, number> = {};
