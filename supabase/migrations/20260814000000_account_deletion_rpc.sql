@@ -2,63 +2,72 @@
 -- NEIGHBORLY TRUST: 100% DPDP & Google Play Compliant Account Deletion System
 -- ============================================================================
 
--- 1. Ensure all dependent foreign keys CASCADE on delete
-ALTER TABLE IF EXISTS public.reviews
-  DROP CONSTRAINT IF EXISTS reviews_booking_id_fkey,
-  DROP CONSTRAINT IF EXISTS reviews_customer_id_fkey,
-  DROP CONSTRAINT IF EXISTS reviews_worker_id_fkey;
+-- 1. Ensure all dependent foreign keys CASCADE on delete safely
+DO $$ BEGIN
+  -- Reviews
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'reviews') THEN
+    ALTER TABLE public.reviews DROP CONSTRAINT IF EXISTS reviews_booking_id_fkey;
+    ALTER TABLE public.reviews DROP CONSTRAINT IF EXISTS reviews_customer_id_fkey;
+    ALTER TABLE public.reviews DROP CONSTRAINT IF EXISTS reviews_worker_id_fkey;
+    
+    ALTER TABLE public.reviews 
+      ADD CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE CASCADE,
+      ADD CONSTRAINT reviews_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+      ADD CONSTRAINT reviews_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
 
-ALTER TABLE IF EXISTS public.reviews
-  ADD CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE CASCADE,
-  ADD CONSTRAINT reviews_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
-  ADD CONSTRAINT reviews_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  -- Booking Offers
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'booking_offers') THEN
+    ALTER TABLE public.booking_offers DROP CONSTRAINT IF EXISTS booking_offers_booking_id_fkey;
+    ALTER TABLE public.booking_offers DROP CONSTRAINT IF EXISTS booking_offers_worker_id_fkey;
+    
+    ALTER TABLE public.booking_offers 
+      ADD CONSTRAINT booking_offers_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE CASCADE,
+      ADD CONSTRAINT booking_offers_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
 
-ALTER TABLE IF EXISTS public.booking_offers
-  DROP CONSTRAINT IF EXISTS booking_offers_booking_id_fkey,
-  DROP CONSTRAINT IF EXISTS booking_offers_customer_id_fkey,
-  DROP CONSTRAINT IF EXISTS booking_offers_worker_id_fkey;
+  -- Bookings
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'bookings') THEN
+    ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_customer_id_fkey;
+    ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_worker_id_fkey;
+    
+    ALTER TABLE public.bookings 
+      ADD CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+      ADD CONSTRAINT bookings_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+  END IF;
 
-ALTER TABLE IF EXISTS public.booking_offers
-  ADD CONSTRAINT booking_offers_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE CASCADE,
-  ADD CONSTRAINT booking_offers_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
-  ADD CONSTRAINT booking_offers_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  -- Worker Categories
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'worker_categories') THEN
+    ALTER TABLE public.worker_categories DROP CONSTRAINT IF EXISTS worker_categories_worker_id_fkey;
+    ALTER TABLE public.worker_categories 
+      ADD CONSTRAINT worker_categories_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
 
-ALTER TABLE IF EXISTS public.bookings
-  DROP CONSTRAINT IF EXISTS bookings_customer_id_fkey,
-  DROP CONSTRAINT IF EXISTS bookings_worker_id_fkey,
-  DROP CONSTRAINT IF EXISTS bookings_provider_id_fkey;
+  -- Worker Profiles
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'worker_profiles') THEN
+    ALTER TABLE public.worker_profiles DROP CONSTRAINT IF EXISTS worker_profiles_profile_id_fkey;
+    ALTER TABLE public.worker_profiles 
+      ADD CONSTRAINT worker_profiles_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
 
-ALTER TABLE IF EXISTS public.bookings
-  ADD CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
-  ADD CONSTRAINT bookings_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  -- Calls
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'calls') THEN
+    ALTER TABLE public.calls DROP CONSTRAINT IF EXISTS calls_caller_id_fkey;
+    ALTER TABLE public.calls DROP CONSTRAINT IF EXISTS calls_callee_id_fkey;
+    ALTER TABLE public.calls 
+      ADD CONSTRAINT calls_caller_id_fkey FOREIGN KEY (caller_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+      ADD CONSTRAINT calls_callee_id_fkey FOREIGN KEY (callee_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
 
-ALTER TABLE IF EXISTS public.worker_categories
-  DROP CONSTRAINT IF EXISTS worker_categories_worker_id_fkey;
+  -- Push Tokens
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'push_tokens') THEN
+    ALTER TABLE public.push_tokens DROP CONSTRAINT IF EXISTS push_tokens_profile_id_fkey;
+    ALTER TABLE public.push_tokens 
+      ADD CONSTRAINT push_tokens_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE IF EXISTS public.worker_categories
-  ADD CONSTRAINT worker_categories_worker_id_fkey FOREIGN KEY (worker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-ALTER TABLE IF EXISTS public.worker_profiles
-  DROP CONSTRAINT IF EXISTS worker_profiles_profile_id_fkey;
-
-ALTER TABLE IF EXISTS public.worker_profiles
-  ADD CONSTRAINT worker_profiles_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-ALTER TABLE IF EXISTS public.calls
-  DROP CONSTRAINT IF EXISTS calls_caller_id_fkey,
-  DROP CONSTRAINT IF EXISTS calls_callee_id_fkey;
-
-ALTER TABLE IF EXISTS public.calls
-  ADD CONSTRAINT calls_caller_id_fkey FOREIGN KEY (caller_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
-  ADD CONSTRAINT calls_callee_id_fkey FOREIGN KEY (callee_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-ALTER TABLE IF EXISTS public.push_tokens
-  DROP CONSTRAINT IF EXISTS push_tokens_profile_id_fkey;
-
-ALTER TABLE IF EXISTS public.push_tokens
-  ADD CONSTRAINT push_tokens_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
--- 2. Customer Account Deletion RPC (Security Definer - Superuser execution)
+-- 2. Customer Account Deletion RPC (Security Definer)
 CREATE OR REPLACE FUNCTION public.delete_customer_account()
 RETURNS boolean
 LANGUAGE plpgsql
@@ -72,9 +81,8 @@ BEGIN
     RETURN false;
   END IF;
 
-  -- Delete all user data cleanly
+  -- Cascaded erasure
   DELETE FROM public.reviews WHERE customer_id = v_uid;
-  DELETE FROM public.booking_offers WHERE customer_id = v_uid;
   DELETE FROM public.bookings WHERE customer_id = v_uid;
   DELETE FROM public.calls WHERE caller_id = v_uid OR callee_id = v_uid;
   DELETE FROM public.push_tokens WHERE profile_id = v_uid;
@@ -83,7 +91,6 @@ BEGIN
 
   RETURN true;
 EXCEPTION WHEN OTHERS THEN
-  -- Fallback: At least remove profile and auth user
   DELETE FROM public.profiles WHERE id = v_uid;
   DELETE FROM auth.users WHERE id = v_uid;
   RETURN true;
@@ -104,7 +111,7 @@ BEGIN
     RETURN false;
   END IF;
 
-  -- Clean up all worker records
+  -- Cascaded erasure
   DELETE FROM public.reviews WHERE worker_id = v_uid;
   DELETE FROM public.booking_offers WHERE worker_id = v_uid;
   DELETE FROM public.worker_categories WHERE worker_id = v_uid;
