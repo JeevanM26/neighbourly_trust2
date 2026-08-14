@@ -406,8 +406,3 @@ CREATE POLICY "push_tokens_owner_only" ON public.push_tokens
   FOR ALL TO authenticated 
   USING (profile_id = (SELECT auth.uid()))
   WITH CHECK (profile_id = (SELECT auth.uid()));
-
-ALTER TABLE IF EXISTS public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "spatial_ref_sys_read" ON public.spatial_ref_sys;
-CREATE POLICY "spatial_ref_sys_read" ON public.spatial_ref_sys 
-  FOR SELECT TO authenticated, anon USING (true);
