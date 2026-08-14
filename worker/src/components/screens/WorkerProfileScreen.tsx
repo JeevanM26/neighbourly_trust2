@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
-import { fetchServiceCategories } from '../../lib/supabase';
+import { fetchServiceCategories, fetchWorkerReviews } from '../../lib/supabase';
 import { 
   Star, Volume2, Globe, Shield, LogOut, Trash2, Edit3, Check, X, 
   Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, 
   Wrench, Scissors, MapPin, IndianRupee, Phone, CheckCircle2, 
-  ShieldCheck, Award, ChevronRight, QrCode, AlertTriangle
+  ShieldCheck, Award, ChevronRight, QrCode, AlertTriangle, MessageSquare
 } from 'lucide-react';
 
 // ─── Robust Category Visual & Rate Mapping ───────────────────
@@ -58,10 +58,17 @@ export default function WorkerProfileScreen() {
   const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set());
   const [availableCategories, setAvailableCategories] = useState<ServiceCategory[]>([]);
   const [saving, setSaving] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   useEffect(() => {
     fetchServiceCategories().then(data => setAvailableCategories(data));
   }, []);
+
+  useEffect(() => {
+    if (worker?.id) {
+      fetchWorkerReviews(worker.id).then(data => setReviews(data));
+    }
+  }, [worker?.id]);
 
   useEffect(() => {
     if (worker && !isEditing) {
@@ -481,6 +488,50 @@ export default function WorkerProfileScreen() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* ── Customer Ratings & Reviews Card ── */}
+        <div style={{
+          background: 'white', borderRadius: 24, padding: 20, marginBottom: 18,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid #F1F5F9'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Star size={18} color="#F59E0B" fill="#F59E0B" />
+              <h3 style={{ fontSize: 13, fontWeight: 800, color: '#475569', margin: 0, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                Customer Feedback ({reviews.length})
+              </h3>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 4 }}>
+              ★ {worker.rating?.toFixed(1) || '5.0'} / 5.0
+            </div>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '16px 8px', color: '#94A3B8', fontSize: 13, fontWeight: 500 }}>
+              No customer reviews yet. Reviews will appear here automatically when customers rate your completed jobs!
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {reviews.map((r, i) => (
+                <div key={r.id || i} style={{ background: '#F8FAFC', borderRadius: 14, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{r.customer_name}</span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} size={12} fill={s <= r.rating ? '#F59E0B' : '#E2E8F0'} color={s <= r.rating ? '#F59E0B' : '#CBD5E1'} />
+                      ))}
+                    </div>
+                  </div>
+                  {r.comment && (
+                    <p style={{ fontSize: 12, color: '#475569', margin: '4px 0 0', fontWeight: 500, lineHeight: 1.4 }}>
+                      "{r.comment}"
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Logout & Account Actions ── */}

@@ -82,6 +82,7 @@ export interface Booking {
   commission_amount?: number;
   address_notes?: string;
   created_at: string;
+  review?: { id?: string; rating: number; comment?: string } | null;
 }
 
 // ─── App Settings ─────────────────────────────────────────

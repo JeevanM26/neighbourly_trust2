@@ -328,3 +328,30 @@ export function subscribeToBookingOffers(
     })
     .subscribe();
 }
+
+// ─── Fetch Worker Customer Reviews ──────────────────────────
+export async function fetchWorkerReviews(workerId: string) {
+  const client = getClient();
+  if (!client) return [];
+  try {
+    const { data } = await client
+      .from('reviews')
+      .select(`
+        id, rating, comment, created_at,
+        profiles!customer_id ( full_name )
+      `)
+      .eq('worker_id', workerId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    return (data || []).map((r: any) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      created_at: r.created_at,
+      customer_name: r.profiles?.full_name || 'Verified Customer'
+    }));
+  } catch {
+    return [];
+  }
+}
+

@@ -254,17 +254,47 @@ function BookingCard({
           )}
 
           {booking.status === 'completed' && (
-            <button
-              onClick={() => onOpenReview(booking)}
-              style={{
-                flex: 1, background: '#FEF3C7', border: '1.5px solid #FDE68A', color: '#92400E',
-                padding: '11px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              <Star size={15} fill="#D97706" color="#D97706" />
-              Rate & Review Pro
-            </button>
+            booking.review ? (
+              <div
+                style={{
+                  flex: 1, background: '#ECFDF5', border: '1.5px solid #A7F3D0', borderRadius: 12,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star
+                        key={s}
+                        size={13}
+                        fill={s <= (booking.review?.rating || 5) ? '#F59E0B' : '#E2E8F0'}
+                        color={s <= (booking.review?.rating || 5) ? '#F59E0B' : '#CBD5E1'}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#065F46' }}>
+                    {booking.review.rating}.0 Rated
+                  </span>
+                </div>
+                {booking.review.comment && (
+                  <span style={{ fontSize: 11, color: '#047857', fontWeight: 600, fontStyle: 'italic', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    "{booking.review.comment}"
+                  </span>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => onOpenReview(booking)}
+                style={{
+                  flex: 1, background: '#FEF3C7', border: '1.5px solid #FDE68A', color: '#92400E',
+                  padding: '11px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <Star size={15} fill="#D97706" color="#D97706" />
+                Rate & Review Pro
+              </button>
+            )
           )}
         </div>
       </div>
@@ -304,21 +334,47 @@ export default function BookingsScreen() {
     try {
       const client = getClient();
       if (client) {
-        await client.from('reviews').insert({
+        // 1. Insert review into Supabase
+        const { error: reviewErr } = await client.from('reviews').upsert({
           booking_id: reviewBooking.id,
           customer_id: user.id,
           worker_id: reviewBooking.worker_id || '',
           rating: rating,
           comment: comment.trim() || 'Great service!',
-        });
+        }, { onConflict: 'booking_id' });
+
+        if (reviewErr) {
+          console.warn("Reviews table upsert notice:", reviewErr);
+        }
+
+        // 2. Recalculate worker's avg_rating in real-time
+        if (reviewBooking.worker_id) {
+          const { data: allWorkerReviews } = await client
+            .from('reviews')
+            .select('rating')
+            .eq('worker_id', reviewBooking.worker_id);
+          
+          if (allWorkerReviews && allWorkerReviews.length > 0) {
+            const avgRating = allWorkerReviews.reduce((sum, r) => sum + (r.rating || 5), 0) / allWorkerReviews.length;
+            await client
+              .from('worker_profiles')
+              .update({ 
+                avg_rating: parseFloat(avgRating.toFixed(2))
+              })
+              .eq('profile_id', reviewBooking.worker_id);
+          }
+        }
       }
-      showToast('Thank you! Your review has been posted ⭐', 'success');
+      showToast(`Thank you! Your ${rating}⭐ review has been posted!`, 'success');
       setReviewBooking(null);
       setComment('');
       setRating(5);
+      await refreshBookings();
     } catch (e) {
+      console.error("handleSubmitReview error:", e);
       showToast('Review submitted!', 'success');
       setReviewBooking(null);
+      await refreshBookings();
     } finally {
       setSubmittingReview(false);
     }

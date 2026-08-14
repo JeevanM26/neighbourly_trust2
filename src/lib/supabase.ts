@@ -87,7 +87,8 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
       .select(`
         *,
         profiles!worker_id ( full_name, avatar_url ),
-        service_categories!category_id ( name_en )
+        service_categories!category_id ( name_en ),
+        reviews ( id, rating, comment )
       `)
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
@@ -104,10 +105,13 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
       worker_avatar: b.profiles?.avatar_url,
       // Removed worker_phone for privacy
       category_name: b.service_categories?.name_en,
+      review: Array.isArray(b.reviews) && b.reviews.length > 0 
+        ? b.reviews[0] 
+        : (b.reviews && typeof b.reviews === 'object' && b.reviews.rating ? b.reviews : null),
     }));
   } catch (err) {
     console.error("fetchCustomerBookings exception:", err);
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof err === 'string' ? err : (err as any)?.message || 'Database error occurred' }));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: typeof err === 'string' ? err : (err as any)?.message || 'Database error occurred' }));
     return []; 
   }
 }
