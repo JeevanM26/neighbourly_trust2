@@ -54,18 +54,10 @@ export default function WorkerProfileSheet({
     return () => { isMounted = false; };
   }, [categoryId, workerId, searchLocation, userLocation, requestLocation]);
 
-  // Determine if there is an active booking related to this worker/category
-  // Prioritize active states over 'searching' in case there are orphaned test bookings
-  const relevantBookings = bookings.filter(b => {
-    if (b.category_id !== categoryId) return false;
-    if (!['searching', 'accepted', 'on_the_way', 'in_progress', 'no_workers_found'].includes(b.status)) return false;
-    return true;
-  });
-  const statusPriority: Record<string, number> = { in_progress: 1, on_the_way: 2, accepted: 3, searching: 4 };
-  relevantBookings.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
-  
-  const activeBooking = (activeBookingId ? bookings.find(b => b.id === activeBookingId) : null)
-    || relevantBookings[0];
+  // Determine if there is an active booking related to this specific worker session
+  const activeBooking = activeBookingId
+    ? bookings.find(b => b.id === activeBookingId)
+    : bookings.find(b => b.worker_id === workerId && ['accepted', 'on_the_way', 'in_progress'].includes(b.status));
 
   // Polling fallback: if we have an active booking or just booked, poll every 3 seconds
   // in case the Realtime WebSocket drops the event or is blocked.
@@ -125,6 +117,12 @@ export default function WorkerProfileSheet({
   const isCompleted = activeBooking?.status === 'completed';
   const noWorkers = activeBooking?.status === 'no_workers_found';
 
+  const handleFindAnother = () => {
+    setActiveBookingId(null);
+    setBookingStatus('idle');
+    onBack();
+  };
+
   if (noWorkers) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
@@ -138,7 +136,7 @@ export default function WorkerProfileSheet({
           <h2 style={{ margin: '0 0 12px 0', color: '#0F172A' }}>Worker Not Available</h2>
           <p style={{ color: '#64748B', marginBottom: 32 }}>We couldn't connect you with {worker.full_name}. They might be offline or busy.</p>
           <button 
-            onClick={onBack}
+            onClick={handleFindAnother}
             style={{ 
               width: '100%', padding: '16px', borderRadius: 12, border: 'none', 
               background: '#0B3D66', color: 'white', fontWeight: 600, fontSize: 16, cursor: 'pointer'
