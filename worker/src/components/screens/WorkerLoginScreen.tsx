@@ -4,6 +4,7 @@ import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { ShieldCheck, ChevronLeft, Smartphone, MessageSquare, Check, ChevronRight } from 'lucide-react';
+import PrivacyPolicyModal from '../PrivacyPolicyModal';
 
 type Step = 'phone' | 'otp' | 'name' | 'skills';
 
@@ -16,6 +17,7 @@ export default function WorkerLoginScreen() {
   const [otpMethod, setOtpMethod] = useState<'sms' | 'screen'>('sms');
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -157,7 +159,17 @@ export default function WorkerLoginScreen() {
               {consent && <Check size={12} color="white" strokeWidth={3} />}
             </div>
             <span style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5, fontWeight: 500 }}>
-              I agree to the <strong style={{ color: '#059669' }}>Terms of Service</strong> and <strong style={{ color: '#059669' }}>Privacy Policy</strong>.
+              I agree to the Partner Terms and{' '}
+              <span
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPrivacyModal(true);
+                }}
+                style={{ color: '#059669', fontWeight: 800, textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Privacy Policy
+              </span>.
             </span>
           </label>
 
@@ -168,6 +180,11 @@ export default function WorkerLoginScreen() {
           </button>
         </div>
       </div>
+
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </div>
   );
 

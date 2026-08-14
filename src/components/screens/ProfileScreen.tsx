@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { LanguageCode } from '../../lib/types';
-import { User, Globe, Volume2, VolumeX, LogOut, ChevronRight, Shield, HelpCircle, Bell } from 'lucide-react';
+import { User, Globe, Volume2, VolumeX, LogOut, ChevronRight, Shield, HelpCircle, Bell, ShieldCheck } from 'lucide-react';
+import PrivacyPolicyModal from '../PrivacyPolicyModal';
 
 const LANGUAGES: { code: LanguageCode; label: string; native: string }[] = [
   { code: 'en', label: 'English',   native: 'English'  },
@@ -22,6 +23,7 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const totalBookings = bookings.length;
   const completedBookings = bookings.filter(b => b.status === 'completed').length;
@@ -201,11 +203,18 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
         </div>
       )}
 
-      {/* Help */}
+      {/* Help & Policies */}
       <div style={{ margin: '12px 16px 0', background: 'white', borderRadius: 20, padding: '4px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <p style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '14px 0 4px' }}>
-          Support
+          Support & Trust
         </p>
+        <SettingRow
+          icon={<ShieldCheck size={18} color="#0B3D66" />}
+          label="Privacy Policy & Data Rights"
+          right={<ChevronRight size={14} color="#94A3B8" />}
+          onClick={() => setShowPrivacyModal(true)}
+        />
+        <div style={{ borderBottom: '1px solid #F1F5F9' }} />
         <SettingRow
           icon={<HelpCircle size={18} color="#0B3D66" />}
           label="Help & FAQ"
@@ -231,9 +240,18 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
         />
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: 10, color: '#CBD5E1', fontWeight: 500, margin: '24px 0 100px' }}>
+      <p 
+        onClick={() => setShowPrivacyModal(true)}
+        style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, margin: '24px 0 100px', cursor: 'pointer', textDecoration: 'underline' }}
+      >
         Neighborly Trust v2.0 · DPDP Act 2023 compliant
       </p>
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal 
+        isOpen={showPrivacyModal} 
+        onClose={() => setShowPrivacyModal(false)} 
+      />
 
       {/* Language Picker Modal */}
       {showLangPicker && (

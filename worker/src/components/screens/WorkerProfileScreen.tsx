@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
 import { fetchServiceCategories, fetchWorkerReviews } from '../../lib/supabase';
+import PrivacyPolicyModal from '../PrivacyPolicyModal';
 import { 
   Star, Volume2, Globe, Shield, LogOut, Trash2, Edit3, Check, X, 
   Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, 
   Wrench, Scissors, MapPin, IndianRupee, Phone, CheckCircle2, 
-  ShieldCheck, Award, ChevronRight, QrCode, AlertTriangle, MessageSquare
+  ShieldCheck, Award, ChevronRight, QrCode, AlertTriangle, MessageSquare, FileText
 } from 'lucide-react';
 
 // ─── Robust Category Visual & Rate Mapping ───────────────────
@@ -59,6 +60,7 @@ export default function WorkerProfileScreen() {
   const [availableCategories, setAvailableCategories] = useState<ServiceCategory[]>([]);
   const [saving, setSaving] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   useEffect(() => {
     fetchServiceCategories().then(data => setAvailableCategories(data));
@@ -534,6 +536,27 @@ export default function WorkerProfileScreen() {
           )}
         </div>
 
+        {/* ── Support & Policies ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+          <button 
+            onClick={() => setShowPrivacyModal(true)}
+            style={{ 
+              width: '100%', padding: '14px 16px', borderRadius: 16, 
+              border: '1.5px solid #E2E8F0', background: 'white', 
+              cursor: 'pointer', display: 'flex', alignItems: 'center', 
+              justifyContent: 'space-between', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={16} color="#059669" />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Partner Privacy & DPDP Rights</span>
+            </div>
+            <ChevronRight size={16} color="#94A3B8" />
+          </button>
+        </div>
+
         {/* ── Logout & Account Actions ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button 
@@ -563,9 +586,18 @@ export default function WorkerProfileScreen() {
           </button>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, marginTop: 24 }}>
+        <p 
+          onClick={() => setShowPrivacyModal(true)}
+          style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, marginTop: 24, cursor: 'pointer', textDecoration: 'underline' }}
+        >
           Neighborly Trust Partner Portal v2.0 · DPDP Act 2023 Compliant
         </p>
+
+        {/* Privacy Policy Modal */}
+        <PrivacyPolicyModal 
+          isOpen={showPrivacyModal} 
+          onClose={() => setShowPrivacyModal(false)} 
+        />
 
       </div>
     </div>

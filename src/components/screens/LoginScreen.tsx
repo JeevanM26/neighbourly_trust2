@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, ChevronLeft, Smartphone } from 'lucide-react';
+import PrivacyPolicyModal from '../PrivacyPolicyModal';
 
 type Step = 'language' | 'phone' | 'otp' | 'profile';
 
@@ -24,6 +25,7 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [authUserId, setAuthUserId] = useState('');
@@ -430,7 +432,17 @@ export default function LoginScreen() {
               )}
             </div>
             <span style={{ fontSize: 12, color: '#475569', fontWeight: 500, lineHeight: 1.5 }}>
-              I agree to Neighborly Trust's <strong style={{ color: '#0B3D66' }}>Privacy Policy</strong>.
+              I agree to Neighborly Trust's{' '}
+              <span
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPrivacyModal(true);
+                }}
+                style={{ color: '#0B3D66', fontWeight: 800, textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Privacy Policy
+              </span>.
             </span>
           </label>
 
@@ -450,6 +462,12 @@ export default function LoginScreen() {
           </button>
         </div>
       </div>
+
+      {/* Standalone DPDP & Google Play Compliant Privacy Policy Modal */}
+      <PrivacyPolicyModal 
+        isOpen={showPrivacyModal} 
+        onClose={() => setShowPrivacyModal(false)} 
+      />
     </div>
   );
 }
