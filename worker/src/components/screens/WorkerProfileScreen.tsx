@@ -186,17 +186,6 @@ export default function WorkerProfileScreen() {
               <div style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 12, padding: '3px 8px' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, color: 'white' }}>{totalJobsCount} jobs done</span>
               </div>
-              {worker.is_verified ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(52,211,153,0.4)', borderRadius: 12, padding: '3px 8px' }}>
-                  <ShieldCheck size={12} color="#6EE7B7" />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#6EE7B7' }}>Verified Pro</span>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(245,158,11,0.25)', border: '1px solid rgba(251,191,36,0.4)', borderRadius: 12, padding: '3px 8px' }}>
-                  <AlertTriangle size={12} color="#FDE68A" />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#FDE68A' }}>KYC Pending</span>
-                </div>
-              )}
             </div>
 
           </div>
@@ -492,29 +481,6 @@ export default function WorkerProfileScreen() {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* ── Partner Verification & KYC Status ── */}
-        <div style={{ 
-          background: worker.is_verified ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)' : '#FFFBEB', 
-          borderRadius: 20, padding: '16px', border: `1.5px solid ${worker.is_verified ? '#A7F3D0' : '#FDE68A'}`, marginBottom: 18 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {worker.is_verified ? <ShieldCheck size={18} color="#065F46" /> : <AlertTriangle size={18} color="#D97706" />}
-              <span style={{ fontSize: 13, fontWeight: 800, color: worker.is_verified ? '#065F46' : '#92400E' }}>
-                {worker.is_verified ? 'Verified Partner Status' : 'Account Verification Status'}
-              </span>
-            </div>
-            <span style={{ fontSize: 11, fontWeight: 800, color: worker.is_verified ? '#059669' : '#D97706' }}>
-              {worker.is_verified ? '● Verified Pro' : '● KYC Pending'}
-            </span>
-          </div>
-          <p style={{ fontSize: 11, color: worker.is_verified ? '#047857' : '#B45309', fontWeight: 500, margin: 0, lineHeight: 1.4 }}>
-            {worker.is_verified 
-              ? 'Your government ID and phone number are verified. You receive top search ranking on customer maps.' 
-              : 'Complete your government ID verification to earn the Verified Pro badge and receive higher-paying job requests.'}
-          </p>
         </div>
 
         {/* ── Logout & Account Actions ── */}
