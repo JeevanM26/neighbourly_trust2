@@ -10,33 +10,28 @@ import {
   ShieldCheck, Award, ChevronRight, QrCode, AlertTriangle
 } from 'lucide-react';
 
-const CategoryIcon = ({ slug, size = 20 }: { slug: string, size?: number }) => {
-  switch (slug.toLowerCase()) {
-    case 'electrician': return <Zap size={size} color="#F59E0B" />;
-    case 'plumber': return <Droplet size={size} color="#0284C7" />;
-    case 'carpenter': return <Hammer size={size} color="#D97706" />;
-    case 'painter': return <Paintbrush size={size} color="#8B5CF6" />;
-    case 'ac-appliance-repair': return <Wind size={size} color="#06B6D4" />;
-    case 'mason-construction': return <HardHat size={size} color="#EAB308" />;
-    case 'pest-control': return <Bug size={size} color="#EC4899" />;
-    case 'house-cleaning': return <Sparkles size={size} color="#10B981" />;
-    case 'mechanic': return <Wrench size={size} color="#64748B" />;
-    case 'home-salon': return <Scissors size={size} color="#F43F5E" />;
-    default: return <Wrench size={size} color="#059669" />;
-  }
+// ─── Robust Category Visual & Rate Mapping ───────────────────
+export const getCategoryMeta = (slug?: string, name?: string) => {
+  const key = `${slug || ''} ${name || ''}`.toLowerCase();
+  
+  if (key.includes('electr')) return { icon: Zap, color: '#F59E0B', bg: '#FEF3C7', rate: 350, emoji: '⚡' };
+  if (key.includes('plumb')) return { icon: Droplet, color: '#0284C7', bg: '#E0F2FE', rate: 350, emoji: '🔧' };
+  if (key.includes('carpent')) return { icon: Hammer, color: '#D97706', bg: '#FEF3C7', rate: 400, emoji: '🪚' };
+  if (key.includes('paint')) return { icon: Paintbrush, color: '#8B5CF6', bg: '#F3E8FF', rate: 600, emoji: '🎨' };
+  if (key.includes('clean')) return { icon: Sparkles, color: '#10B981', bg: '#ECFDF5', rate: 500, emoji: '🧹' };
+  if (key.includes('salon')) return { icon: Scissors, color: '#F43F5E', bg: '#FFE4E6', rate: 500, emoji: '✂️' };
+  if (key.includes('ac') || key.includes('appliance')) return { icon: Wind, color: '#06B6D4', bg: '#ECFEFF', rate: 450, emoji: '❄️' };
+  if (key.includes('pest')) return { icon: Bug, color: '#EC4899', bg: '#FCE7F3', rate: 750, emoji: '🐛' };
+  if (key.includes('mason') || key.includes('construct')) return { icon: HardHat, color: '#EAB308', bg: '#FEF9C3', rate: 550, emoji: '🧱' };
+  if (key.includes('mechanic')) return { icon: Wrench, color: '#64748B', bg: '#F1F5F9', rate: 400, emoji: '🔧' };
+  
+  return { icon: Wrench, color: '#059669', bg: '#ECFDF5', rate: 350, emoji: '🛠️' };
 };
 
-const CATEGORY_RATES: Record<string, number> = {
-  electrician: 350,
-  plumber: 350,
-  carpenter: 400,
-  painter: 600,
-  'house-cleaning': 500,
-  'pest-control': 750,
-  'ac-appliance-repair': 450,
-  mechanic: 400,
-  'home-salon': 500,
-  'mason-construction': 550,
+const CategoryIcon = ({ slug, name, size = 20 }: { slug?: string; name?: string; size?: number }) => {
+  const meta = getCategoryMeta(slug, name);
+  const IconComp = meta.icon;
+  return <IconComp size={size} color={meta.color} />;
 };
 
 const LANGUAGES = [
@@ -127,7 +122,7 @@ export default function WorkerProfileScreen() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           
-          {/* Avatar with Verified Ring */}
+          {/* Avatar with Status Ring */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{ 
               width: 72, height: 72, borderRadius: 22, 
@@ -254,7 +249,7 @@ export default function WorkerProfileScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {!isEditing ? (
               (worker.categories || []).map(cat => {
-                const basePrice = CATEGORY_RATES[cat.slug] || 350;
+                const meta = getCategoryMeta(cat.slug, cat.name_en);
                 return (
                   <div 
                     key={cat.id} 
@@ -267,15 +262,15 @@ export default function WorkerProfileScreen() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ 
                         width: 38, height: 38, borderRadius: 10, 
-                        background: '#FFFFFF', border: '1px solid #E2E8F0',
+                        background: meta.bg, border: `1px solid ${meta.color}30`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
                       }}>
-                        {cat.slug && <CategoryIcon slug={cat.slug} size={20} />}
+                        <CategoryIcon slug={cat.slug} name={cat.name_en} size={20} />
                       </div>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{cat.name_en}</div>
-                        <div style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>₹{basePrice} base rate · ₹{Math.round(basePrice * 0.92)} net</div>
+                        <div style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>₹{meta.rate} base rate · ₹{Math.round(meta.rate * 0.92)} net</div>
                       </div>
                     </div>
                     <div style={{ background: '#ECFDF5', borderRadius: 20, padding: '3px 8px', border: '1px solid #A7F3D0' }}>
@@ -287,7 +282,7 @@ export default function WorkerProfileScreen() {
             ) : (
               availableCategories.map(cat => {
                 const selected = draftCategories.has(cat.id);
-                const basePrice = CATEGORY_RATES[cat.slug] || 350;
+                const meta = getCategoryMeta(cat.slug, cat.name_en);
                 return (
                   <button 
                     key={cat.id} 
@@ -303,17 +298,17 @@ export default function WorkerProfileScreen() {
                   >
                     <div style={{ 
                       width: 40, height: 40, borderRadius: 12, 
-                      background: selected ? '#D1FAE5' : '#F1F5F9', 
+                      background: meta.bg, 
                       display: 'flex', alignItems: 'center', justifyContent: 'center' 
                     }}>
-                      {cat.slug && <CategoryIcon slug={cat.slug} size={22} />}
+                      <CategoryIcon slug={cat.slug} name={cat.name_en} size={22} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: selected ? '#065F46' : '#334155' }}>
                         {cat.name_en}
                       </div>
                       <div style={{ fontSize: 11, color: selected ? '#059669' : '#94A3B8', fontWeight: 600 }}>
-                        ₹{basePrice} base rate
+                        ₹{meta.rate} base rate
                       </div>
                     </div>
                     <div style={{ 
