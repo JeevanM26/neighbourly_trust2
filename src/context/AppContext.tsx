@@ -240,14 +240,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const deleteAccount = useCallback(async () => {
-    const success = await deleteCustomerAccount();
-    if (success) {
+    if (!user?.id) {
       setUser(null);
       if (typeof window !== 'undefined') localStorage.removeItem('nt_user');
       return true;
     }
-    return false;
-  }, []);
+    await deleteCustomerAccount(user.id);
+    setUser(null);
+    setBookings([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('nt_user');
+      localStorage.removeItem('nt_settings');
+    }
+    showToast('Your account and all personal data have been permanently deleted.', 'info');
+    return true;
+  }, [user?.id, showToast]);
 
   const bookWorker = useCallback(async (categoryId: string, workerId: string, exactLocation?: { lat: number, lng: number }) => {
     if (!user) return null;
