@@ -192,7 +192,6 @@ export async function deleteCustomerAccount(userId?: string): Promise<boolean> {
     const targetId = userId || (await client.auth.getUser()).data.user?.id;
     if (targetId) {
       await client.from('reviews').delete().eq('customer_id', targetId);
-      await client.from('booking_offers').delete().eq('customer_id', targetId);
       await client.from('bookings').delete().eq('customer_id', targetId);
       await client.from('push_tokens').delete().eq('profile_id', targetId);
       await client.from('profiles').delete().eq('id', targetId);
