@@ -188,7 +188,7 @@ export default function HomeScreen({
             hourly_rate: 300,
             avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
             location: { lat: roundedLat + 0.001, lng: roundedLng - 0.003 },
-            description: 'Deep home cleaning & sanitization specialist. Background checked.',
+            description: 'Deep home cleaning & sanitization specialist.',
             is_online: true,
             is_verified: true,
             featured: true,

@@ -278,36 +278,42 @@ export default function WorkerProfileSheet({
         </div>
 
         {/* Trust & Safety Card */}
-        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 24px', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', textAlign: 'left' }}>
-           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#475569', marginBottom: 16, letterSpacing: 0.5 }}>TRUST & SAFETY</h3>
+        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 24px', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', textAlign: 'left' }}>
+           <h3 style={{ fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 14, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+             SAFETY & TRUST PROTOCOLS
+           </h3>
            
-           <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#DCFCE7', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-               <ShieldCheck size={20} />
+           <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
+             <div style={{ width: 38, height: 38, borderRadius: 12, background: worker.is_verified ? '#DCFCE7' : '#FEF3C7', color: worker.is_verified ? '#10B981' : '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               {worker.is_verified ? <ShieldCheck size={20} /> : <CheckCircle2 size={20} />}
              </div>
              <div>
-               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Identity Verified</div>
-               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>Government ID checked</div>
+               <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
+                 {worker.is_verified ? 'Government ID Verified' : 'Registered Specialist'}
+               </div>
+               <div style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
+                 {worker.is_verified ? 'Identity documents verified by platform' : 'SMS phone authenticated partner'}
+               </div>
              </div>
            </div>
 
-           <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#DBEAFE', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-               <Award size={20} />
+           <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
+             <div style={{ width: 38, height: 38, borderRadius: 12, background: '#DBEAFE', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               <Phone size={18} />
              </div>
              <div>
-               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Background Verified</div>
-               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>Local police clearance</div>
+               <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Number Privacy Shield</div>
+               <div style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>Direct encrypted in-app voice calling</div>
              </div>
            </div>
 
-           <div style={{ display: 'flex', gap: 16 }}>
-             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F3E8FF', color: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-               <Clock size={20} />
+           <div style={{ display: 'flex', gap: 14 }}>
+             <div style={{ width: 38, height: 38, borderRadius: 12, background: '#F3E8FF', color: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+               <Shield size={18} />
              </div>
              <div>
-               <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Punctuality Score</div>
-               <div style={{ fontSize: 13, color: '#94A3B8', fontWeight: 500 }}>4.8/5 — Arrives on time</div>
+               <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>Secure PIN Completion</div>
+               <div style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>Job confirmed with your 4-digit PIN</div>
              </div>
            </div>
         </div>

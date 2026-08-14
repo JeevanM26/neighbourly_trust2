@@ -306,11 +306,11 @@ export default function WorkerProfileDetail({ worker, onBack, onBooked }: Worker
 
             {[
 
-              { icon: ShieldCheck, text: 'Identity Verified', sub: 'Government ID checked', color: '#15803D' },
+              { icon: ShieldCheck, text: 'Identity Authentication', sub: 'SMS phone verified provider', color: '#15803D' },
 
-              { icon: Award, text: 'Background Verified', sub: 'Local police clearance', color: '#1D4ED8' },
+              { icon: Phone, text: 'Privacy Protected', sub: 'Encrypted direct calling', color: '#1D4ED8' },
 
-              { icon: Clock, text: 'Punctuality Score', sub: '4.8/5 — Arrives on time', color: '#7C3AED' },
+              { icon: Award, text: 'Completion Verified', sub: 'Secure 4-digit PIN checkout', color: '#7C3AED' },
 
             ].map((item, i) => (
 

@@ -106,7 +106,7 @@ function RequestCard({ offer, onAccept, onDecline }: {
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{customerName}</div>
             <div style={{ fontSize: 11, color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-              <ShieldCheck size={12} /> Verified neighbor
+              <CheckCircle2 size={12} /> Registered Customer
             </div>
           </div>
           {customerId && (
