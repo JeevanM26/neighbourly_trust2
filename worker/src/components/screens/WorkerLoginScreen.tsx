@@ -332,8 +332,8 @@ export default function WorkerLoginScreen() {
 
   // ── Category Selection Step ─────────────────────────────────
   if (step === 'skills') return (
-    <div style={{ height: '100%', overflowY: 'auto', background: '#F0FDF4' }}>
-      <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '36px 24px 24px' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F0FDF4', position: 'relative' }}>
+      <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '36px 24px 24px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', margin: '0 0 4px' }}>Final Step</p>
@@ -344,7 +344,7 @@ export default function WorkerLoginScreen() {
         </div>
       </div>
 
-      <div style={{ padding: '20px 20px 100px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 120px' }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 14 }}>
           Tap to select • {selectedCategories.size} selected
         </p>
@@ -373,10 +373,38 @@ export default function WorkerLoginScreen() {
             );
           })}
         </div>
+      </div>
 
+      {/* Floating Bottom Action Bar */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: '16px 20px 24px',
+        background: 'linear-gradient(to top, rgba(240, 253, 244, 0.98) 75%, rgba(240, 253, 244, 0))',
+        backdropFilter: 'blur(6px)',
+        zIndex: 50
+      }}>
         <button onClick={handleCompleteOnboarding}
           disabled={selectedCategories.size === 0}
-          style={{ width: '100%', marginTop: 24, padding: '16px', borderRadius: 14, background: selectedCategories.size === 0 ? '#E2E8F0' : 'linear-gradient(135deg, #059669, #065F46)', color: selectedCategories.size === 0 ? '#94A3B8' : 'white', fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: selectedCategories.size > 0 ? '0 4px 12px rgba(5,150,105,0.3)' : 'none' }}>
+          style={{ 
+            width: '100%', 
+            padding: '16px', 
+            borderRadius: 16, 
+            background: selectedCategories.size === 0 ? '#E2E8F0' : 'linear-gradient(135deg, #059669, #065F46)', 
+            color: selectedCategories.size === 0 ? '#94A3B8' : 'white', 
+            fontWeight: 800, 
+            fontSize: 15, 
+            border: 'none', 
+            cursor: selectedCategories.size === 0 ? 'not-allowed' : 'pointer', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: 8, 
+            boxShadow: selectedCategories.size > 0 ? '0 6px 20px rgba(5,150,105,0.35)' : 'none',
+            transition: 'all 0.25s ease'
+          }}>
           Start Taking Bookings 🚀 <ChevronRight size={18} />
         </button>
       </div>
