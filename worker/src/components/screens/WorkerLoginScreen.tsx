@@ -3,8 +3,25 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
-import { ShieldCheck, ChevronLeft, Smartphone, MessageSquare, Check, ChevronRight } from 'lucide-react';
+import { 
+  ShieldCheck, ChevronLeft, Smartphone, MessageSquare, Check, ChevronRight,
+  Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench, Bug, Flame, Scissors, Car
+} from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
+
+const CategoryIcon = ({ slug, size = 24 }: { slug: string, size?: number }) => {
+  const s = (slug || '').toLowerCase();
+  if (s.includes('elec')) return <Zap size={size} color="#F59E0B" />;
+  if (s.includes('plumb')) return <Droplet size={size} color="#38BDF8" />;
+  if (s.includes('carp')) return <Hammer size={size} color="#FB923C" />;
+  if (s.includes('paint')) return <Paintbrush size={size} color="#C084FC" />;
+  if (s.includes('clean')) return <Sparkles size={size} color="#34D399" />;
+  if (s.includes('pest')) return <Bug size={size} color="#F87171" />;
+  if (s.includes('ac') || s.includes('appliance')) return <Flame size={size} color="#60A5FA" />;
+  if (s.includes('salon') || s.includes('barber')) return <Scissors size={size} color="#F472B6" />;
+  if (s.includes('mechanic') || s.includes('auto')) return <Car size={size} color="#818CF8" />;
+  return <Wrench size={size} color="#059669" />;
+};
 
 type Step = 'phone' | 'otp' | 'name' | 'skills';
 
@@ -343,8 +360,8 @@ export default function WorkerLoginScreen() {
                   return next;
                 });
               }} className={`skill-pill${selected ? ' selected' : ''}`} style={{ width: '100%', textAlign: 'left', background: 'white', border: `2px solid ${selected ? '#059669' : '#E2E8F0'}`, borderRadius: 16, padding: 12, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: selected ? '#D1FAE5' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-                  <img src={cat.icon_url} alt={cat.name_en} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: selected ? '#D1FAE5' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CategoryIcon slug={cat.slug || cat.name_en} size={26} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: selected ? '#065F46' : '#334155' }}>{cat.name_en}</div>

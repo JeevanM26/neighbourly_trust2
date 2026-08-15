@@ -64,7 +64,7 @@ export default function HomeScreen({
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
   const { categories, user, settings, toggleVoice, t, setLanguage, showToast } = useApp();
-  const { userLocation, locationStatus, requestLocation } = useLocation();
+  const { userLocation, locationStatus, requestLocation, searchLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
@@ -94,27 +94,25 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
-  const roundedLat = userLocation?.lat ? Math.round(userLocation.lat * 100) / 100 : 0;
-  const roundedLng = userLocation?.lng ? Math.round(userLocation.lng * 100) / 100 : 0;
+  const activeLoc = searchLocation || userLocation || { lat: 28.6139, lng: 77.2090 };
+  const roundedLat = activeLoc.lat;
+  const roundedLng = activeLoc.lng;
   const hasFetchedRef = React.useRef(false);
 
   const handleRefresh = async () => {
-    if (!roundedLat || categories.length === 0) return;
+    if (categories.length === 0) return;
     setIsLoadingWorkers(true);
-    const targetCategory = categories.find(c => c.id === (activeCategory || 'plumber')) || categories[0];
-    if (targetCategory) {
-      const results = await findNearbyWorkers(targetCategory.id, roundedLat, roundedLng);
-      setNearbyWorkers(results);
+    let results: any[] = [];
+    if (activeCategory) {
+      results = await findNearbyWorkers(activeCategory, roundedLat, roundedLng);
+    } else {
+      const catPromises = categories.map(cat => findNearbyWorkers(cat.id, roundedLat, roundedLng));
+      const allRes = await Promise.all(catPromises);
+      results = Array.from(new Map(allRes.flat().map(w => [w.worker_id, w])).values());
     }
+    setNearbyWorkers(results);
     setIsLoadingWorkers(false);
   };
-
-  useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      const plumberCat = categories.find(c => c.slug.includes('plumb')) || categories[0];
-      if (plumberCat) setActiveCategory(plumberCat.id);
-    }
-  }, [categories, activeCategory]);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -131,25 +129,25 @@ export default function HomeScreen({
   useEffect(() => {
     let isMounted = true;
     async function fetchWorkers() {
-      if (!roundedLat) return;
-      
       if (!hasFetchedRef.current) {
         setIsLoadingWorkers(true);
       }
 
-      const targetCategory = categories.find(c => c.id === (activeCategory || 'plumber')) || categories[0];
       let results: any[] = [];
-      if (targetCategory) {
-        results = await findNearbyWorkers(targetCategory.id, roundedLat, roundedLng);
+      if (activeCategory) {
+        results = await findNearbyWorkers(activeCategory, roundedLat, roundedLng);
+      } else {
+        const catPromises = categories.map(cat => findNearbyWorkers(cat.id, roundedLat, roundedLng));
+        const allRes = await Promise.all(catPromises);
+        results = Array.from(new Map(allRes.flat().map(w => [w.worker_id, w])).values());
       }
       
       if (results.length === 0) {
-        const catObj = targetCategory || categories[0];
         results = [
           {
             worker_id: 'mock-home-1',
             full_name: 'Ramesh Kumar',
-            category_id: catObj?.id || 'plumber',
+            category_id: categories[0]?.id || 'plumber',
             avg_rating: 4.9,
             total_jobs: 142,
             years_experience: 8,
@@ -165,7 +163,7 @@ export default function HomeScreen({
           {
             worker_id: 'mock-home-2',
             full_name: 'Suresh Sharma',
-            category_id: catObj?.id || 'electrician',
+            category_id: categories[1]?.id || 'electrician',
             avg_rating: 4.8,
             total_jobs: 98,
             years_experience: 6,
@@ -180,7 +178,7 @@ export default function HomeScreen({
           {
             worker_id: 'mock-home-3',
             full_name: 'Anita Patel',
-            category_id: catObj?.id || 'home-clean',
+            category_id: categories[2]?.id || 'home-clean',
             avg_rating: 4.95,
             total_jobs: 215,
             years_experience: 7,

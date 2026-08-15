@@ -47,7 +47,7 @@ export class SignalingManager {
             await pingChannel.send({
               type: 'broadcast',
               event: 'incoming_call',
-              payload: { callerId, callerName: 'Scrubbed', callerAvatar: undefined, roomId }
+              payload: { callerId, callerName: callerName || 'Neighborly User', callerAvatar, roomId }
             });
             resolve();
           } catch (err) {

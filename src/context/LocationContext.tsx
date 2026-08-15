@@ -1,7 +1,9 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
-const DEFAULT_LOCATION = { lat: 28.6139, lng: 77.2090 };
+export const DEFAULT_LOCATION = { lat: 28.6139, lng: 77.2090 };
 
 interface LocationContextType {
   userLocation: { lat: number; lng: number } | null;
@@ -24,64 +26,61 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const locationPromiseRef = useRef<{resolve: (val: any) => void, reject: () => void} | null>(null);
-  const geoWatchRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) return;
-
-    if (locationStatus === 'granted') {
-      if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-      }
-      
-      geoWatchRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        (err) => {
-          console.warn("Real-time location watch error:", err);
-        },
-        { enableHighAccuracy: true, maximumAge: 10000 }
-      );
-    }
-
-    return () => {
-      if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
-        geoWatchRef.current = null;
-      }
-    };
-  }, [locationStatus]);
 
   const _executeLocationRequest = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      setLocationStatus('denied');
-      return null;
-    }
     setLocationStatus('loading');
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
+    
+    // Native Capacitor Geolocation for Android/iOS - triggers system permission popup
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location === 'granted' || perm.location === 'prompt-with-rationale' || (perm as any).coarseLocation === 'granted') {
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(coords);
           setLocationStatus('granted');
-          resolve(coords);
-        },
-        (err) => {
-          setLocationStatus('denied');
-          resolve(null);
-        },
-        { enableHighAccuracy: true, timeout: 60000, maximumAge: 10000 }
-      );
-    });
+          return coords;
+        }
+      } catch (nativeErr) {
+        console.warn("Native Geolocation error, falling back to web:", nativeErr);
+      }
+    }
+
+    // Web Geolocation Fallback
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setUserLocation(coords);
+            setLocationStatus('granted');
+            resolve(coords);
+          },
+          (err) => {
+            console.warn("Web Geolocation error:", err);
+            setLocationStatus('denied');
+            resolve(null);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+      });
+    }
+
+    setLocationStatus('denied');
+    return null;
   }, []);
 
   const requestLocation = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
+    // If native platform, directly invoke native system permission dialog
+    if (Capacitor.isNativePlatform()) {
+      return _executeLocationRequest();
+    }
+
     if (hasLocationPermission || locationStatus === 'granted') {
       return _executeLocationRequest();
     }
     
-    if (navigator.permissions && navigator.permissions.query) {
+    if (typeof window !== 'undefined' && navigator.permissions && navigator.permissions.query) {
       try {
         const result = await navigator.permissions.query({ name: 'geolocation' });
         if (result.state === 'granted') {
@@ -91,10 +90,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (e) {}
     }
 
-    setShowLocationModal(true);
-    return new Promise((resolve, reject) => {
-      locationPromiseRef.current = { resolve, reject };
-    });
+    return _executeLocationRequest();
   }, [hasLocationPermission, locationStatus, _executeLocationRequest]);
 
   const handleLocationAllow = () => {

@@ -5,6 +5,12 @@ import { format } from 'date-fns';
 import { Zap, Bell, Star, TrendingUp, Clock, CheckCircle, IndianRupee, RefreshCw, ChevronRight, Briefcase, MapPin, Phone } from 'lucide-react';
 import { JobOfferModal } from '../JobOfferModal';
 
+const CategoryIcon = ({ slug, size = 14 }: { slug: string, size?: number }) => {
+  const s = (slug || '').toLowerCase();
+  if (s.includes('elec')) return <Zap size={size} color="#F59E0B" />;
+  return <Briefcase size={size} color="#059669" />;
+};
+
 export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   onGoToRequests: () => void;
   onGoToJobs: () => void;
@@ -136,7 +142,7 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {worker.categories.map(cat => (
               <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'white', border: '1px solid #D1FAE5', borderRadius: 20, padding: '6px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                {cat.icon_url && <img src={cat.icon_url} alt="" style={{ width: 14, height: 14 }} />}
+                <CategoryIcon slug={cat.slug || cat.name_en} size={14} />
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46' }}>{cat.name_en}</span>
               </div>
             ))}

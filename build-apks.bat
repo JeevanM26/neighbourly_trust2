@@ -6,8 +6,10 @@ echo   Neighborly Trust - Automated Android APK Builder
 echo ===================================================
 echo.
 
-:: Detect Java JDK (PyCharm JBR or default JAVA_HOME)
-if exist "C:\Program Files\JetBrains\PyCharm 2025.1.2\jbr" (
+:: Detect Java JDK (Microsoft OpenJDK 17 or fallback)
+if exist "C:\Program Files\Microsoft\jdk-17.0.20.8-hotspot" (
+    set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.20.8-hotspot"
+) else if exist "C:\Program Files\JetBrains\PyCharm 2025.1.2\jbr" (
     set "JAVA_HOME=C:\Program Files\JetBrains\PyCharm 2025.1.2\jbr"
 )
 if not defined ANDROID_HOME (
