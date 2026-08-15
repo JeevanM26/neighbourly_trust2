@@ -49,7 +49,7 @@ export default function WorkerTabsLayout({ children }: { children: React.ReactNo
   if (!isLoggedIn) {
     return (
       <>
-        <div className="screen" style={{ flex: 1 }}>
+        <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <WorkerLoginScreen />
         </div>
         <Toast />

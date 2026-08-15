@@ -332,7 +332,7 @@ export default function WorkerLoginScreen() {
 
   // ── Category Selection Step ─────────────────────────────────
   if (step === 'skills') return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F0FDF4', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F0FDF4', position: 'relative', overflow: 'hidden' }}>
       <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '36px 24px 24px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
