@@ -123,10 +123,23 @@ export async function createBooking(params: {
   workerId: string;
   lat: number;
   lng: number;
+  addressText?: string;
 }): Promise<string | null> {
   const client = getClient();
   if (!client) return null;
   try {
+    let address = params.addressText;
+    if (!address && typeof window !== 'undefined') {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${params.lat}&lon=${params.lng}`);
+        const json = await res.json();
+        if (json?.display_name) {
+          const parts = json.display_name.split(',');
+          address = parts.slice(0, 3).join(',').trim();
+        }
+      } catch (e) {}
+    }
+
     const { data, error } = await client
       .from('bookings')
       .insert({
@@ -136,7 +149,8 @@ export async function createBooking(params: {
         status: 'searching',
         customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`,
         customer_lat: params.lat,
-        customer_lng: params.lng
+        customer_lng: params.lng,
+        address_text: address || `${params.lat.toFixed(4)}, ${params.lng.toFixed(4)}`
       })
       .select('id')
       .single();

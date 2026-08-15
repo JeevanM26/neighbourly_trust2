@@ -78,14 +78,16 @@ export default function WorkerProfileSheet({
 
   const handleBook = async () => {
     setBookingStatus('booking');
-    const loc = searchLocation || userLocation;
-    // Use worker's exact location to guarantee dispatch picks this worker
-    const workerLat = worker?.location?.lat ?? loc?.lat ?? DEFAULT_LOCATION.lat;
-    const workerLng = worker?.location?.lng ?? loc?.lng ?? DEFAULT_LOCATION.lng;
+    let loc = searchLocation || userLocation;
+    if (!loc) {
+      loc = await requestLocation();
+    }
+    const customerLat = loc?.lat ?? userLocation?.lat ?? DEFAULT_LOCATION.lat;
+    const customerLng = loc?.lng ?? userLocation?.lng ?? DEFAULT_LOCATION.lng;
 
     const id = await bookWorker(categoryId, workerId, {
-        lat: workerLat,
-        lng: workerLng
+        lat: customerLat,
+        lng: customerLng
     });
     if (id) {
       setActiveBookingId(id);

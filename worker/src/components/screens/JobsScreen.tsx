@@ -35,6 +35,31 @@ function JobCard({
   const meta = STATUS_META[booking.status] ?? STATUS_META.pending;
   const isActive = ['accepted', 'on_the_way', 'in_progress'].includes(booking.status);
 
+  const [resolvedAddress, setResolvedAddress] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (booking.address_text) {
+      setResolvedAddress(booking.address_text);
+      return;
+    }
+    if (booking.customer_location?.lat && booking.customer_location?.lng) {
+      const { lat, lng } = booking.customer_location;
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            setResolvedAddress(parts.slice(0, 3).join(',').trim());
+          } else {
+            setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+          }
+        })
+        .catch(() => {
+          setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        });
+    }
+  }, [booking.address_text, booking.customer_location]);
+
   const handleDirections = () => {
     if (booking.customer_location) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${booking.customer_location.lat},${booking.customer_location.lng}`, '_blank');
@@ -71,7 +96,7 @@ function JobCard({
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>Date</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>Booking Time</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{format(new Date(booking.created_at), 'd MMM, h:mm a')}</div>
           </div>
         </div>
@@ -82,7 +107,7 @@ function JobCard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 12, background: '#F8FAFC', padding: 10, borderRadius: 12 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
             <MapPin size={14} color="#059669" style={{ marginTop: 2, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>{booking.address_text || 'Customer Location'}</span>
+            <span style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>{resolvedAddress || booking.address_text || 'Customer Location'}</span>
           </div>
           <button onClick={handleDirections} style={{ background: '#E0F2FE', border: '1px solid #BAE6FD', color: '#0369A1', borderRadius: 8, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <Navigation size={12} /> Directions

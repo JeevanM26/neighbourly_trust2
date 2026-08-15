@@ -10,6 +10,30 @@ interface JobOfferModalProps {
 
 export function JobOfferModal({ offer, onAccept, onDecline }: JobOfferModalProps) {
   const [timeLeft, setTimeLeft] = useState(30);
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (offer.booking?.address_text) {
+      setResolvedAddress(offer.booking.address_text);
+      return;
+    }
+    const loc = offer.booking?.customer_location;
+    if (loc?.lat && loc?.lng) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            setResolvedAddress(parts.slice(0, 3).join(',').trim());
+          } else {
+            setResolvedAddress(`GPS (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`);
+          }
+        })
+        .catch(() => {
+          setResolvedAddress(`GPS (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`);
+        });
+    }
+  }, [offer.booking?.address_text, offer.booking?.customer_location]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -43,9 +67,8 @@ export function JobOfferModal({ offer, onAccept, onDecline }: JobOfferModalProps
         {/* Header with Timer */}
         <div style={{ background: '#FEF3C7', padding: '24px 20px', textAlign: 'center', position: 'relative' }}>
           <h2 style={{ fontSize: 24, fontWeight: 900, color: '#92400E', margin: '0 0 8px' }}>New Job Offer!</h2>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#B45309', fontWeight: 700 }}>
-            <Clock size={16} />
-            <span style={{ fontSize: 18 }}>{timeLeft}s</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#B45309', fontWeight: 700, fontSize: 15 }}>
+            <Clock size={18} /> Auto-declines in {timeLeft}s
           </div>
           
           {/* Progress bar */}
@@ -66,7 +89,7 @@ export function JobOfferModal({ offer, onAccept, onDecline }: JobOfferModalProps
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>Location</div>
               <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>
-                {offer.booking?.address_text || 'Customer Location (GPS)'}
+                {resolvedAddress || offer.booking?.address_text || (offer.booking?.customer_location ? `GPS (${offer.booking.customer_location.lat.toFixed(4)}, ${offer.booking.customer_location.lng.toFixed(4)})` : 'Customer Location (GPS)')}
               </div>
             </div>
           </div>

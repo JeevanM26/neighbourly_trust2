@@ -61,10 +61,30 @@ export default function WorkerProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [resolvedAddress, setResolvedAddress] = useState<string>('Live GPS Location');
 
   useEffect(() => {
     fetchServiceCategories().then(data => setAvailableCategories(data));
   }, []);
+
+  useEffect(() => {
+    if (worker?.location?.lat && worker?.location?.lng) {
+      const { lat, lng } = worker.location;
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            setResolvedAddress(parts.slice(0, 3).join(',').trim());
+          } else {
+            setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+          }
+        })
+        .catch(() => {
+          setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        });
+    }
+  }, [worker?.location]);
 
   useEffect(() => {
     if (worker?.id) {
@@ -349,7 +369,7 @@ export default function WorkerProfileScreen() {
               </div>
               <div>
                 <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0F172A', margin: 0 }}>Service Location</h3>
-                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>Panjimogaru, Mangaluru</span>
+                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{resolvedAddress}</span>
               </div>
             </div>
             <div style={{ background: '#E0F2FE', border: '1px solid #BAE6FD', borderRadius: 12, padding: '4px 10px' }}>

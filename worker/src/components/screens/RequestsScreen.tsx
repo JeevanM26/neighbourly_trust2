@@ -181,6 +181,32 @@ function ActiveJobCard({
   const commission = Math.round(gross * COMMISSION_RATE);
   const net = gross - commission;
 
+  const [resolvedAddress, setResolvedAddress] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (booking.address_text) {
+      setResolvedAddress(booking.address_text);
+      return;
+    }
+    if (booking.customer_location?.lat && booking.customer_location?.lng) {
+      const { lat, lng } = booking.customer_location;
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            const short = parts.slice(0, 3).join(',').trim();
+            setResolvedAddress(short || data.display_name);
+          } else {
+            setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+          }
+        })
+        .catch(() => {
+          setResolvedAddress(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        });
+    }
+  }, [booking.address_text, booking.customer_location]);
+
   const handleDirections = () => {
     if (booking.customer_location) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${booking.customer_location.lat},${booking.customer_location.lng}`, '_blank');
@@ -201,10 +227,10 @@ function ActiveJobCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ 
             width: 46, height: 46, borderRadius: 14, 
-            background: 'linear-gradient(135deg, #0B3D66, #075985)', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            color: 'white', fontSize: 18, fontWeight: 900,
-            boxShadow: '0 4px 12px rgba(11,61,102,0.2)'
+            background: 'linear-gradient(135deg, #059669, #047857)', 
+            color: 'white', display: 'flex', alignItems: 'center', 
+            justifyContent: 'center', fontSize: 18, fontWeight: 900, 
+            boxShadow: '0 4px 12px rgba(5,150,105,0.25)' 
           }}>
             {booking.customer_name ? booking.customer_name[0]?.toUpperCase() : 'C'}
           </div>
@@ -286,7 +312,7 @@ function ActiveJobCard({
               Service Location
             </div>
             <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 600, lineHeight: 1.3 }}>
-              {booking.address_text || 'Panjimogaru, Mangaluru'}
+              {resolvedAddress || booking.address_text || (booking.customer_location ? `GPS (${booking.customer_location.lat.toFixed(4)}, ${booking.customer_location.lng.toFixed(4)})` : 'Customer Location')}
             </div>
           </div>
         </div>

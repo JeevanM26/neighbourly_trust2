@@ -228,13 +228,41 @@ export async function fetchBookingDetails(bookingId: string): Promise<Booking | 
   return data ? mapBookingRow(data) : null;
 }
 
+function parseLocation(loc: any): { lat: number; lng: number } | undefined {
+  if (!loc) return undefined;
+  if (typeof loc === 'object') {
+    if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+      return { lat: loc.lat, lng: loc.lng };
+    }
+    if (Array.isArray(loc.coordinates) && loc.coordinates.length >= 2) {
+      return { lat: Number(loc.coordinates[1]), lng: Number(loc.coordinates[0]) };
+    }
+  }
+  if (typeof loc === 'string') {
+    const match = loc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    if (match) {
+      const lng = parseFloat(match[1]);
+      const lat = parseFloat(match[2]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+    }
+  }
+  return undefined;
+}
+
 function mapBookingRow(b: any): Booking {
+  const loc = (b.customer_lat && b.customer_lng)
+    ? { lat: Number(b.customer_lat), lng: Number(b.customer_lng) }
+    : parseLocation(b.customer_location);
+
   return {
     ...b,
     customer_name: b.profiles?.full_name,
     customer_phone: b.profiles?.phone,
     category_name: b.service_categories?.name_en,
-    customer_location: b.customer_lat && b.customer_lng ? { lat: b.customer_lat, lng: b.customer_lng } : undefined,
+    customer_location: loc,
+    address_text: b.address_text || (loc ? `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}` : undefined),
   };
 }
 

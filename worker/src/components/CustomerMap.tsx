@@ -54,11 +54,16 @@ export default function CustomerMap({ customerLoc }: CustomerMapProps) {
         markerRef.current = L.marker([customerLoc.lat, customerLoc.lng], { icon: customerIcon })
           .addTo(leafletMap.current)
           .bindPopup('<b style="font-family:system-ui;color:#0F172A;">Customer Location</b>');
+
+        setTimeout(() => {
+          if (leafletMap.current) leafletMap.current.invalidateSize();
+        }, 200);
       } else {
         leafletMap.current.setView([customerLoc.lat, customerLoc.lng], 15);
         if (markerRef.current) {
           markerRef.current.setLatLng([customerLoc.lat, customerLoc.lng]);
         }
+        leafletMap.current.invalidateSize();
       }
     });
 
