@@ -118,7 +118,7 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const { getClient } = await import('../../lib/supabase');
+      const { getClient, upsertProfile } = await import('../../lib/supabase');
       const client = getClient();
       if (!client) {
         setError('Service unavailable. Please try again.');
@@ -138,16 +138,42 @@ export default function LoginScreen() {
         return;
       }
       
-      setAuthUserId(data.user.id);
+      const userId = data.user.id;
+      setAuthUserId(userId);
       
-      // Check if profile exists
-      const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).single();
+      // 1. Check if profile exists by user ID
+      let existingName = '';
+      const { data: profile } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
       
-      if (profile && profile.role === 'customer' && profile.full_name && profile.full_name !== 'Deleted User') {
-        // Returning user
-        loginUser(cleanPhone, profile.full_name, data.user.id);
+      if (profile && profile.full_name && profile.full_name.trim() !== '' && profile.full_name !== 'Deleted User') {
+        existingName = profile.full_name.trim();
       } else {
-        // New user or missing full name
+        // 2. Fallback: check if profile exists matching phone number
+        const { data: phoneProfile } = await client
+          .from('profiles')
+          .select('*')
+          .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+          .maybeSingle();
+
+        if (phoneProfile && phoneProfile.full_name && phoneProfile.full_name.trim() !== '' && phoneProfile.full_name !== 'Deleted User') {
+          existingName = phoneProfile.full_name.trim();
+          // Link profile to current auth user id
+          await upsertProfile({
+            id: userId,
+            full_name: existingName,
+            phone: cleanPhone,
+            language: settings.language,
+            consent_given: true,
+          });
+        }
+      }
+
+      if (existingName) {
+        // Returning user - log in immediately without asking for name again!
+        loginUser(cleanPhone, existingName, userId);
+      } else {
+        // New user or missing full name - prompt once
+        if (profile?.full_name) setName(profile.full_name);
         setStep('profile');
         setLoading(false);
       }
@@ -157,9 +183,31 @@ export default function LoginScreen() {
     }
   };
   
-  const handleCompleteProfile = () => {
-    if (!name.trim()) { setError('Please enter your name.'); return; }
-    loginUser(phone, name.trim(), authUserId);
+  const handleCompleteProfile = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) { setError('Please enter your name.'); return; }
+    
+    setLoading(true);
+    setError('');
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    try {
+      const { upsertProfile } = await import('../../lib/supabase');
+      // Persist profile to Supabase database
+      await upsertProfile({
+        id: authUserId,
+        full_name: trimmedName,
+        phone: cleanPhone,
+        language: settings.language,
+        consent_given: true,
+      });
+      
+      loginUser(cleanPhone, trimmedName, authUserId);
+    } catch {
+      loginUser(cleanPhone, trimmedName, authUserId);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (step === 'language') {

@@ -11,10 +11,14 @@ if exist "C:\Program Files\Microsoft\jdk-17.0.20.8-hotspot" (
     set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.20.8-hotspot"
 ) else if exist "C:\Program Files\JetBrains\PyCharm 2025.1.2\jbr" (
     set "JAVA_HOME=C:\Program Files\JetBrains\PyCharm 2025.1.2\jbr"
+) else if exist "%LOCALAPPDATA%\Programs\Microsoft\jdk-17.0.19.10-hotspot" (
+    set "JAVA_HOME=%LOCALAPPDATA%\Programs\Microsoft\jdk-17.0.19.10-hotspot"
 )
 if not defined ANDROID_HOME (
     set "ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk"
 )
+
+set CAPACITOR_TELEMETRY=0
 
 echo [1/6] Building Customer App Static Assets...
 call npm run build
@@ -24,7 +28,11 @@ if %errorlevel% neq 0 (
 )
 
 echo [2/6] Syncing Customer App Capacitor...
-call npx cap sync android
+call .\node_modules\.bin\cap.cmd sync android
+if %errorlevel% neq 0 (
+    echo [ERROR] Customer Capacitor sync failed!
+    exit /b %errorlevel%
+)
 
 echo [3/6] Compiling Customer App APK (Android 34)...
 cd /d "%~dp0android"
@@ -43,7 +51,11 @@ if %errorlevel% neq 0 (
 )
 
 echo [5/6] Syncing Worker App Capacitor...
-call npx cap sync android
+call .\node_modules\.bin\cap.cmd sync android
+if %errorlevel% neq 0 (
+    echo [ERROR] Worker Capacitor sync failed!
+    exit /b %errorlevel%
+)
 
 echo [6/6] Compiling Worker App APK (Android 34)...
 cd /d "%~dp0worker\android"

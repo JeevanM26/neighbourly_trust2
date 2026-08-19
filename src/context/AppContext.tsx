@@ -91,14 +91,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.session?.user) {
           const authUser = data.session.user;
           // check if profile exists
-          const { data: profileData } = await client!.from('profiles').select('*').eq('id', authUser.id).single();
-          if (profileData && profileData.role === 'customer') {
+          const { data: profileData } = await client!.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+          if (profileData && profileData.full_name && profileData.full_name.trim() !== '' && profileData.full_name !== 'Deleted User') {
             setUser({
               id: authUser.id,
               full_name: profileData.full_name,
               phone: authUser.phone || '',
               role: 'customer',
-              language: profileData.preferred_language as LanguageCode || 'en',
+              language: (profileData.preferred_language || profileData.language || 'en') as LanguageCode,
               consent_given: true,
             });
           }
@@ -226,6 +226,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     upsertProfile({
       id: authUserId,
       full_name: name,
+      phone: cleanPhone,
       language: settings.language,
       consent_given: true,
     }).catch(() => {});

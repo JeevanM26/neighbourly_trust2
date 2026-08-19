@@ -1,9 +1,47 @@
-'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useLocation } from '../../context/LocationContext';
 import { LanguageCode } from '../../lib/types';
-import { User, Globe, Volume2, VolumeX, LogOut, ChevronRight, Shield, HelpCircle, Bell, ShieldCheck } from 'lucide-react';
+import { 
+  User, Globe, Volume2, VolumeX, LogOut, ChevronRight, Shield, HelpCircle, 
+  Bell, ShieldCheck, MapPin, Home, Briefcase, Heart, Plus, Edit3, 
+  Check, RefreshCw, Navigation, Building2, Trash2, Crosshair
+} from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
+
+export interface SavedAddress {
+  id: string;
+  type: 'home' | 'work' | 'parents' | 'other';
+  title: string;
+  address: string;
+  landmark?: string;
+  lat?: number;
+  lng?: number;
+}
+
+const DEFAULT_PRESETS: SavedAddress[] = [
+  {
+    id: 'addr_home',
+    type: 'home',
+    title: 'Home',
+    address: 'Flat / House address not set',
+    landmark: '',
+  },
+  {
+    id: 'addr_work',
+    type: 'work',
+    title: 'Work',
+    address: 'Office / Workplace address not set',
+    landmark: '',
+  },
+  {
+    id: 'addr_parents',
+    type: 'parents',
+    title: "Parents' House",
+    address: 'Address not set',
+    landmark: '',
+  }
+];
 
 const LANGUAGES: { code: LanguageCode; label: string; native: string }[] = [
   { code: 'en', label: 'English',   native: 'English'  },
@@ -20,10 +58,25 @@ const LANGUAGES: { code: LanguageCode; label: string; native: string }[] = [
 
 export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?: () => void }) {
   const { user, logoutUser, deleteAccount, settings, setLanguage, toggleSounds, toggleVoice, bookings, showToast } = useApp();
+  const { userLocation, locationStatus, requestLocation } = useLocation();
+
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  // Address state
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(DEFAULT_PRESETS);
+  const [activeAddressId, setActiveAddressId] = useState<string>('live_gps');
+  const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
+  const [isRefreshingGps, setIsRefreshingGps] = useState(false);
+  const [liveResolvedAddress, setLiveResolvedAddress] = useState<string>('');
+
+  // Draft form for editing address
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftAddress, setDraftAddress] = useState('');
+  const [draftLandmark, setDraftLandmark] = useState('');
+  const [draftType, setDraftType] = useState<'home' | 'work' | 'parents' | 'other'>('home');
 
   const totalBookings = bookings.length;
   const completedBookings = bookings.filter(b => b.status === 'completed').length;
@@ -32,6 +85,133 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
     .reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
   const selectedLang = LANGUAGES.find(l => l.code === settings.language) ?? LANGUAGES[0];
+
+  // Load saved addresses and active selection from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('nt_saved_addresses');
+      if (stored) {
+        setSavedAddresses(JSON.parse(stored));
+      }
+      const activeId = localStorage.getItem('nt_active_address_id');
+      if (activeId) setActiveAddressId(activeId);
+    } catch {}
+  }, []);
+
+  // Reverse geocode live GPS location
+  useEffect(() => {
+    if (!userLocation) return;
+    let isCancelled = false;
+    const fetchAddressName = async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}&zoom=18&addressdetails=1`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isCancelled) return;
+          const addr = data.address;
+          const parts = [
+            addr?.suburb || addr?.neighbourhood || addr?.residential || addr?.road,
+            addr?.city || addr?.town || addr?.village || addr?.county,
+            addr?.state
+          ].filter(Boolean);
+          if (parts.length > 0) {
+            setLiveResolvedAddress(parts.join(', '));
+            return;
+          }
+          if (data.display_name) {
+            setLiveResolvedAddress(data.display_name.split(',').slice(0, 3).join(', '));
+            return;
+          }
+        }
+      } catch {}
+      if (!isCancelled) {
+        setLiveResolvedAddress(`${userLocation.lat.toFixed(4)}°N, ${userLocation.lng.toFixed(4)}°E`);
+      }
+    };
+    fetchAddressName();
+    return () => { isCancelled = true; };
+  }, [userLocation]);
+
+  const handleRefreshGps = async () => {
+    setIsRefreshingGps(true);
+    try {
+      const coords = await requestLocation();
+      if (coords) {
+        showToast('📍 Live GPS location refreshed!', 'success');
+      } else {
+        showToast('Could not fetch GPS location. Check permissions.', 'info');
+      }
+    } catch {
+      showToast('Error refreshing GPS.', 'error');
+    } finally {
+      setIsRefreshingGps(false);
+    }
+  };
+
+  const handleSelectActiveAddress = (addrId: string, title: string) => {
+    setActiveAddressId(addrId);
+    try {
+      localStorage.setItem('nt_active_address_id', addrId);
+    } catch {}
+    showToast(`Active address set to ${title} 📍`, 'success');
+  };
+
+  const handleOpenEdit = (addr: SavedAddress) => {
+    setEditingAddress(addr);
+    setDraftTitle(addr.title);
+    setDraftAddress(addr.address === 'Address not set' || addr.address.includes('not set') ? '' : addr.address);
+    setDraftLandmark(addr.landmark || '');
+    setDraftType(addr.type);
+  };
+
+  const handleSaveAddress = () => {
+    if (!editingAddress) return;
+    const updated: SavedAddress = {
+      ...editingAddress,
+      title: draftTitle.trim() || (draftType === 'home' ? 'Home' : draftType === 'work' ? 'Work' : draftType === 'parents' ? "Parents' House" : 'Other'),
+      address: draftAddress.trim() || 'Address not set',
+      landmark: draftLandmark.trim(),
+      type: draftType,
+      lat: editingAddress.lat || userLocation?.lat,
+      lng: editingAddress.lng || userLocation?.lng,
+    };
+
+    const exists = savedAddresses.some(a => a.id === updated.id);
+    const newAddresses = exists 
+      ? savedAddresses.map(a => a.id === updated.id ? updated : a)
+      : [...savedAddresses, updated];
+
+    setSavedAddresses(newAddresses);
+    try {
+      localStorage.setItem('nt_saved_addresses', JSON.stringify(newAddresses));
+    } catch {}
+
+    setEditingAddress(null);
+    showToast(`Address "${updated.title}" saved! ✅`, 'success');
+  };
+
+  const handleAutoFillFromGps = () => {
+    if (liveResolvedAddress) {
+      setDraftAddress(prev => prev ? `${prev}, ${liveResolvedAddress}` : liveResolvedAddress);
+      showToast('Filled address from live GPS 📍', 'info');
+    } else if (userLocation) {
+      setDraftAddress(`${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`);
+      showToast('Filled GPS coordinates', 'info');
+    } else {
+      handleRefreshGps();
+    }
+  };
+
+  const getAddressIcon = (type: SavedAddress['type'], size = 18) => {
+    switch (type) {
+      case 'home': return <Home size={size} color="#0B3D66" />;
+      case 'work': return <Briefcase size={size} color="#0B3D66" />;
+      case 'parents': return <Heart size={size} color="#E11D48" />;
+      default: return <MapPin size={size} color="#0B3D66" />;
+    }
+  };
 
   function SettingRow({ icon, label, right, onClick }: { icon: React.ReactNode; label: string; right: React.ReactNode; onClick?: () => void }) {
     return (
@@ -105,22 +285,135 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
         ))}
       </div>
 
-      {/* Saved Addresses Placeholder */}
-      <div style={{ margin: '16px 16px 0', background: 'white', borderRadius: 20, padding: '4px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-        <p style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '14px 0 4px' }}>
-          Saved Addresses
-        </p>
-        <SettingRow
-          icon={<Globe size={18} color="#0B3D66" />}
-          label="Home"
-          right={<span style={{ fontSize: 11, color: '#94A3B8' }}>Coming Soon</span>}
-        />
-        <div style={{ borderBottom: '1px solid #F1F5F9' }} />
-        <SettingRow
-          icon={<Globe size={18} color="#0B3D66" />}
-          label="Work"
-          right={<span style={{ fontSize: 11, color: '#94A3B8' }}>Coming Soon</span>}
-        />
+      {/* Live Location & Saved Addresses */}
+      <div style={{ margin: '16px 16px 0', background: 'white', borderRadius: 20, padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>
+            Live GPS & Saved Addresses
+          </p>
+          <button
+            onClick={() => handleOpenEdit({
+              id: `addr_${Date.now()}`,
+              type: 'other',
+              title: '',
+              address: '',
+              landmark: '',
+            })}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F0F7FF', border: 'none',
+              padding: '4px 10px', borderRadius: 12, color: '#0B3D66', fontSize: 11, fontWeight: 700, cursor: 'pointer'
+            }}
+          >
+            <Plus size={13} />
+            <span>Add New</span>
+          </button>
+        </div>
+
+        {/* Live GPS Active Card */}
+        <div 
+          onClick={() => handleSelectActiveAddress('live_gps', 'Current Live GPS')}
+          style={{
+            padding: '12px 14px',
+            borderRadius: 14,
+            background: activeAddressId === 'live_gps' ? '#ECFDF5' : '#F8FAFC',
+            border: `1.5px solid ${activeAddressId === 'live_gps' ? '#10B981' : '#E2E8F0'}`,
+            marginBottom: 10,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>Current GPS Location</span>
+              {activeAddressId === 'live_gps' && (
+                <span style={{ fontSize: 9, fontWeight: 800, background: '#10B981', color: 'white', padding: '1px 6px', borderRadius: 10 }}>
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleRefreshGps(); }}
+              title="Refresh GPS"
+              style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#64748B' }}
+            >
+              <RefreshCw size={13} style={{ animation: isRefreshingGps ? 'spin 1s linear infinite' : 'none' }} />
+            </button>
+          </div>
+          <div style={{ fontSize: 12, color: '#475569', fontWeight: 500, lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {liveResolvedAddress || (userLocation ? `${userLocation.lat.toFixed(4)}°N, ${userLocation.lng.toFixed(4)}°E` : 'Tap to detect location')}
+          </div>
+        </div>
+
+        {/* Saved Presets */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {savedAddresses.map((addr) => {
+            const isActive = activeAddressId === addr.id;
+            const isNotConfigured = !addr.address || addr.address.includes('not set');
+
+            return (
+              <div
+                key={addr.id}
+                onClick={() => {
+                  if (isNotConfigured) {
+                    handleOpenEdit(addr);
+                  } else {
+                    handleSelectActiveAddress(addr.id, addr.title);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 12px',
+                  borderRadius: 14,
+                  background: isActive ? '#F0F7FF' : 'white',
+                  border: `1.5px solid ${isActive ? '#0B3D66' : '#F1F5F9'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: isActive ? 'rgba(11,61,102,0.1)' : '#F8FAFC',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {getAddressIcon(addr.type, 18)}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{addr.title}</span>
+                    {isActive && (
+                      <span style={{ fontSize: 9, fontWeight: 800, background: '#0B3D66', color: 'white', padding: '1px 6px', borderRadius: 10 }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{
+                    fontSize: 11, color: isNotConfigured ? '#94A3B8' : '#64748B',
+                    fontWeight: isNotConfigured ? 600 : 500,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }}>
+                    {isNotConfigured ? '+ Tap to set address' : addr.address}
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(addr); }}
+                  title="Edit Address"
+                  style={{
+                    background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
+                    padding: '6px', cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center'
+                  }}
+                >
+                  <Edit3 size={13} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Settings */}
@@ -344,6 +637,214 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
                 style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: '#EF4444', color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Address Modal */}
+      {editingAddress && (
+        <div className="modal-backdrop" onClick={() => setEditingAddress(null)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()} style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+            <div className="modal-handle" />
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                {editingAddress.title ? `Edit ${editingAddress.title}` : 'Add New Address'}
+              </h3>
+              {savedAddresses.length > 3 && editingAddress.type === 'other' && (
+                <button
+                  onClick={() => {
+                    const newAddresses = savedAddresses.filter(a => a.id !== editingAddress.id);
+                    setSavedAddresses(newAddresses);
+                    try { localStorage.setItem('nt_saved_addresses', JSON.stringify(newAddresses)); } catch {}
+                    setEditingAddress(null);
+                    showToast('Address deleted.', 'info');
+                  }}
+                  style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Trash2 size={13} />
+                  <span>Delete</span>
+                </button>
+              )}
+            </div>
+
+            {/* Address Type Selector */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 6 }}>
+                Address Type
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {[
+                  { type: 'home', label: 'Home', icon: <Home size={15} /> },
+                  { type: 'work', label: 'Work', icon: <Briefcase size={15} /> },
+                  { type: 'parents', label: 'Parents', icon: <Heart size={15} /> },
+                  { type: 'other', label: 'Other', icon: <MapPin size={15} /> },
+                ].map(item => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => {
+                      setDraftType(item.type as any);
+                      if (!draftTitle || draftTitle === 'Home' || draftTitle === 'Work' || draftTitle === "Parents' House") {
+                        setDraftTitle(item.label);
+                      }
+                    }}
+                    style={{
+                      padding: '10px 4px',
+                      borderRadius: 12,
+                      border: `1.5px solid ${draftType === item.type ? '#0B3D66' : '#E2E8F0'}`,
+                      background: draftType === item.type ? '#F0F7FF' : 'white',
+                      color: draftType === item.type ? '#0B3D66' : '#64748B',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Label / Name */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 6 }}>
+                Address Name / Label
+              </label>
+              <input
+                type="text"
+                value={draftTitle}
+                onChange={e => setDraftTitle(e.target.value)}
+                placeholder="e.g. Home, Office 3rd Floor"
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#0F172A',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Flat / House No / Street Address */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Full Address & Street
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAutoFillFromGps}
+                  style={{
+                    background: '#ECFDF5',
+                    border: '1px solid #10B981',
+                    borderRadius: 8,
+                    padding: '3px 8px',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#059669',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3
+                  }}
+                >
+                  <Crosshair size={11} />
+                  <span>Use Live GPS</span>
+                </button>
+              </div>
+              <textarea
+                value={draftAddress}
+                onChange={e => setDraftAddress(e.target.value)}
+                rows={3}
+                placeholder="e.g. Flat 304, Green Palms Apt, 5th Cross, Gandhi Nagar"
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#0F172A',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  resize: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Landmark (Optional) */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 6 }}>
+                Landmark (Optional)
+              </label>
+              <input
+                type="text"
+                value={draftLandmark}
+                onChange={e => setDraftLandmark(e.target.value)}
+                placeholder="e.g. Behind City Hospital, Near Water Tank"
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#0F172A',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setEditingAddress(null)}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: 14,
+                  border: '1.5px solid #E2E8F0',
+                  background: 'white',
+                  color: '#475569',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAddress}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #0B3D66, #041B30)',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(11,61,102,0.25)'
+                }}
+              >
+                Save Address
               </button>
             </div>
           </div>

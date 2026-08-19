@@ -168,28 +168,36 @@ export async function createBooking(params: {
 export async function upsertProfile(profile: {
   id: string;
   full_name: string;
+  phone?: string;
   language: string;
   consent_given: boolean;
 }): Promise<boolean> {
   const client = getClient();
   if (!client) return false;
   try {
+    const payload: any = {
+      id: profile.id,
+      full_name: profile.full_name,
+      role: 'customer',
+      language: profile.language || 'en',
+      preferred_language: profile.language || 'en',
+      consent_given: profile.consent_given ?? true,
+      updated_at: new Date().toISOString(),
+    };
+    if (profile.phone) {
+      payload.phone = profile.phone;
+    }
     const { error } = await client
       .from('profiles')
-      .upsert({ 
-        id: profile.id,
-        full_name: profile.full_name,
-        role: 'customer',
-        preferred_language: profile.language,
-        // Ensure avatar_url is explicitly handled if present, else undefined is fine
-      });
+      .upsert(payload, { onConflict: 'id' });
     if (error) {
       console.error("upsert profile error details:", error.message, error.details, error.hint);
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-error', { detail: error.message || 'Database error occurred' }));
+      return false;
     }
-    return !error;
+    return true;
   } catch (e) { 
-    console.error(e);
+    console.error("upsertProfile exception:", e);
     return false; 
   }
 }

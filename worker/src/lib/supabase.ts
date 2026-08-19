@@ -35,44 +35,110 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
 }
 
 // ─── Fetch worker profile from Supabase ───────────────────
-export async function fetchWorkerProfile(authUserId: string): Promise<WorkerProfile | null> {
+export async function fetchWorkerProfile(authUserId: string, phoneFallback?: string): Promise<WorkerProfile | null> {
   const client = getClient();
   if (!client) return null;
   try {
-    // 1. Check if worker profile exists
-    const { data, error } = await client
+    // 1. Fetch categories directly from worker_categories (joined with service_categories)
+    const { data: catData } = await client
+      .from('worker_categories')
+      .select('category_id, service_categories ( id, slug, name_en, icon_url )')
+      .eq('worker_id', authUserId);
+
+    let categories: ServiceCategory[] = (catData || [])
+      .map((c: any) => c.service_categories)
+      .filter(Boolean);
+
+    // Fallback: If service_categories join wasn't expanded, query by IDs
+    if (categories.length === 0 && catData && catData.length > 0) {
+      const catIds = catData.map((c: any) => c.category_id).filter(Boolean);
+      if (catIds.length > 0) {
+        const { data: directCats } = await client.from('service_categories').select('*').in('id', catIds);
+        if (directCats) categories = directCats;
+      }
+    }
+
+    // 2. Fetch worker profile metadata
+    const { data } = await client
       .from('worker_profiles')
       .select(`
         bio, years_experience, is_online, is_verified, service_radius_km, avg_rating, total_jobs,
-        profiles!profile_id ( full_name, preferred_language ),
-        worker_categories ( category_id )
+        profiles!profile_id ( full_name, preferred_language, phone )
       `)
       .eq('profile_id', authUserId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return null;
-
-    // Fetch actual category details
-    const catIds = ((data as any).worker_categories || []).map((c: any) => c.category_id);
-    let categories: ServiceCategory[] = [];
-    if (catIds.length > 0) {
-      const { data: cats } = await client.from('service_categories').select('*').in('id', catIds);
-      if (cats) categories = cats;
+    if (data) {
+      return {
+        id: authUserId,
+        full_name: (data as any).profiles?.full_name ?? '',
+        phone: (data as any).profiles?.phone ?? '',
+        language: (data as any).profiles?.preferred_language ?? 'en',
+        is_online: !!data.is_online,
+        is_verified: !!data.is_verified,
+        bio: data.bio,
+        years_experience: data.years_experience || 0,
+        service_radius_km: data.service_radius_km || 8,
+        rating: Number(data.avg_rating) || 5.0,
+        total_jobs: data.total_jobs || 0,
+        categories,
+      };
     }
 
-    return {
-      id: authUserId,
-      full_name: (data as any).profiles?.full_name ?? '',
-      language: (data as any).profiles?.preferred_language ?? 'en',
-      is_online: !!data.is_online,
-      is_verified: !!data.is_verified,
-      bio: data.bio,
-      years_experience: data.years_experience || 0,
-      service_radius_km: data.service_radius_km || 8,
-      rating: Number(data.avg_rating) || 5.0,
-      total_jobs: data.total_jobs || 0,
-      categories,
-    };
+    // 3. Fallback: Check if a master profile exists in public.profiles by ID
+    const { data: prof } = await client.from('profiles').select('full_name, preferred_language, phone').eq('id', authUserId).maybeSingle();
+    if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
+      return {
+        id: authUserId,
+        full_name: prof.full_name,
+        phone: prof.phone || '',
+        language: prof.preferred_language || 'en',
+        is_online: false,
+        is_verified: false,
+        rating: 5.0,
+        total_jobs: 0,
+        years_experience: 0,
+        service_radius_km: 8,
+        categories,
+      };
+    }
+
+    // 4. Fallback by phone number if provided
+    if (phoneFallback) {
+      const clean = phoneFallback.replace(/\D/g, '');
+      const { data: phoneProf } = await client
+        .from('profiles')
+        .select('id, full_name, preferred_language, phone')
+        .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+        .maybeSingle();
+
+      if (phoneProf && phoneProf.full_name && phoneProf.full_name.trim() !== '' && phoneProf.full_name !== 'Deleted User') {
+        const { data: phoneCatData } = await client
+          .from('worker_categories')
+          .select('category_id, service_categories ( id, slug, name_en, icon_url )')
+          .eq('worker_id', phoneProf.id);
+
+        const phoneCats: ServiceCategory[] = (phoneCatData || [])
+          .map((c: any) => c.service_categories)
+          .filter(Boolean);
+
+        return {
+          id: phoneProf.id,
+          full_name: phoneProf.full_name,
+          phone: phoneProf.phone || clean,
+          language: phoneProf.preferred_language || 'en',
+          is_online: false,
+          is_verified: false,
+          rating: 5.0,
+          total_jobs: 0,
+          years_experience: 0,
+          service_radius_km: 8,
+          categories: phoneCats.length > 0 ? phoneCats : categories,
+        };
+      }
+    }
+
+    return null;
   } catch { return null; }
 }
 
@@ -81,6 +147,7 @@ export async function createWorkerProfile(params: {
   id: string;
   name: string;
   categoryIds: string[];
+  phone?: string;
 }): Promise<boolean> {
   const client = getClient();
   if (!client) return false;
@@ -88,9 +155,18 @@ export async function createWorkerProfile(params: {
     // 1. Ensure profile exists
     const { data: existingProf } = await client.from('profiles').select('id').eq('id', params.id).maybeSingle();
     if (!existingProf) {
-      await client.from('profiles').insert({ id: params.id, full_name: params.name, role: 'worker' });
+      await client.from('profiles').insert({ 
+        id: params.id, 
+        full_name: params.name, 
+        phone: params.phone || null,
+        role: 'worker' 
+      });
     } else {
-      await client.from('profiles').update({ full_name: params.name, role: 'worker' }).eq('id', params.id);
+      await client.from('profiles').update({ 
+        full_name: params.name, 
+        role: 'worker',
+        ...(params.phone ? { phone: params.phone } : {})
+      }).eq('id', params.id);
     }
 
     // 2. Insert worker_profile

@@ -26,7 +26,7 @@ const CategoryIcon = ({ slug, size = 24 }: { slug: string, size?: number }) => {
 type Step = 'phone' | 'otp' | 'name' | 'skills';
 
 export default function WorkerLoginScreen() {
-  const { loginWorker, completeOnboarding, isNewWorker, showToast } = useWorker();
+  const { worker, loginWorker, completeOnboarding, isNewWorker, showToast } = useWorker();
   const [step, setStep] = useState<Step>('phone');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -45,9 +45,14 @@ export default function WorkerLoginScreen() {
   useEffect(() => {
     if (isNewWorker) {
       fetchServiceCategories().then(data => setCategories(data));
-      setStep('name');
+      if (worker?.full_name && worker.full_name.trim() !== '' && worker.full_name !== 'Deleted User') {
+        setName(worker.full_name);
+        setStep('skills');
+      } else {
+        setStep('name');
+      }
     }
-  }, [isNewWorker]);
+  }, [isNewWorker, worker?.full_name]);
 
   useEffect(() => {
     if (countdown <= 0) return;

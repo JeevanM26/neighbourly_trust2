@@ -161,16 +161,20 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   useEffect(() => {
-
-
     const client = getClient();
     if (client) {
-      client!.auth.getSession().then(({ data }) => {
+      client!.auth.getSession().then(async ({ data }) => {
         if (data.session?.user) {
           accessTokenRef.current = data.session.access_token;
-          const savedWorker = localStorage.getItem('nt_worker');
-          if (savedWorker) {
-            try { setWorker(JSON.parse(savedWorker)); } catch {}
+          const authUser = data.session.user;
+          const prof = await fetchWorkerProfile(authUser.id);
+          if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
+            setWorker({ ...prof, phone: authUser.phone || prof.phone || '' });
+          } else {
+            const savedWorker = localStorage.getItem('nt_worker');
+            if (savedWorker) {
+              try { setWorker(JSON.parse(savedWorker)); } catch {}
+            }
           }
         }
         setIsAuthLoading(false);
@@ -284,28 +288,37 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const loginWorker = useCallback((phone: string, authUserId: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // Check if worker profile exists in DB
-    fetchWorkerProfile(authUserId).then(profile => {
-      if (profile && profile.full_name !== 'Deleted User') {
-        setWorker({ ...profile, phone: cleanPhone });
-        showToast(`Welcome back, ${profile.full_name.split(' ')[0]}! 👋`);
-      } else {
-        // New worker — needs onboarding
-        setWorker({
-          id: authUserId,
-          full_name: '', // Will be set during onboarding
-          phone: cleanPhone,
-          language: 'en',
-          is_online: false,
-          is_verified: false,
-          rating: 5.0,
-          total_jobs: 0,
-          years_experience: 0,
-          service_radius_km: 8,
-          categories: [],
-        });
-        setIsNewWorker(true);
+    // Check if worker profile exists in DB (by ID or phone)
+    fetchWorkerProfile(authUserId, cleanPhone).then(profile => {
+      if (profile && profile.full_name && profile.full_name.trim() !== '' && profile.full_name !== 'Deleted User') {
+        if (profile.categories && profile.categories.length > 0) {
+          setWorker({ ...profile, phone: cleanPhone });
+          showToast(`Welcome back, ${profile.full_name.split(' ')[0]}! 👋`);
+          setIsNewWorker(false);
+          return;
+        } else {
+          // Profile exists with name, just needs skills selection
+          setWorker({ ...profile, phone: cleanPhone });
+          setIsNewWorker(true);
+          return;
+        }
       }
+      
+      // New worker — needs onboarding
+      setWorker({
+        id: authUserId,
+        full_name: '', // Will be set during onboarding
+        phone: cleanPhone,
+        language: 'en',
+        is_online: false,
+        is_verified: false,
+        rating: 5.0,
+        total_jobs: 0,
+        years_experience: 0,
+        service_radius_km: 8,
+        categories: [],
+      });
+      setIsNewWorker(true);
     });
   }, [showToast]);
 
@@ -315,11 +328,12 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const success = await createWorkerProfile({
       id: worker.id,
       name: name,
-      categoryIds
+      categoryIds,
+      phone: worker.phone
     });
     
     if (success) {
-      const profile = await fetchWorkerProfile(worker.id);
+      const profile = await fetchWorkerProfile(worker.id, worker.phone);
       if (profile) setWorker({ ...profile, phone: worker.phone });
       setIsNewWorker(false);
       showToast('Profile created! You\'re ready to take bookings 🎉');
