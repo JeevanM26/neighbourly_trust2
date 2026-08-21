@@ -54,8 +54,6 @@ export default function WorkerProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [draftRadius, setDraftRadius] = useState(5);
-  const [draftUpi, setDraftUpi] = useState('jeevan@upi');
-  const [isEditingUpi, setIsEditingUpi] = useState(false);
   const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set());
   const [availableCategories, setAvailableCategories] = useState<ServiceCategory[]>([]);
   const [saving, setSaving] = useState(false);
@@ -394,59 +392,6 @@ export default function WorkerProfileScreen() {
           </div>
         </div>
 
-        {/* ── Direct Payout UPI Card ── */}
-        <div style={{ 
-          background: 'white', borderRadius: 22, padding: '18px', marginBottom: 16, 
-          boxShadow: '0 4px 16px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0' 
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IndianRupee size={18} color="#059669" />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0F172A', margin: 0 }}>Instant UPI Payouts</h3>
-                <span style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>Direct daily bank settlement</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => setIsEditingUpi(!isEditingUpi)}
-              style={{ background: 'none', border: 'none', color: '#059669', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-            >
-              {isEditingUpi ? 'Done' : 'Edit UPI'}
-            </button>
-          </div>
-
-          {isEditingUpi ? (
-            <div style={{ marginTop: 10 }}>
-              <input 
-                type="text" 
-                value={draftUpi} 
-                onChange={(e) => setDraftUpi(e.target.value)} 
-                placeholder="e.g. mobile@upi"
-                style={{ 
-                  width: '100%', padding: '10px 12px', borderRadius: 12, 
-                  border: '1.5px solid #059669', fontSize: 13, fontWeight: 700, 
-                  boxSizing: 'border-box', outline: 'none', marginBottom: 8 
-                }}
-              />
-              <button 
-                onClick={() => {
-                  setIsEditingUpi(false);
-                  showToast('Payout UPI ID saved! 💰');
-                }} 
-                style={{ width: '100%', padding: '10px', background: '#059669', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
-              >
-                Save Payout Account
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '10px 12px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', fontFamily: 'monospace' }}>{draftUpi}</span>
-              <span style={{ fontSize: 11, color: '#10B981', fontWeight: 800 }}>● Active</span>
-            </div>
-          )}
-        </div>
 
         {/* ── App Preferences & Language ── */}
         <div style={{ 
