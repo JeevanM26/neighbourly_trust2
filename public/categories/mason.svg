@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Drop Shadows -->
+    <filter id="masonShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#EA580C" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.16"/>
+    </filter>
+
+    <!-- 3D Brick Red Gradients -->
+    <linearGradient id="brickTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+    <linearGradient id="brickSide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C2410C"/>
+      <stop offset="100%" stop-color="#7C2D12"/>
+    </linearGradient>
+
+    <!-- Trowel Steel Blade -->
+    <linearGradient id="trowelBlade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="35%" stop-color="#E2E8F0"/>
+      <stop offset="70%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+
+    <!-- Wooden Handle -->
+    <linearGradient id="woodHandle" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="50%" stop-color="#92400E"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#masonShadow)" transform="translate(10, 8)">
+    
+    <!-- 3D Terracotta Construction Bricks in Isometric Base -->
+    <g transform="translate(20, 95)">
+      <!-- Brick 1 Top Face -->
+      <polygon points="40,25 95,5 125,20 70,40" fill="url(#brickTop)"/>
+      <!-- Brick 1 Left Face -->
+      <polygon points="40,25 70,40 70,68 40,53" fill="url(#brickSide)"/>
+      <!-- Brick 1 Right Face -->
+      <polygon points="70,40 125,20 125,48 70,68" fill="#9A3412"/>
+
+      <!-- Mortar Layer Line -->
+      <polygon points="35,28 65,43 65,47 35,32" fill="#CBD5E1" opacity="0.8"/>
+    </g>
+
+    <!-- 3D Diamond Bricklayer Trowel -->
+    <g transform="rotate(-15 100 80)">
+      <!-- Blade Shadow -->
+      <polygon points="70,25 125,75 70,120 40,75" fill="rgba(0,0,0,0.15)"/>
+      
+      <!-- Forged Steel Blade -->
+      <polygon points="65,20 120,70 65,115 35,70" fill="url(#trowelBlade)"/>
+      <!-- Blade Spine Highlight -->
+      <line x1="65" y1="20" x2="65" y2="115" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Shank / Neck (S-Curved Steel Rod) -->
+      <path d="M 65 70 C 65 50 95 50 95 30 L 115 30" fill="none" stroke="#334155" stroke-width="7" stroke-linecap="round"/>
+
+      <!-- Lacquered Wooden Grip Handle -->
+      <rect x="110" y="22" width="48" height="16" rx="8" fill="url(#woodHandle)"/>
+      <rect x="115" y="24" width="38" height="4" rx="2" fill="#FDE68A" opacity="0.4"/>
+      <!-- Brass Ferrule Ring -->
+      <rect x="108" y="21" width="6" height="18" rx="2" fill="#F59E0B"/>
+    </g>
+  </g>
+</svg>

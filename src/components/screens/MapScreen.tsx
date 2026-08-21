@@ -261,60 +261,12 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       
       let results: any[] = [];
       if (activeFilter === 'All') {
-        const targetCategory = categories.length > 0 ? categories[0] : null;
-        if (targetCategory) {
-          const res = await findNearbyWorkers(targetCategory.id, searchLat, searchLng);
-          results = res.map(w => ({ ...w, __categoryId: targetCategory.id }));
-        }
+        const catPromises = categories.map(cat => findNearbyWorkers(cat.id, searchLat, searchLng));
+        const allRes = await Promise.all(catPromises);
+        results = allRes.flat();
       } else {
         const res = await findNearbyWorkers(activeFilter, searchLat, searchLng);
         results = res.map(w => ({ ...w, __categoryId: activeFilter }));
-      }
-
-      // Sample fallback specialists if database count is 0 in immediate radius
-      if (results.length === 0) {
-        const sampleSpecialists = [
-          {
-            worker_id: 'mock-w1',
-            full_name: 'Ramesh Kumar',
-            name: 'Ramesh Kumar',
-            avg_rating: 4.9,
-            rating: 4.9,
-            total_jobs_completed: 142,
-            hourly_rate: 350,
-            avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
-            location: { lat: searchLat + 0.0032, lng: searchLng + 0.0025 },
-            __categoryId: activeFilter === 'All' ? (categories[0]?.id || 'cat-elec') : activeFilter,
-            bio: 'Expert specialist with 8+ years experience. Fast arrival & fair rates.',
-          },
-          {
-            worker_id: 'mock-w2',
-            full_name: 'Suresh Sharma',
-            name: 'Suresh Sharma',
-            avg_rating: 4.8,
-            rating: 4.8,
-            total_jobs_completed: 98,
-            hourly_rate: 400,
-            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-            location: { lat: searchLat - 0.0025, lng: searchLng + 0.0035 },
-            __categoryId: activeFilter === 'All' ? (categories[1]?.id || categories[0]?.id || 'cat-plumb') : activeFilter,
-            bio: 'Certified technician. 5-star quality guarantee.',
-          },
-          {
-            worker_id: 'mock-w3',
-            full_name: 'Anita Patel',
-            name: 'Anita Patel',
-            avg_rating: 4.95,
-            rating: 4.95,
-            total_jobs_completed: 215,
-            hourly_rate: 300,
-            avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-            location: { lat: searchLat + 0.0018, lng: searchLng - 0.0032 },
-            __categoryId: activeFilter === 'All' ? (categories[2]?.id || categories[0]?.id || 'cat-clean') : activeFilter,
-            bio: 'Verified neighbor. Professional background-checked specialist.',
-          }
-        ];
-        results = sampleSpecialists;
       }
 
       if (isMounted) {

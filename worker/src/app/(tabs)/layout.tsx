@@ -40,7 +40,7 @@ export default function WorkerTabsLayout({ children }: { children: React.ReactNo
           <ShieldCheck size={36} color="#FCD34D" strokeWidth={2.5} />
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.3px', margin: 0 }}>
-          Neighborly Trust
+          Hero Hand
         </h1>
       </div>
     );

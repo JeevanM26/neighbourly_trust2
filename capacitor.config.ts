@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.neighborly.trust',
-  appName: 'Neighborly Trust',
+  appName: 'Hero Hand',
   webDir: 'out',
   server: {
     androidScheme: 'https'

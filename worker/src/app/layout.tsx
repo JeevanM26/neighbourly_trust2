@@ -12,9 +12,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Neighborly Trust — Worker Portal',
+  title: 'Hero Hand — Worker Portal',
   description: 'Manage your service bookings, skills, and earnings. Accept jobs, track your income, and grow your business.',
-  authors: [{ name: 'Neighborly Trust' }],
+  authors: [{ name: 'Hero Hand' }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

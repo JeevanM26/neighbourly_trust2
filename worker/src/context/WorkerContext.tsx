@@ -14,6 +14,7 @@ import {
 } from '../lib/supabase';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallOverlay } from '../components/CallOverlay';
+import { CallAudioSynthesizer } from '../lib/callEngine';
 import { MapPin } from 'lucide-react';
 import { WorkerLocationProvider } from './WorkerLocationContext';
 
@@ -123,7 +124,15 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try { return JSON.parse(localStorage.getItem('nt_worker') ?? 'null'); } catch { return null; }
   });
   const [isNewWorker, setIsNewWorker] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const savedOnline = localStorage.getItem('nt_worker_online');
+      if (savedOnline !== null) return JSON.parse(savedOnline);
+      const savedWorker = JSON.parse(localStorage.getItem('nt_worker') ?? 'null');
+      return !!savedWorker?.is_online;
+    } catch { return false; }
+  });
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   
   const [offers, setOffers] = useState<BookingOffer[]>([]);
@@ -146,11 +155,18 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const webrtc = useWebRTC(worker?.id || '');
 
-  // Persist & Supabase Auth Session
+  // Persist worker profile and online status
   useEffect(() => {
-    if (typeof window !== 'undefined') localStorage.setItem('nt_worker', JSON.stringify(worker));
-    if (worker) setIsOnline(worker.is_online);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nt_worker', JSON.stringify(worker));
+    }
   }, [worker]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nt_worker_online', JSON.stringify(isOnline));
+    }
+  }, [isOnline]);
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -169,7 +185,10 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const authUser = data.session.user;
           const prof = await fetchWorkerProfile(authUser.id);
           if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
-            setWorker({ ...prof, phone: authUser.phone || prof.phone || '' });
+            const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('nt_worker_online') : null;
+            const effectiveOnline = savedOnline !== null ? JSON.parse(savedOnline) : prof.is_online;
+            setWorker({ ...prof, is_online: effectiveOnline, phone: authUser.phone || prof.phone || '' });
+            setIsOnline(effectiveOnline);
           } else {
             const savedWorker = localStorage.getItem('nt_worker');
             if (savedWorker) {
@@ -193,43 +212,15 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setWorker(null);
           setActiveBookings([]);
           setCompletedBookings([]);
+          setIsOnline(false);
           localStorage.removeItem('nt_worker');
+          localStorage.removeItem('nt_worker_online');
         }
         setIsAuthLoading(false);
       });
 
-      const handleBeforeUnload = () => {
-        const savedWorker = localStorage.getItem('nt_worker');
-        if (savedWorker) {
-          try {
-            const parsed = JSON.parse(savedWorker);
-            if (parsed && parsed.id) {
-              const token = accessTokenRef.current || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-              // Fire-and-forget fetch with keepalive to ensure it reaches Supabase
-              fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/worker_profiles?profile_id=eq.${parsed.id}`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ is_online: false }),
-                keepalive: true
-              }).catch(() => {});
-            }
-          } catch (e) {}
-        }
-      };
-
-      if (typeof window !== 'undefined') {
-        window.addEventListener('beforeunload', handleBeforeUnload);
-      }
-
       return () => {
         subscription.unsubscribe();
-        if (typeof window !== 'undefined') {
-          window.removeEventListener('beforeunload', handleBeforeUnload);
-        }
       };
     } else {
       setIsAuthLoading(false);
@@ -264,6 +255,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     refreshBookings();
 
     // Real-time subscription to Booking Offers
+    const alertSynth = new CallAudioSynthesizer();
     const channel = subscribeToBookingOffers(worker.id, (newOffer) => {
       // Auto dismiss after 30s happens in the UI component, but we add it to state here
       setOffers(prev => {
@@ -271,6 +263,13 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (prev.find(o => o.id === newOffer.id)) return prev;
         return [newOffer, ...prev];
       });
+
+      // Play loud attention-grabbing arpeggio and trigger urgent phone vibration
+      alertSynth.playNewBookingAlert(
+        newOffer.booking?.customer_name || 'Customer',
+        newOffer.booking?.category_name || 'Job'
+      );
+
       showToast(`🔔 New ${newOffer.booking?.category_name || 'Job'} offer!`, 'info');
       // Browser notification
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
@@ -281,7 +280,10 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     });
     realtimeRef.current = channel;
-    return () => { channel?.unsubscribe(); };
+    return () => {
+      alertSynth.stop();
+      channel?.unsubscribe();
+    };
   }, [worker, refreshBookings, showToast]);
 
   // Auth
@@ -376,7 +378,10 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setActiveBookings([]);
     setCompletedBookings([]);
     setIsOnline(false);
-    if (typeof window !== 'undefined') localStorage.removeItem('nt_worker');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('nt_worker');
+      localStorage.removeItem('nt_worker_online');
+    }
     
     const client = getClient();
     if (client) {
@@ -402,13 +407,29 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setIsOnline(next);
     setWorker(prev => prev ? { ...prev, is_online: next } : null);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nt_worker_online', JSON.stringify(next));
+    }
 
-    if (next && typeof window !== 'undefined' && navigator.geolocation) {
-      showToast('You\'re online — ready for bookings! ✅', 'success');
+    if (next) {
+      if (typeof window !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
+          },
+          async () => {
+            await setWorkerOnline(worker.id, true, null, null);
+          },
+          { timeout: 8000 }
+        );
+      } else {
+        await setWorkerOnline(worker.id, true, null, null);
+      }
+      showToast("You're online — ready for bookings! ✅", 'success');
     } else {
       // Offline
       await setWorkerOnline(worker.id, false, null, null);
-      showToast('You\'re offline', 'info');
+      showToast("You're offline", 'info');
     }
   }, [isOnline, worker, showToast]);
 

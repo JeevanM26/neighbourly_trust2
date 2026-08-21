@@ -63,7 +63,7 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
             </div>
             <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', textAlign: 'center', margin: '0 0 12px' }}>Location Access Needed</h3>
             <p style={{ fontSize: 14, color: '#475569', textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px', fontWeight: 500 }}>
-              Neighborly Trust needs to access your location in the background while you are online to match you with nearby customers and track your progress to jobs.
+              Hero Hand needs to access your location in the background while you are online to match you with nearby customers and track your progress to jobs.
             </p>
             <button onClick={executeToggle} style={{ width: '100%', padding: 16, background: 'linear-gradient(135deg, #059669, #065F46)', color: 'white', borderRadius: 16, border: 'none', fontSize: 16, fontWeight: 800, cursor: 'pointer', marginBottom: 12 }}>
               Continue

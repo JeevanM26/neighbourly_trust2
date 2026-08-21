@@ -158,8 +158,8 @@ export default function WorkerLoginScreen() {
         <div style={{ width: 76, height: 76, borderRadius: 22, background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)' }}>
           <ShieldCheck size={38} color="#FCD34D" strokeWidth={2.5} />
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>Worker Portal</h1>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 500 }}>Neighborly Trust — Partner App</p>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>Hero Hand Partner</h1>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 500 }}>Hero Hand — Partner App</p>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 6, fontWeight: 400 }}>Accept jobs • Track earnings • Grow your business</p>
       </div>
 

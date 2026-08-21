@@ -33,18 +33,36 @@ const isCategoryMatch = (catName: string, intentCat: string) => {
   return false;
 };
 
-const CategoryIcon = ({ slug, size = 26 }: { slug: string, size?: number }) => {
+const getCategory3DImage = (slug: string = ''): string => {
   const s = slug.toLowerCase();
-  if (s.includes('elec')) return <Zap size={size} color="#F59E0B" />;
-  if (s.includes('plumb')) return <Droplet size={size} color="#38BDF8" />;
-  if (s.includes('carp')) return <Hammer size={size} color="#FB923C" />;
-  if (s.includes('paint')) return <Paintbrush size={size} color="#C084FC" />;
-  if (s.includes('clean')) return <Sparkles size={size} color="#34D399" />;
-  if (s.includes('pest')) return <Bug size={size} color="#F87171" />;
-  if (s.includes('ac') || s.includes('appliance')) return <Flame size={size} color="#60A5FA" />;
-  if (s.includes('salon') || s.includes('barber')) return <Scissors size={size} color="#F472B6" />;
-  if (s.includes('mechanic') || s.includes('auto')) return <Car size={size} color="#818CF8" />;
-  return <Tool size={size} color="#94A3B8" />;
+  if (s.includes('elec')) return '/categories/electrician.png';
+  if (s.includes('plumb')) return '/categories/plumber.png';
+  if (s.includes('carp')) return '/categories/carpenter.png';
+  if (s.includes('paint')) return '/categories/painter.png';
+  if (s.includes('clean')) return '/categories/cleaning.png';
+  if (s.includes('pest')) return '/categories/pestcontrol.png';
+  if (s.includes('ac') || s.includes('appliance')) return '/categories/acrepair.png';
+  if (s.includes('salon') || s.includes('barber')) return '/categories/salon.png';
+  if (s.includes('mason')) return '/categories/mason.png';
+  if (s.includes('mechanic') || s.includes('auto')) return '/categories/mechanic.png';
+  return '/categories/electrician.png';
+};
+
+const CategoryIcon = ({ slug, size = 58 }: { slug: string, size?: number }) => {
+  const imgPath = getCategory3DImage(slug);
+  return (
+    <img 
+      src={imgPath} 
+      alt={slug} 
+      style={{ 
+        width: size, 
+        height: size, 
+        objectFit: 'contain',
+        filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.45))',
+        transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
+      }} 
+    />
+  );
 };
 
 const PRESET_CHIPS = [
@@ -142,58 +160,6 @@ export default function HomeScreen({
         results = Array.from(new Map(allRes.flat().map(w => [w.worker_id, w])).values());
       }
       
-      if (results.length === 0) {
-        results = [
-          {
-            worker_id: 'mock-home-1',
-            full_name: 'Ramesh Kumar',
-            category_id: categories[0]?.id || 'plumber',
-            avg_rating: 4.9,
-            total_jobs: 142,
-            years_experience: 8,
-            distance_km: 0.6,
-            hourly_rate: 350,
-            avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
-            location: { lat: roundedLat + 0.003, lng: roundedLng + 0.002 },
-            description: 'Master plumber with 8+ years experience in fittings & leak fixing.',
-            is_online: true,
-            is_verified: true,
-            featured: true,
-          },
-          {
-            worker_id: 'mock-home-2',
-            full_name: 'Suresh Sharma',
-            category_id: categories[1]?.id || 'electrician',
-            avg_rating: 4.8,
-            total_jobs: 98,
-            years_experience: 6,
-            distance_km: 1.1,
-            hourly_rate: 400,
-            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-            location: { lat: roundedLat - 0.002, lng: roundedLng + 0.003 },
-            description: 'Certified electrical expert for wiring, switches & emergency tripping.',
-            is_online: true,
-            is_verified: true,
-          },
-          {
-            worker_id: 'mock-home-3',
-            full_name: 'Anita Patel',
-            category_id: categories[2]?.id || 'home-clean',
-            avg_rating: 4.95,
-            total_jobs: 215,
-            years_experience: 7,
-            distance_km: 0.9,
-            hourly_rate: 300,
-            avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
-            location: { lat: roundedLat + 0.001, lng: roundedLng - 0.003 },
-            description: 'Deep home cleaning & sanitization specialist.',
-            is_online: true,
-            is_verified: true,
-            featured: true,
-          }
-        ];
-      }
-
       if (isMounted) {
         setNearbyWorkers(results);
         setIsLoadingWorkers(false);
@@ -319,26 +285,27 @@ export default function HomeScreen({
                     setActiveCategory(isSelected ? null : cat.id);
                   }}
                   style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: 'pointer',
-                    background: isSelected ? 'rgba(56, 189, 248, 0.14)' : 'rgba(255,255,255,0.05)',
-                    border: isSelected ? '1.5px solid #38BDF8' : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 18, padding: '12px 8px', minWidth: 84, width: 84, flexShrink: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer',
+                    background: isSelected 
+                      ? 'linear-gradient(180deg, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0.08) 100%)' 
+                      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
+                    border: isSelected ? '2px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 20, padding: '8px 4px 10px', minWidth: 88, width: 88, flexShrink: 0,
                     scrollSnapAlign: 'start',
-                    boxShadow: isSelected ? '0 0 16px rgba(56, 189, 248, 0.35)' : 'none',
+                    boxShadow: isSelected ? '0 0 20px rgba(56, 189, 248, 0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                 >
                   <div style={{ 
-                    width: 48, height: 48, borderRadius: 14, 
-                    background: isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.08)', 
+                    width: 60, height: 60, 
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.2s ease'
                   }}>
-                    <CategoryIcon slug={cat.slug} size={24} />
+                    <CategoryIcon slug={cat.slug} size={58} />
                   </div>
                   <span style={{ 
-                    fontSize: 11, fontWeight: 700, 
-                    color: isSelected ? '#38BDF8' : 'rgba(255,255,255,0.85)', 
+                    fontSize: 12, fontWeight: 800, 
+                    color: isSelected ? '#38BDF8' : 'rgba(255,255,255,0.9)', 
                     textAlign: 'center', lineHeight: 1.2,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%',
                     transition: 'color 0.2s ease'
@@ -463,9 +430,8 @@ export default function HomeScreen({
                         e.stopPropagation();
                         speakText(
                           `${worker.full_name}, ${catName}. ` +
-                          `Rate: ${worker.hourly_rate || 350} rupees per hour. ` +
                           `Rating: ${Number(worker.avg_rating || 4.9).toFixed(1)} stars. ` +
-                          `Completed ${worker.total_jobs || 120} verified jobs.`
+                          `Completed ${worker.total_jobs || 2} verified jobs.`
                         );
                       }}
                       style={{ 
@@ -506,7 +472,7 @@ export default function HomeScreen({
                           </span>
                         </div>
                         <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-                          ({worker.total_jobs || 120}+ jobs)
+                          ({worker.total_jobs || 2} jobs)
                         </span>
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: 8 }}>
@@ -514,14 +480,14 @@ export default function HomeScreen({
                       </div>
                     </div>
                     
-                    {/* Distance & Rate Bar */}
+                    {/* Distance Bar */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, background: '#F8FAFC', padding: '8px 10px', borderRadius: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#475569', fontSize: 12, fontWeight: 600 }}>
                         <MapPin size={13} color="#0B3D66" />
-                        {worker.distance_km ? `${Number(worker.distance_km).toFixed(1)} km` : '0.6 km'}
+                        {worker.distance_km ? `${Number(worker.distance_km).toFixed(1)} km away` : '0.6 km away'}
                       </div>
-                      <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>
-                        ₹{worker.hourly_rate || 350}<span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>/hr</span>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 8 }}>
+                        Available
                       </div>
                     </div>
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Neighborly Trust</string>
-    <string name="title_activity_main">Neighborly Trust</string>
+    <string name="app_name">Hero Hand</string>
+    <string name="title_activity_main">Hero Hand</string>
     <string name="package_name">com.neighborly.trust</string>
     <string name="custom_url_scheme">com.neighborly.trust</string>
 </resources>

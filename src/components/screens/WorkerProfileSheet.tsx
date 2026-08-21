@@ -225,42 +225,17 @@ export default function WorkerProfileSheet({
            </div>
         </div>
 
-        {/* 3 Square Cards Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
-           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-             <div style={{ fontSize: 24, marginBottom: 8 }}>💰</div>
-             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>₹{worker.hourly_rate || 350}</div>
-             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Rate/Hour</div>
-           </div>
-           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MapPin size={24} color="#EF4444" /></div>
-             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.distance_km.toFixed(1)} km</div>
-             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Distance</div>
-           </div>
-           <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Star size={24} color="#F59E0B" fill="#F59E0B" /></div>
-             <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.total_jobs || 0}+</div>
-             <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Reviews</div>
-           </div>
-        </div>
-
-        {/* Transparent Pricing Card */}
-        <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 16px', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <h3 style={{ fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            Price Breakdown
-          </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#334155', marginBottom: 8 }}>
-            <span>Specialist Hourly Rate</span>
-            <span style={{ fontWeight: 700 }}>₹{worker.hourly_rate || 350}</span>
+        {/* 2 Square Cards Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MapPin size={24} color="#EF4444" /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.distance_km.toFixed(1)} km</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Distance</div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#334155', marginBottom: 8 }}>
-            <span>Safety & Platform Fee</span>
-            <span style={{ fontWeight: 700, color: '#059669' }}>+₹10</span>
-          </div>
-          <div style={{ height: 1, background: '#F1F5F9', margin: '8px 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 900, color: '#0F172A' }}>
-            <span>Estimated Total</span>
-            <span style={{ color: '#0B3D66' }}>₹{(worker.hourly_rate || 350) + 10}</span>
+          <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Star size={24} color="#F59E0B" fill="#F59E0B" /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.total_jobs || 0}+</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Reviews</div>
           </div>
         </div>
 

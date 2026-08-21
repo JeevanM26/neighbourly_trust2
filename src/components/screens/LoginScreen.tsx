@@ -223,7 +223,7 @@ export default function LoginScreen() {
             <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: 0 }}>
-            Neighborly Trust
+            Hero Hand
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, marginTop: 6, fontWeight: 500 }}>
             Trusted help, right at your door.
@@ -421,7 +421,7 @@ export default function LoginScreen() {
           </div>
           <div>
             <h1 style={{ fontSize: 24, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.4px' }}>
-              Neighborly Trust
+              Hero Hand
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, margin: 0, fontWeight: 500 }}>
               Book trusted local specialists
@@ -480,7 +480,7 @@ export default function LoginScreen() {
               )}
             </div>
             <span style={{ fontSize: 12, color: '#475569', fontWeight: 500, lineHeight: 1.5 }}>
-              I agree to Neighborly Trust's{' '}
+              I agree to Hero Hand's{' '}
               <span
                 onClick={(e) => {
                   e.preventDefault();

@@ -12,13 +12,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Neighborly Trust — Find Local Service Specialists",
+  title: "Hero Hand — Find Local Service Specialists",
   description:
     "Book verified local electricians, plumbers, carpenters, and home cleaners in your area. Fast, reliable, and trustworthy service at your doorstep.",
   keywords: "electrician, plumber, carpenter, home cleaning, local services, book service, nearby workers, trusted providers",
-  authors: [{ name: "Neighborly Trust" }],
+  authors: [{ name: "Hero Hand" }],
   openGraph: {
-    title: "Neighborly Trust",
+    title: "Hero Hand",
     description: "Find and book verified local service specialists near you.",
     type: "website",
   },

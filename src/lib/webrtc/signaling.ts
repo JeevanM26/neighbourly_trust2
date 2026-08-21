@@ -40,26 +40,43 @@ export class SignalingManager {
   async pingUser(targetUserId: string, callerId: string, callerName: string, callerAvatar: string | undefined, roomId: string) {
     const channelHash = typeof btoa !== 'undefined' ? btoa(targetUserId + '_WEBRTC_SALT').replace(/=/g, '') : targetUserId;
     const pingChannel = this.client.channel(`user_${channelHash}`);
-    await new Promise<void>((resolve, reject) => {
+    
+    await new Promise<void>((resolve) => {
+      let isDone = false;
+      const timeoutId = setTimeout(() => {
+        if (!isDone) {
+          isDone = true;
+          pingChannel.unsubscribe();
+          resolve();
+        }
+      }, 4000);
+
       pingChannel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && !isDone) {
           try {
             await pingChannel.send({
               type: 'broadcast',
               event: 'incoming_call',
               payload: { callerId, callerName: callerName || 'Neighborly User', callerAvatar, roomId }
             });
-            resolve();
           } catch (err) {
-            reject(err);
+            console.warn('Signaling send error:', err);
+          } finally {
+            if (!isDone) {
+              isDone = true;
+              clearTimeout(timeoutId);
+              pingChannel.unsubscribe();
+              resolve();
+            }
           }
+        } else if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && !isDone) {
+          isDone = true;
+          clearTimeout(timeoutId);
+          pingChannel.unsubscribe();
+          resolve();
         }
       });
-      // Safety timeout
-      setTimeout(() => reject(new Error('Signaling ping timeout')), 5000);
-    }).catch(e => console.error('Error pinging user:', e));
-
-    pingChannel.unsubscribe();
+    });
   }
 
   /**

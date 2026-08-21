@@ -11,22 +11,25 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
   const [duration, setDuration] = useState(0);
   const synthRef = useRef<CallAudioSynthesizer | null>(null);
 
-  // Handle synth tones based on status
+  // Handle synth tones and vibration based on status
   useEffect(() => {
-    if (callStatus === 'ringing' || callStatus === 'calling') {
-      if (!synthRef.current) synthRef.current = new CallAudioSynthesizer();
+    if (!synthRef.current) synthRef.current = new CallAudioSynthesizer();
+
+    if (callStatus === 'ringing') {
+      synthRef.current.playIncomingCall(incomingCall?.callerName || 'Specialist');
+    } else if (callStatus === 'calling') {
       synthRef.current.playRingback();
     } else if (callStatus === 'connected') {
-      synthRef.current?.stop();
+      synthRef.current.stop();
     } else if (callStatus === 'idle') {
-      synthRef.current?.stop();
-      if (synthRef.current && duration > 0) synthRef.current.playEndCall(); 
+      synthRef.current.stop();
+      if (duration > 0) synthRef.current.playEndCall(); 
     }
     
     return () => {
       synthRef.current?.stop();
     };
-  }, [callStatus]);
+  }, [callStatus, incomingCall?.callerName]);
 
   // Handle duration timer
   useEffect(() => {
@@ -83,7 +86,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
             </div>
 
             <h3 style={{ fontSize: 30, fontWeight: 300, letterSpacing: 0.5, color: 'white', marginBottom: 8, textAlign: 'center', margin: 0 }}>
-              {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
+              {incomingCall ? incomingCall.callerName : 'Hero Hand Call'}
             </h3>
 
             <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.5, color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>

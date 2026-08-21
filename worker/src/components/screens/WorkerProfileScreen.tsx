@@ -295,7 +295,6 @@ export default function WorkerProfileScreen() {
                       </div>
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{cat.name_en}</div>
-                        <div style={{ fontSize: 11, color: '#059669', fontWeight: 700 }}>₹{meta.rate} base rate · ₹{Math.round(meta.rate * 0.92)} net</div>
                       </div>
                     </div>
                     <div style={{ background: '#ECFDF5', borderRadius: 20, padding: '3px 8px', border: '1px solid #A7F3D0' }}>
@@ -331,9 +330,6 @@ export default function WorkerProfileScreen() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: selected ? '#065F46' : '#334155' }}>
                         {cat.name_en}
-                      </div>
-                      <div style={{ fontSize: 11, color: selected ? '#059669' : '#94A3B8', fontWeight: 600 }}>
-                        ₹{meta.rate} base rate
                       </div>
                     </div>
                     <div style={{ 
@@ -610,7 +606,7 @@ export default function WorkerProfileScreen() {
           onClick={() => setShowPrivacyModal(true)}
           style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, marginTop: 24, cursor: 'pointer', textDecoration: 'underline' }}
         >
-          Neighborly Trust Partner Portal v2.0 · DPDP Act 2023 Compliant
+          Hero Hand Partner Portal v2.0 · DPDP Act 2023 Compliant
         </p>
 
         {/* Privacy Policy Modal */}

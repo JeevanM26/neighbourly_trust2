@@ -9,22 +9,25 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
   const [duration, setDuration] = useState(0);
   const synthRef = useRef<CallAudioSynthesizer | null>(null);
 
-  // Handle synth tones based on status
+  // Handle synth tones and vibration based on status
   useEffect(() => {
-    if (callStatus === 'ringing' || callStatus === 'calling') {
-      if (!synthRef.current) synthRef.current = new CallAudioSynthesizer();
+    if (!synthRef.current) synthRef.current = new CallAudioSynthesizer();
+
+    if (callStatus === 'ringing') {
+      synthRef.current.playIncomingCall(incomingCall?.callerName || 'Customer');
+    } else if (callStatus === 'calling') {
       synthRef.current.playRingback();
     } else if (callStatus === 'connected') {
-      synthRef.current?.stop();
+      synthRef.current.stop();
     } else if (callStatus === 'idle') {
-      synthRef.current?.stop();
-      if (synthRef.current) synthRef.current.playEndCall(); // assuming we want an end call tone
+      synthRef.current.stop();
+      if (duration > 0) synthRef.current.playEndCall();
     }
     
     return () => {
       synthRef.current?.stop();
     };
-  }, [callStatus]);
+  }, [callStatus, incomingCall?.callerName]);
 
   // Handle duration timer
   useEffect(() => {
@@ -59,7 +62,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
           <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#94A3B8' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'rgba(30,41,59,0.8)', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(51,65,85,0.5)' }}>
               <ShieldCheck size={14} color="#34D399" />
-              <span style={{ fontWeight: 500, color: '#E2E8F0' }}>Neighborly Privacy Shield</span>
+              <span style={{ fontWeight: 500, color: '#E2E8F0' }}>Hero Hand Privacy Shield</span>
             </div>
           </div>
 
@@ -81,7 +84,7 @@ export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }
             </div>
 
             <h3 style={{ fontSize: 24, fontWeight: 900, letterSpacing: -0.5, color: 'white', margin: '0 0 8px' }}>
-              {incomingCall ? incomingCall.callerName : 'Neighborly Trust Call'}
+              {incomingCall ? incomingCall.callerName : 'Hero Hand Call'}
             </h3>
 
             <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 0.5 }}>

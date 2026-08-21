@@ -44,13 +44,13 @@ export function formatCallDuration(seconds: number): string {
 }
 
 /**
- * Sound FX Synthesizer using Web Audio API for call tones (no external audio assets required).
+ * Sound FX & Haptic Vibration Synthesizer using Web Audio API and Navigator Vibration API.
+ * Provides high-audibility multi-tone synthesized ringtones and urgent phone vibration without external assets.
  */
 export class CallAudioSynthesizer {
   private audioCtx: AudioContext | null = null;
-  private ringOscillator: OscillatorNode | null = null;
-  private ringGain: GainNode | null = null;
   private ringTimer: any = null;
+  private vibrateTimer: any = null;
 
   private initContext() {
     if (typeof window === 'undefined') return;
@@ -62,6 +62,111 @@ export class CallAudioSynthesizer {
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume().catch(() => {});
+    }
+  }
+
+  /**
+   * Loud Multi-Tone Incoming Call Ringtone & Continuous Phone Vibration
+   */
+  playIncomingCall(callerName: string = 'Someone') {
+    this.stop();
+    this.initContext();
+
+    const playHarmonicChime = () => {
+      if (!this.audioCtx || this.audioCtx.state === 'suspended') return;
+      try {
+        const now = this.audioCtx.currentTime;
+        
+        // High-audibility dual-tone telephone chord sequence (C5+E5 -> E5+G5 -> G5+C6)
+        const notes = [
+          { freq1: 523.25, freq2: 659.25, time: 0, dur: 0.20 },     // C5 + E5
+          { freq1: 659.25, freq2: 783.99, time: 0.24, dur: 0.20 },   // E5 + G5
+          { freq1: 783.99, freq2: 1046.50, time: 0.48, dur: 0.40 },  // G5 + C6
+        ];
+
+        notes.forEach(({ freq1, freq2, time, dur }) => {
+          if (!this.audioCtx) return;
+          const osc1 = this.audioCtx.createOscillator();
+          const osc2 = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          osc1.frequency.setValueAtTime(freq1, now + time);
+          osc2.frequency.setValueAtTime(freq2, now + time);
+
+          gain.gain.setValueAtTime(0, now + time);
+          gain.gain.linearRampToValueAtTime(0.32, now + time + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(this.audioCtx.destination);
+
+          osc1.start(now + time);
+          osc2.start(now + time);
+          osc1.stop(now + time + dur + 0.05);
+          osc2.stop(now + time + dur + 0.05);
+        });
+      } catch (e) {
+        console.warn('[WebRTC Audio] Ring chime error:', e);
+      }
+    };
+
+    // Play chime immediately and loop every 2.2 seconds
+    playHarmonicChime();
+    this.ringTimer = setInterval(playHarmonicChime, 2200);
+
+    // Continuous Strong Phone Vibration ([800ms vibrate, 250ms pause, 800ms vibrate, 250ms pause])
+    const triggerVibration = () => {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([800, 250, 800, 250]);
+        } catch {}
+      }
+    };
+    triggerVibration();
+    this.vibrateTimer = setInterval(triggerVibration, 2100);
+  }
+
+  /**
+   * New Booking Request Alert Tone (Ascending Arpeggio + Urgent Haptic Pulses)
+   */
+  playNewBookingAlert(customerName: string = 'Customer', categoryName: string = 'Service') {
+    this.stop();
+    this.initContext();
+
+    if (this.audioCtx && this.audioCtx.state !== 'suspended') {
+      try {
+        const now = this.audioCtx.currentTime;
+        // 4-tone ascending alert arpeggio (D5 -> F#5 -> A5 -> D6)
+        const freqs = [587.33, 739.99, 880.00, 1174.66];
+        freqs.forEach((freq, idx) => {
+          if (!this.audioCtx) return;
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+
+          gain.gain.setValueAtTime(0, now + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.35, now + idx * 0.12 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.28);
+
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.3);
+        });
+      } catch {}
+    }
+
+    // Strong Vibration pattern for new booking offer
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([500, 200, 500, 200, 800]);
+      } catch {}
     }
   }
 
@@ -120,6 +225,15 @@ export class CallAudioSynthesizer {
     if (this.ringTimer) {
       clearInterval(this.ringTimer);
       this.ringTimer = null;
+    }
+    if (this.vibrateTimer) {
+      clearInterval(this.vibrateTimer);
+      this.vibrateTimer = null;
+    }
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(0);
+      } catch {}
     }
   }
 }

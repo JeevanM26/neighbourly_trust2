@@ -157,46 +157,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => { if (user) refreshBookings(); }, [user, refreshBookings]);
 
-  // Real-time booking updates
+  // Real-time booking updates & Cross-tab sync
   useEffect(() => {
-    if (!isConfigured() || !user?.id) return;
+    if (!user?.id) return;
     
     // Clean up existing subscriptions if any
     if (realtimeChannelRef.current) realtimeChannelRef.current.unsubscribe();
     if (realtimeOfferRef.current) realtimeOfferRef.current.unsubscribe();
     
-    realtimeChannelRef.current = subscribeToBookingStatus(user.id, (updatedBooking) => {
-      setBookings(prev => {
-        const exists = prev.find(b => b.id === updatedBooking.id);
-        if (!exists) return [updatedBooking, ...prev];
-        return prev.map(b => b.id === updatedBooking.id ? updatedBooking : b);
+    if (isConfigured()) {
+      realtimeChannelRef.current = subscribeToBookingStatus(user.id, (updatedBooking) => {
+        setBookings(prev => {
+          const exists = prev.find(b => b.id === updatedBooking.id);
+          if (!exists) return [updatedBooking, ...prev];
+          return prev.map(b => b.id === updatedBooking.id ? { ...b, ...updatedBooking } : b);
+        });
+        
+        const status = updatedBooking.status;
+        if (status === 'accepted') {
+          showToast('✅ Your worker is on the way!', 'success');
+          try { confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#10B981', '#0B3D66'] }); } catch {}
+        } else if (status === 'completed') {
+          showToast('🎉 Job completed! Please rate your experience.', 'success');
+          try { confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } }); } catch {}
+        } else if (status === 'cancelled') {
+          showToast('Booking cancelled.', 'error');
+        }
       });
-      
-      const status = updatedBooking.status;
-      if (status === 'accepted') {
-        showToast('✅ Your worker is on the way!', 'success');
-        try { confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#10B981', '#0B3D66'] }); } catch {}
-      } else if (status === 'completed') {
-        showToast('🎉 Job completed!', 'success');
-      } else if (status === 'cancelled') {
-        showToast('Booking cancelled.', 'error');
-      }
-    });
 
-    realtimeOfferRef.current = subscribeToCustomerOffers(user.id, (offer) => {
-      // If we see a declined offer, we notify the customer that a specific worker passed.
-      if (offer.status === 'declined') {
-        showToast('A worker declined your request. Finding another...', 'error');
+      realtimeOfferRef.current = subscribeToCustomerOffers(user.id, (offer) => {
+        if (offer.status === 'declined') {
+          showToast('A worker declined your request. Finding another...', 'error');
+        }
+      });
+    }
+
+    // Cross-tab / Cross-window instant sync via BroadcastChannel
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('hero_hand_booking_sync');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'STATUS_UPDATE' || event.data?.status) {
+          const { bookingId, status } = event.data;
+          setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+          refreshBookings();
+          if (status === 'completed') {
+            showToast('🎉 Job completed by specialist! Thank you.', 'success');
+            try { confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } }); } catch {}
+          }
+        }
+      };
+    } catch {}
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'hero_hand_booking_sync' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          if (data?.bookingId && data?.status) {
+            setBookings(prev => prev.map(b => b.id === data.bookingId ? { ...b, status: data.status } : b));
+            refreshBookings();
+          }
+        } catch {}
       }
-    });
+    };
+    window.addEventListener('storage', handleStorage);
 
     return () => { 
       if (realtimeChannelRef.current) realtimeChannelRef.current.unsubscribe(); 
       if (realtimeOfferRef.current) realtimeOfferRef.current.unsubscribe();
       realtimeChannelRef.current = null;
       realtimeOfferRef.current = null;
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
     };
-  }, [user?.id]); // eslint-disable-line
+  }, [user?.id, refreshBookings]);
+
+  // Periodic background refresh for active bookings
+  useEffect(() => {
+    if (!user?.id) return;
+    const hasActive = bookings.some(b => ['searching', 'pending', 'accepted', 'on_the_way', 'in_progress'].includes(b.status));
+    if (!hasActive) return;
+
+    const pollInterval = setInterval(() => {
+      refreshBookings();
+    }, 3500);
+
+    return () => clearInterval(pollInterval);
+  }, [user?.id, bookings, refreshBookings]);
 
   const showToast = useCallback((message: string, type: ToastState['type'] = 'success') => {
     if (toastTimer.current) clearTimeout(toastTimer.current);

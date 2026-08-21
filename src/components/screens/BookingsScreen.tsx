@@ -443,11 +443,39 @@ export default function BookingsScreen() {
             ))}
           </>
         ) : shown.length === 0 ? (
-          <EmptyState 
-            icon={<span className="text-6xl">📋</span>}
-            title={tab === 'active' ? 'No active bookings' : 'No booking history'} 
-            description={tab === 'active' ? 'Book a verified plumber, electrician or carpenter from Home!' : 'Completed service bookings will show up here.'} 
-          />
+          tab === 'active' && past.length > 0 ? (
+            <div style={{
+              background: 'white', borderRadius: 24, padding: '24px 20px',
+              border: '1.5px solid #BBF7D0', textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(16,185,129,0.08)'
+            }}>
+              <div style={{ fontSize: 44, marginBottom: 8 }}>🎉</div>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
+                All Active Jobs Completed!
+              </h3>
+              <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Your service specialist completed the job. View your invoice and leave a 5⭐ review in your history.
+              </p>
+              <button
+                onClick={() => setTab('past')}
+                style={{
+                  background: 'linear-gradient(135deg, #059669, #047857)',
+                  color: 'white', border: 'none', borderRadius: 14,
+                  padding: '12px 20px', fontSize: 13, fontWeight: 800,
+                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
+                }}
+              >
+                View Completed Jobs ({past.length}) ➔
+              </button>
+            </div>
+          ) : (
+            <EmptyState 
+              icon={<span className="text-6xl">📋</span>}
+              title={tab === 'active' ? 'No active bookings' : 'No booking history'} 
+              description={tab === 'active' ? 'Book a verified plumber, electrician or carpenter from Home!' : 'Completed service bookings will show up here.'} 
+            />
+          )
         ) : (
           shown.map(b => (
             <BookingCard
