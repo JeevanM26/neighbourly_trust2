@@ -108,3 +108,17 @@ export interface ToastState {
 
 // ─── Default Location (Shivamogga, Karnataka) ─────────────
 export const DEFAULT_LOCATION = { lat: 13.9299, lng: 75.5681 };
+
+export const getAssetPath = (path: string): string => {
+  if (!path) return '';
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/neighbourly_trust2')) {
+    return `/neighbourly_trust2${cleanPath}`;
+  }
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  if (basePath) {
+    const formattedBase = `/${basePath.replace(/^\/|\/$/g, '')}`;
+    return `${formattedBase}${cleanPath}`;
+  }
+  return cleanPath;
+};

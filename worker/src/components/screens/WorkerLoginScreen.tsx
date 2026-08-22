@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
-import { ServiceCategory } from '../../lib/types';
+import { ServiceCategory, getAssetPath } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { 
   ShieldCheck, Check, ChevronRight,
@@ -126,7 +126,7 @@ export default function WorkerLoginScreen() {
       <div style={{ height: '100%', overflowY: 'auto', background: '#F0FDF4', display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '52px 24px 36px', textAlign: 'center' }}>
           <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)', boxShadow: '0 8px 30px rgba(0,0,0,0.15)' }}>
-            <img src="/logo.png" alt="Hands of Heros Partner" style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => {
+            <img src={getAssetPath('/logo.png')} alt="Hands of Heros Partner" style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }} />
             <ShieldCheck size={42} color="#FCD34D" strokeWidth={2.5} />
