@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useWorker } from '../../context/WorkerContext';
-import { ServiceCategory } from '../../lib/types';
+import { ServiceCategory, getAssetPath } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { 
   ShieldCheck, Check, ChevronRight,
@@ -71,7 +71,7 @@ export default function WorkerLoginScreen() {
       const { error: authErr } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+          redirectTo: typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined,
         },
       });
       if (authErr) throw authErr;
@@ -108,10 +108,12 @@ export default function WorkerLoginScreen() {
         await client.from('profiles').update({
           phone: cleanPhone,
           full_name: name.trim() || worker.full_name,
+          email: worker.email || undefined,
+          updated_at: new Date().toISOString(),
         }).eq('id', worker.id);
       }
       await completeOnboarding(name.trim(), Array.from(selectedCategories));
-      showToast('Profile setup complete! Welcome to Hands of Heros Partner 🛠️', 'success');
+      showToast('Profile setup complete! Welcome to HOS: Workers 🛠️', 'success');
     } catch (err) {
       console.warn('Partner onboarding notice:', err);
       completeOnboarding(name.trim(), Array.from(selectedCategories));
@@ -126,16 +128,16 @@ export default function WorkerLoginScreen() {
       <div style={{ height: '100%', overflowY: 'auto', background: '#F0FDF4', display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '52px 24px 36px', textAlign: 'center' }}>
           <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)', boxShadow: '0 8px 30px rgba(0,0,0,0.15)' }}>
-            <img src="/logo.png" alt="Hands of Heros Partner" style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => {
+            <img src={getAssetPath('/logo.png')} alt="HOS: Workers" style={{ width: 62, height: 62, objectFit: 'contain' }} onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }} />
             <ShieldCheck size={42} color="#FCD34D" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
-            Hands of Heros Partner
+            HOS: Workers
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 500, margin: '0 0 16px' }}>
-            Specialist & Partner App
+            One App. All Workers. · ShramiXs Partner
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>

@@ -551,7 +551,7 @@ export default function WorkerProfileScreen() {
           onClick={() => setShowPrivacyModal(true)}
           style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, marginTop: 24, cursor: 'pointer', textDecoration: 'underline' }}
         >
-          Hero Hand Partner Portal v2.0 · DPDP Act 2023 Compliant
+          HOS: Workers Partner Portal v2.0 · DPDP Act 2023 Compliant
         </p>
 
         {/* Privacy Policy Modal */}

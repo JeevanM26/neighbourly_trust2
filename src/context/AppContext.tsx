@@ -61,23 +61,25 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return JSON.parse(localStorage.getItem('nt_user') ?? 'null'); } catch { return null; }
+  });
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [settings, setSettings] = useState<AppSettings>({ language: 'en', sounds: true, voice: false });
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    if (typeof window === 'undefined') return { language: 'en', sounds: true, voice: false };
+    try { return JSON.parse(localStorage.getItem('nt_settings') ?? 'null') ?? { language: 'en', sounds: true, voice: false }; }
+    catch { return { language: 'en', sounds: true, voice: false }; }
+  });
   const webrtc = useWebRTC(user?.id || '');
 
   // Load initial settings and auth
   useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('nt_settings');
-      if (savedSettings) setSettings(JSON.parse(savedSettings));
-    } catch {}
-
     const errorHandler = (e: any) => {
       showToast(e.detail || 'An unexpected error occurred.', 'error');
     };
@@ -93,14 +95,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const name = profileData?.full_name || authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Hands of Heros User';
           const userPhone = authUser.phone || authUser.user_metadata?.phone || profileData?.phone || '';
           
-          if (!profileData) {
+          const userEmail = authUser.email || profileData?.email || '';
+          const userAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || profileData?.avatar_url || null;
+          
+          if (!profileData || !profileData.email) {
             try {
               await client!.from('profiles').upsert({
                 id: authUser.id,
                 full_name: name,
                 phone: userPhone,
+                email: userEmail,
+                avatar_url: userAvatar,
                 role: 'customer',
                 consent_given: true,
+                updated_at: new Date().toISOString(),
               });
             } catch {}
           }
@@ -109,6 +117,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             id: authUser.id,
             full_name: name,
             phone: userPhone,
+            email: userEmail,
+            avatar_url: userAvatar || undefined,
             role: 'customer',
             language: (profileData?.preferred_language || profileData?.language || settings.language || 'en') as LanguageCode,
             consent_given: true,

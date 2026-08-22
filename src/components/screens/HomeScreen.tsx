@@ -33,27 +33,78 @@ const isCategoryMatch = (catName: string, intentCat: string) => {
   return false;
 };
 
+export const getAssetPath = (path: string): string => {
+  if (!path) return '';
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/neighbourly_trust2')) {
+    return `/neighbourly_trust2${cleanPath}`;
+  }
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  if (basePath) {
+    const formattedBase = `/${basePath.replace(/^\/|\/$/g, '')}`;
+    return `${formattedBase}${cleanPath}`;
+  }
+  return cleanPath;
+};
+
 const getCategory3DImage = (slug: string = ''): string => {
   const s = slug.toLowerCase();
-  if (s.includes('elec')) return '/categories/electrician.png';
-  if (s.includes('plumb')) return '/categories/plumber.png';
-  if (s.includes('carp')) return '/categories/carpenter.png';
-  if (s.includes('paint')) return '/categories/painter.png';
-  if (s.includes('clean')) return '/categories/cleaning.png';
-  if (s.includes('pest')) return '/categories/pestcontrol.png';
-  if (s.includes('ac') || s.includes('appliance')) return '/categories/acrepair.png';
-  if (s.includes('salon') || s.includes('barber')) return '/categories/salon.png';
-  if (s.includes('mason')) return '/categories/mason.png';
-  if (s.includes('mechanic') || s.includes('auto')) return '/categories/mechanic.png';
-  return '/categories/electrician.png';
+  let img = '/categories/electrician.png';
+  if (s.includes('elec')) img = '/categories/electrician.png';
+  else if (s.includes('plumb')) img = '/categories/plumber.png';
+  else if (s.includes('carp')) img = '/categories/carpenter.png';
+  else if (s.includes('paint')) img = '/categories/painter.png';
+  else if (s.includes('clean')) img = '/categories/cleaning.png';
+  else if (s.includes('pest')) img = '/categories/pestcontrol.png';
+  else if (s.includes('ac') || s.includes('appliance')) img = '/categories/acrepair.png';
+  else if (s.includes('salon') || s.includes('barber')) img = '/categories/salon.png';
+  else if (s.includes('mason')) img = '/categories/mason.png';
+  else if (s.includes('mechanic') || s.includes('auto')) img = '/categories/mechanic.png';
+  return getAssetPath(img);
+};
+
+const getCategoryFallbackIcon = (slug: string = '') => {
+  const s = slug.toLowerCase();
+  if (s.includes('elec')) return <Zap size={28} className="text-amber-400" />;
+  if (s.includes('plumb')) return <Droplet size={28} className="text-sky-400" />;
+  if (s.includes('carp')) return <Hammer size={28} className="text-orange-400" />;
+  if (s.includes('paint')) return <Paintbrush size={28} className="text-purple-400" />;
+  if (s.includes('clean')) return <Sparkles size={28} className="text-teal-400" />;
+  if (s.includes('pest')) return <Bug size={28} className="text-rose-400" />;
+  if (s.includes('ac')) return <Flame size={28} className="text-blue-400" />;
+  if (s.includes('salon')) return <Scissors size={28} className="text-pink-400" />;
+  if (s.includes('mechanic')) return <Car size={28} className="text-emerald-400" />;
+  return <Tool size={28} className="text-amber-400" />;
 };
 
 const CategoryIcon = ({ slug, size = 58 }: { slug: string, size?: number }) => {
+  const [hasError, setHasError] = useState(false);
   const imgPath = getCategory3DImage(slug);
+
+  if (hasError) {
+    return (
+      <div 
+        style={{ 
+          width: size, 
+          height: size, 
+          borderRadius: '16px',
+          background: 'rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)'
+        }}
+      >
+        {getCategoryFallbackIcon(slug)}
+      </div>
+    );
+  }
+
   return (
     <img 
       src={imgPath} 
       alt={slug} 
+      onError={() => setHasError(true)}
       style={{ 
         width: size, 
         height: size, 

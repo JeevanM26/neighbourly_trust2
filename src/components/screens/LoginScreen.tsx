@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, Check, ChevronRight, Phone, Sparkles, User } from 'lucide-react';
+import { getAssetPath } from '../../lib/types';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
 
 type Step = 'language' | 'login' | 'complete_phone';
@@ -55,7 +56,7 @@ export default function LoginScreen() {
       const { error: authErr } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+          redirectTo: typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined,
         },
       });
       if (authErr) throw authErr;
@@ -83,7 +84,7 @@ export default function LoginScreen() {
       if (currentUserId && client) {
         await client.from('profiles').update({
           phone: cleanPhone,
-          full_name: name.trim() || user?.full_name || 'Hands of Heros User',
+          full_name: name.trim() || user?.full_name || 'ShramiXs User',
           language: settings.language,
           preferred_language: settings.language,
           consent_given: true,
@@ -92,7 +93,7 @@ export default function LoginScreen() {
       } else if (currentUserId) {
         await upsertProfile({
           id: currentUserId,
-          full_name: name.trim() || user?.full_name || 'Hands of Heros User',
+          full_name: name.trim() || user?.full_name || 'ShramiXs User',
           phone: cleanPhone,
           language: settings.language,
           consent_given: true,
@@ -115,13 +116,13 @@ export default function LoginScreen() {
       <div style={{ height: '100%', background: '#F0F7FF', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '48px 24px 32px', textAlign: 'center' }}>
           <div style={{ width: 68, height: 68, borderRadius: 20, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(10px)' }}>
-            <img src="/logo.png" alt="Hands of Heros" style={{ width: 44, height: 44, objectFit: 'contain' }} onError={(e) => {
+            <img src={getAssetPath('/logo.png')} alt="Hands of ShramiXs" style={{ width: 50, height: 50, objectFit: 'contain' }} onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }} />
             <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: 'white', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
-            Hands of Heros
+            Hands of ShramiXs
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500, margin: 0 }}>
             Select your preferred language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ
@@ -296,16 +297,16 @@ export default function LoginScreen() {
       {/* Hero Header */}
       <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '52px 24px 36px', textAlign: 'center', position: 'relative' }}>
         <div style={{ width: 84, height: 84, borderRadius: 26, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <img src="/logo.png" alt="Hands of Heros" style={{ width: 56, height: 56, objectFit: 'contain' }} onError={(e) => {
+          <img src={getAssetPath('/logo.png')} alt="Hands of ShramiXs" style={{ width: 62, height: 62, objectFit: 'contain' }} onError={(e) => {
             (e.target as HTMLElement).style.display = 'none';
           }} />
           <ShieldCheck size={44} color="#F59E0B" strokeWidth={2.5} />
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', margin: '0 0 6px', letterSpacing: '-0.5px' }}>
-          Hands of Heros
+          Hands of ShramiXs
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500, margin: '0 0 16px' }}>
-          Fast, Verified Home Services at Your Doorstep
+          Skills · Effort · Better Tomorrows
         </p>
 
         {/* Feature Highlights */}

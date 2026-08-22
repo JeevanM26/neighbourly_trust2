@@ -537,7 +537,7 @@ export default function ProfileScreen({ onOpenOwnerPanel }: { onOpenOwnerPanel?:
         onClick={() => setShowPrivacyModal(true)}
         style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: 600, margin: '24px 0 100px', cursor: 'pointer', textDecoration: 'underline' }}
       >
-        Neighborly Trust v2.0 · DPDP Act 2023 compliant
+        Hands of ShramiXs v2.0 · DPDP Act 2023 compliant
       </p>
 
       {/* Privacy Policy Modal */}

@@ -15,7 +15,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   en: {
-    appTitle: 'Neighborly Trust',
+    appTitle: 'Hands of ShramiXs',
     tagline: 'Local reliability you can count on.',
     loginHeading: 'Sign in to access local services',
     phonePlaceholder: 'Enter Phone Number',

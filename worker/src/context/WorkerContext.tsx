@@ -182,10 +182,11 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const handleWorkerSession = async (authUser: any) => {
         try {
           const prof = await fetchWorkerProfile(authUser.id);
+          const userEmail = authUser.email || '';
           if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
             const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('nt_worker_online') : null;
             const effectiveOnline = savedOnline !== null ? JSON.parse(savedOnline) : prof.is_online;
-            setWorker({ ...prof, is_online: effectiveOnline, phone: authUser.phone || prof.phone || '' });
+            setWorker({ ...prof, is_online: effectiveOnline, phone: authUser.phone || prof.phone || '', email: userEmail || prof.email });
             setIsOnline(effectiveOnline);
             setIsNewWorker(false);
           } else {
@@ -194,6 +195,8 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               id: authUser.id,
               full_name: defaultName,
               phone: authUser.phone || authUser.user_metadata?.phone || '',
+              email: userEmail,
+              avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || undefined,
               rating: 5.0,
               review_count: 0,
               experience_years: 1,
