@@ -7,12 +7,12 @@ import {
   ArrowUpRight, IndianRupee, MapPin, Mail, Sparkles, Filter, 
   ChevronRight, ExternalLink, Award, AlertCircle, TrendingUp,
   Flame, Droplet, Hammer, Paintbrush, Scissors, Car, Bug, Wrench, Zap,
-  Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert
+  Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert, Calendar
 } from 'lucide-react';
 
 const SUPER_ADMIN_PHONE = '7975182162';
 
-type AdminTab = 'overview' | 'bookings' | 'workers' | 'customers' | 'reviews' | 'admins';
+type AdminTab = 'overview' | 'today' | 'bookings' | 'workers' | 'customers' | 'reviews' | 'admins';
 
 interface AdminUserRecord {
   id: string;
@@ -25,6 +25,7 @@ interface AdminUserRecord {
 interface AdminBooking {
   id: string;
   created_at: string;
+  completed_at?: string;
   status: string;
   description?: string;
   price_estimate?: number;
@@ -103,8 +104,19 @@ const CATEGORY_ICONS: Record<string, any> = {
   mason: Wrench,
 };
 
+const isSameDay = (dateStr?: string) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const today = new Date();
+  return (
+    d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear()
+  );
+};
+
 export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
-  const [tab, setTab] = useState<AdminTab>('overview');
+  const [tab, setTab] = useState<AdminTab>('today');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -162,7 +174,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
       const { data: rawBookings } = await client
         .from('bookings')
         .select(`
-          id, created_at, status, description, price_estimate, final_price, address_text, category_id,
+          id, created_at, completed_at, status, description, price_estimate, final_price, address_text, category_id,
           customer:customer_id (id, full_name, phone, email, avatar_url),
           worker:worker_id (id, full_name, phone, email, avatar_url)
         `)
@@ -173,6 +185,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
         return {
           id: b.id,
           created_at: b.created_at,
+          completed_at: b.completed_at || (b.status === 'completed' ? b.created_at : undefined),
           status: b.status || 'searching',
           description: b.description,
           price_estimate: b.price_estimate ? Number(b.price_estimate) : 350,
@@ -396,6 +409,11 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
     const inProgressCount = bookings.filter(b => ['accepted', 'on_the_way', 'in_progress'].includes(b.status)).length;
     const cancelledCount = bookings.filter(b => b.status === 'cancelled').length;
 
+    // Today's Work Done
+    const todayDone = bookings.filter(b => b.status === 'completed' && (isSameDay(b.completed_at) || isSameDay(b.created_at)));
+    const todayGMV = todayDone.reduce((sum, b) => sum + (b.final_price || 0), 0);
+    const todayCommission = Math.round(todayGMV * 0.08);
+
     const totalGMV = completedJobs.reduce((sum, b) => sum + (b.final_price || 0), 0);
     const totalCommission = Math.round(totalGMV * 0.08); // 8% Platform Commission
     const workerNetPayout = totalGMV - totalCommission;
@@ -411,6 +429,10 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
       totalGMV,
       totalCommission,
       workerNetPayout,
+      todayDoneCount: todayDone.length,
+      todayGMV,
+      todayCommission,
+      todayDoneList: todayDone,
       totalWorkers: workers.length,
       onlineWorkers,
       verifiedWorkers,
@@ -493,7 +515,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                 </span>
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: '3px 0 0', fontWeight: 500 }}>
-                Super Admin: <b>+91 {SUPER_ADMIN_PHONE}</b> · Quality Review & Operations Engine
+                Super Admin: <b>+91 {SUPER_ADMIN_PHONE}</b> · Daily Work Done & Review Engine
               </p>
             </div>
           </div>
@@ -522,8 +544,9 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
       <nav style={{ background: 'white', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', overflowX: 'auto' }}>
           {[
+            { key: 'today', label: "Today's Work Done", icon: CheckCircle2, badge: stats.todayDoneCount > 0 ? `${stats.todayDoneCount} Done Today` : null, highlight: true },
             { key: 'overview', label: 'Overview & Finances', icon: BarChart3, badge: null },
-            { key: 'bookings', label: 'Tasks & Review Calling', icon: Briefcase, badge: stats.totalJobs },
+            { key: 'bookings', label: 'All Tasks & Calling', icon: Briefcase, badge: stats.totalJobs },
             { key: 'workers', label: 'Workers by Category', icon: Wrench, badge: stats.totalWorkers },
             { key: 'customers', label: 'Customers Directory', icon: Users, badge: stats.totalCustomers },
             { key: 'reviews', label: 'Ratings & Reviews', icon: Star, badge: reviews.length },
@@ -536,12 +559,12 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                 key={t.key}
                 onClick={() => setTab(t.key as AdminTab)}
                 style={{
-                  padding: '14px 20px',
+                  padding: '14px 18px',
                   border: 'none',
-                  background: 'none',
+                  background: t.highlight && !isActive ? '#F0FDF4' : 'none',
                   borderBottom: `3px solid ${isActive ? '#0B3D66' : 'transparent'}`,
-                  color: isActive ? '#0B3D66' : '#64748B',
-                  fontWeight: isActive ? 800 : 600,
+                  color: isActive ? '#0B3D66' : (t.highlight ? '#15803D' : '#64748B'),
+                  fontWeight: isActive ? 900 : 700,
                   fontSize: 13,
                   cursor: 'pointer',
                   display: 'flex',
@@ -551,10 +574,10 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Icon size={16} color={isActive ? '#0B3D66' : '#64748B'} strokeWidth={2.2} />
+                <Icon size={16} color={isActive ? '#0B3D66' : (t.highlight ? '#16A34A' : '#64748B')} strokeWidth={2.2} />
                 <span>{t.label}</span>
                 {t.badge !== null && (
-                  <span style={{ background: isActive ? '#0B3D66' : '#F1F5F9', color: isActive ? 'white' : '#475569', fontSize: 11, fontWeight: 800, padding: '2px 7px', borderRadius: 10 }}>
+                  <span style={{ background: t.highlight ? '#DCFCE7' : (isActive ? '#0B3D66' : '#F1F5F9'), color: t.highlight ? '#166534' : (isActive ? 'white' : '#475569'), fontSize: 11, fontWeight: 900, padding: '2px 8px', borderRadius: 10 }}>
                     {t.badge}
                   </span>
                 )}
@@ -566,6 +589,236 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
 
       {/* ── Main Dashboard Content ── */}
       <main style={{ maxWidth: 1280, margin: '0 auto', width: '100%', padding: '24px 20px', flex: 1 }}>
+
+        {/* ══════════════════════════════════════════════════════════════
+            TAB 0: TODAY'S WORK DONE (NEW DEDICATED VIEW)
+        ══════════════════════════════════════════════════════════════ */}
+        {tab === 'today' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            
+            {/* Top Summary Banner */}
+            <div style={{ background: 'linear-gradient(135deg, #065F46 0%, #047857 100%)', color: 'white', borderRadius: 20, padding: '24px 28px', boxShadow: '0 8px 24px rgba(6,95,70,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.2)', width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={20} color="#86EFAC" />
+                  </div>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
+                    Today's Completed Work ({new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' })})
+                  </h2>
+                </div>
+                <p style={{ fontSize: 13, color: '#D1FAE5', margin: 0 }}>
+                  Live feed of jobs finished today. Call customer immediately for quality rating & feedback.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 16px', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: 'white' }}>{stats.todayDoneCount}</div>
+                  <div style={{ fontSize: 11, color: '#A7F3D0', fontWeight: 700, textTransform: 'uppercase' }}>Tasks Done Today</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 16px', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: '#FDE047' }}>₹{stats.todayGMV.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 11, color: '#A7F3D0', fontWeight: 700, textTransform: 'uppercase' }}>Today's Total GMV</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 16px', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: '#86EFAC' }}>₹{stats.todayCommission.toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: 11, color: '#A7F3D0', fontWeight: 700, textTransform: 'uppercase' }}>Today's 8% Revenue</div>
+                </div>
+              </div>
+            </div>
+
+            {/* List of Tasks Done Today */}
+            {stats.todayDoneList.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: 16, padding: '48px 24px', textAlign: 'center', border: '1px solid #E2E8F0', color: '#94A3B8' }}>
+                <Calendar size={42} style={{ margin: '0 auto 14px', opacity: 0.4, color: '#0B3D66' }} />
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1E293B', margin: '0 0 6px' }}>No completed tasks recorded for today yet</h3>
+                <p style={{ fontSize: 13, margin: '0 0 16px', color: '#64748B' }}>
+                  As technicians mark orders as completed today, they will automatically appear here with full customer & worker phone numbers for review calling.
+                </p>
+                <button
+                  onClick={() => setTab('bookings')}
+                  style={{ background: '#0B3D66', color: 'white', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  View All Completed Tasks ({stats.completedCount}) →
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {stats.todayDoneList.map(b => {
+                  const jobAmount = b.final_price || b.price_estimate || 350;
+                  const commission = Math.round(jobAmount * 0.08);
+                  const workerPayout = jobAmount - commission;
+                  const custPhone = b.customer?.phone?.replace(/\D/g, '') || '';
+                  const workerPhone = b.worker?.phone?.replace(/\D/g, '') || '';
+                  const timeFormatted = b.completed_at ? new Date(b.completed_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Today';
+
+                  return (
+                    <div
+                      key={b.id}
+                      style={{
+                        background: 'white',
+                        borderRadius: 18,
+                        border: '1.5px solid #BBF7D0',
+                        padding: '20px 24px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 16,
+                      }}
+                    >
+                      {/* Top Bar with Time & Category */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, borderBottom: '1px solid #F1F5F9', paddingBottom: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ background: '#DCFCE7', color: '#166534', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <CheckCircle2 size={13} /> Completed Today at {timeFormatted}
+                          </span>
+                          <span style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>
+                            {b.category_name}
+                          </span>
+                        </div>
+                        <span style={{ background: '#F1F5F9', color: '#475569', padding: '3px 8px', borderRadius: 6, fontFamily: 'monospace', fontSize: 11 }}>
+                          Task ID: {b.id.slice(0, 8)}
+                        </span>
+                      </div>
+
+                      {/* 3 Grid Columns: Customer, Worker, Financials */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+                        
+                        {/* Customer Column */}
+                        <div style={{ background: '#EFF6FF', borderRadius: 14, padding: '14px 16px', border: '1px solid #DBEAFE' }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: '#1E40AF', textTransform: 'uppercase', marginBottom: 6 }}>
+                            👤 Customer Details (Call For Review)
+                          </div>
+                          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>
+                            {b.customer?.full_name || 'Guest User'}
+                          </div>
+                          <div style={{ fontSize: 13, color: '#1E293B', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <Phone size={13} color="#2563EB" />
+                            {b.customer?.phone ? `+91 ${b.customer.phone}` : 'No phone saved'}
+                          </div>
+                          {b.customer?.email && (
+                            <div style={{ fontSize: 11, color: '#64748B', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <Mail size={12} color="#64748B" />
+                              <span>{b.customer.email}</span>
+                            </div>
+                          )}
+
+                          {custPhone && (
+                            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                              <a
+                                href={`tel:+91${custPhone}`}
+                                style={{
+                                  flex: 1,
+                                  background: '#0B3D66',
+                                  color: 'white',
+                                  borderRadius: 8,
+                                  padding: '8px 10px',
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 5,
+                                }}
+                              >
+                                <Phone size={13} /> Call for Review
+                              </a>
+                              <a
+                                href={`https://wa.me/91${custPhone}?text=${encodeURIComponent(`Hello ${b.customer?.full_name || 'there'}, this is Hands of Heros Management following up on your ${b.category_name} service completed today. How was your experience with the technician?`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  background: '#22C55E',
+                                  color: 'white',
+                                  borderRadius: 8,
+                                  padding: '8px 10px',
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 5,
+                                }}
+                              >
+                                <MessageSquare size={13} /> WhatsApp
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Worker Column */}
+                        <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '14px 16px', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
+                            🛠️ Technician Who Did The Work
+                          </div>
+                          {b.worker ? (
+                            <>
+                              <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 3 }}>
+                                {b.worker.full_name}
+                              </div>
+                              <div style={{ fontSize: 13, color: '#1E293B', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <Phone size={13} color="#0B3D66" />
+                                {b.worker.phone ? `+91 ${b.worker.phone}` : 'No phone saved'}
+                              </div>
+                              {workerPhone && (
+                                <a
+                                  href={`tel:+91${workerPhone}`}
+                                  style={{
+                                    display: 'inline-flex',
+                                    background: '#F1F5F9',
+                                    color: '#0F172A',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: 8,
+                                    padding: '7px 12px',
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  <Phone size={13} /> Call Worker
+                                </a>
+                              )}
+                            </>
+                          ) : (
+                            <div style={{ fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>
+                              Technician details not linked
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Financials Column */}
+                        <div style={{ background: '#F0FDF4', borderRadius: 14, padding: '14px 16px', border: '1px solid #DCFCE7' }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: 6 }}>
+                            💰 Today's Money Taken
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>
+                            <span>Total Job Amount:</span>
+                            <span>₹{jobAmount}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#16A34A', fontWeight: 800, marginBottom: 2 }}>
+                            <span>Worker Payout (92%):</span>
+                            <span>₹{workerPayout}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#0B3D66', fontWeight: 900 }}>
+                            <span>Platform 8% Revenue:</span>
+                            <span>₹{commission}</span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════
             TAB 1: OVERVIEW & FINANCES
@@ -695,7 +948,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
         )}
 
         {/* ══════════════════════════════════════════════════════════════
-            TAB 2: TASKS & BOOKINGS (WITH 1-TAP REVIEW CALLING)
+            TAB 2: ALL TASKS & BOOKINGS (WITH 1-TAP REVIEW CALLING)
         ══════════════════════════════════════════════════════════════ */}
         {tab === 'bookings' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
