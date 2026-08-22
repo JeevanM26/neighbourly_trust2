@@ -36,7 +36,7 @@ if %errorlevel% neq 0 (
 
 echo [3/6] Compiling Customer App APK (Android 34)...
 cd /d "%~dp0android"
-call gradlew.bat assembleDebug
+call gradlew.bat assembleDebug --no-daemon --max-workers=1
 if %errorlevel% neq 0 (
     echo [ERROR] Customer APK compilation failed!
     exit /b %errorlevel%
@@ -59,7 +59,7 @@ if %errorlevel% neq 0 (
 
 echo [6/6] Compiling Worker App APK (Android 34)...
 cd /d "%~dp0worker\android"
-call gradlew.bat assembleDebug
+call gradlew.bat assembleDebug --no-daemon --max-workers=1
 if %errorlevel% neq 0 (
     echo [ERROR] Worker APK compilation failed!
     exit /b %errorlevel%
