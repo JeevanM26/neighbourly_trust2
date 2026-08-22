@@ -20,6 +20,7 @@ export interface WorkerProfile {
   id: string; // references profiles.id
   full_name: string; // from profiles
   phone?: string; // from local state/auth
+  email?: string;
   language: LanguageCode; // preferred_language from profiles
   avatar_url?: string;
   

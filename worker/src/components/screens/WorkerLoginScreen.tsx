@@ -108,6 +108,8 @@ export default function WorkerLoginScreen() {
         await client.from('profiles').update({
           phone: cleanPhone,
           full_name: name.trim() || worker.full_name,
+          email: worker.email || undefined,
+          updated_at: new Date().toISOString(),
         }).eq('id', worker.id);
       }
       await completeOnboarding(name.trim(), Array.from(selectedCategories));

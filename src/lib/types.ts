@@ -30,6 +30,7 @@ export interface UserProfile {
   id: string;
   full_name: string;
   phone?: string;
+  email?: string;
   role: UserRole;
   language: LanguageCode;
   consent_given: boolean;
