@@ -55,7 +55,7 @@ export default function LoginScreen() {
       const { error: authErr } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+          redirectTo: typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined,
         },
       });
       if (authErr) throw authErr;
