@@ -36,13 +36,8 @@ const isCategoryMatch = (catName: string, intentCat: string) => {
 export const getAssetPath = (path: string): string => {
   if (!path) return '';
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/neighbourly_trust2')) {
+  if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
     return `/neighbourly_trust2${cleanPath}`;
-  }
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-  if (basePath) {
-    const formattedBase = `/${basePath.replace(/^\/|\/$/g, '')}`;
-    return `${formattedBase}${cleanPath}`;
   }
   return cleanPath;
 };

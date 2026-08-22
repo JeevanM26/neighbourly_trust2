@@ -8,7 +8,7 @@ export default function RootPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      router.replace('/dashboard');
+      router.replace('/dashboard/');
     }
   }, [router]);
 
