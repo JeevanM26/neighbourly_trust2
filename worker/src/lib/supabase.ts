@@ -369,13 +369,22 @@ export async function respondToOffer(offerId: string, bookingId: string, status:
 }
 
 // ─── Update Booking Status (Lifecycle) ───────────────────
-export async function updateBookingStatus(bookingId: string, status: Booking['status']): Promise<boolean> {
+export async function updateBookingStatus(
+  bookingId: string, 
+  status: Booking['status'],
+  finalPrice?: number
+): Promise<boolean> {
   const client = getClient();
   if (!client) return true;
   try {
     const payload: any = { status };
     if (status === 'in_progress') payload.started_at = new Date().toISOString();
-    if (status === 'completed') payload.completed_at = new Date().toISOString();
+    if (status === 'completed') {
+      payload.completed_at = new Date().toISOString();
+      if (finalPrice !== undefined && finalPrice > 0) {
+        payload.final_price = finalPrice;
+      }
+    }
     
     const { error } = await client.from('bookings').update(payload).eq('id', bookingId);
     return !error;

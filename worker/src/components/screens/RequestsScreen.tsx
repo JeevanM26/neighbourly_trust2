@@ -436,7 +436,12 @@ export default function RequestsScreen() {
 
   const [pinModalBooking, setPinModalBooking] = useState<Booking | null>(null);
   const [enteredPin, setEnteredPin] = useState('');
+  const [enteredAmount, setEnteredAmount] = useState<string>('350');
   const [pinError, setPinError] = useState('');
+
+  const parsedAmount = Math.max(0, parseFloat(enteredAmount) || 0);
+  const platformFee = Math.round(parsedAmount * 0.08);
+  const netEarning = parsedAmount - platformFee;
 
   const handleQuickMessage = (b: Booking, msg: string) => {
     showToast(`Sent "${msg}" to ${b.customer_name || 'Customer'}`);
@@ -444,6 +449,10 @@ export default function RequestsScreen() {
 
   const handleConfirmPin = async () => {
     if (!pinModalBooking) return;
+    if (parsedAmount <= 0) {
+      setPinError('Please enter a valid amount collected for this job.');
+      return;
+    }
     if (!enteredPin || enteredPin.length !== 4) {
       setPinError('Please enter the 4-digit completion PIN.');
       return;
@@ -456,9 +465,10 @@ export default function RequestsScreen() {
     }
 
     try { confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } }); } catch {}
-    await updateJobStatus(pinModalBooking.id, 'completed');
+    await updateJobStatus(pinModalBooking.id, 'completed', parsedAmount);
     setPinModalBooking(null);
     setEnteredPin('');
+    setEnteredAmount('350');
     setPinError('');
   };
 
@@ -575,6 +585,7 @@ export default function RequestsScreen() {
                 onCall={() => webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url)}
                 onRequestCompletePin={(job) => {
                   setPinModalBooking(job);
+                  setEnteredAmount(job.final_price ? String(job.final_price) : (job.price_estimate ? String(job.price_estimate) : '350'));
                   setEnteredPin('');
                   setPinError('');
                 }}
@@ -599,7 +610,7 @@ export default function RequestsScreen() {
 
       </div>
 
-      {/* ── 4-Digit Customer PIN Completion Modal ── */}
+      {/* ── Customer PIN & Amount Collection Modal ── */}
       {pinModalBooking && (
         <div style={{ 
           position: 'fixed', inset: 0, zIndex: 99999, 
@@ -607,58 +618,114 @@ export default function RequestsScreen() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 
         }}>
           <div style={{ 
-            background: 'white', borderRadius: 28, padding: 24, 
-            width: '100%', maxWidth: 360, 
+            background: 'white', borderRadius: 28, padding: '24px 20px', 
+            width: '100%', maxWidth: 370, 
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-            animation: 'scaleUp 0.2s ease'
+            animation: 'scaleUp 0.2s ease',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ 
               width: 52, height: 52, borderRadius: 16, 
               background: '#ECFDF5', display: 'flex', alignItems: 'center', 
-              justifyContent: 'center', margin: '0 auto 14px',
+              justifyContent: 'center', margin: '0 auto 12px',
               boxShadow: '0 4px 12px rgba(5,150,105,0.15)'
             }}>
               <KeyRound size={26} color="#059669" />
             </div>
             
-            <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', textAlign: 'center', margin: '0 0 6px' }}>
-              Enter Customer PIN
+            <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', textAlign: 'center', margin: '0 0 4px' }}>
+              Job Completion & Payment
             </h3>
-            <p style={{ fontSize: 12, color: '#64748B', textAlign: 'center', margin: '0 0 18px', fontWeight: 500, lineHeight: 1.4 }}>
-              Ask {pinModalBooking.customer_name || 'the customer'} for the 4-digit completion PIN shown on their screen to release payment.
+            <p style={{ fontSize: 12, color: '#64748B', textAlign: 'center', margin: '0 0 16px', fontWeight: 500, lineHeight: 1.4 }}>
+              Enter amount taken from {pinModalBooking.customer_name || 'the customer'} and their 4-digit PIN.
             </p>
 
-            <input
-              type="text"
-              maxLength={4}
-              value={enteredPin}
-              onChange={(e) => {
-                setEnteredPin(e.target.value.toUpperCase());
-                setPinError('');
-              }}
-              placeholder="e.g. 8421"
-              autoFocus
-              style={{
-                width: '100%', padding: '14px', textAlign: 'center', 
-                fontSize: 26, fontWeight: 900, letterSpacing: '8px', 
-                fontFamily: 'monospace', borderRadius: 16, border: '2px solid #059669',
-                outline: 'none', color: '#0F172A', boxSizing: 'border-box', marginBottom: 8,
-                background: '#F0FDF4'
-              }}
-            />
+            {/* 1. Money Taken / Price Taken */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#1E293B', marginBottom: 6 }}>
+                💰 Total Amount Taken / Price (₹)
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: 14, fontSize: 18, fontWeight: 900, color: '#059669' }}>₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={enteredAmount}
+                  onChange={(e) => {
+                    setEnteredAmount(e.target.value);
+                    setPinError('');
+                  }}
+                  placeholder="e.g. 500"
+                  style={{
+                    width: '100%', padding: '12px 14px 12px 34px', fontSize: 18, fontWeight: 900,
+                    borderRadius: 14, border: '2px solid #059669', outline: 'none', color: '#0F172A',
+                    boxSizing: 'border-box', background: '#F0FDF4'
+                  }}
+                />
+              </div>
+
+              {/* Quick Amount Presets */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                {[300, 400, 500, 800, 1200].map(amt => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setEnteredAmount(String(amt))}
+                    style={{
+                      background: enteredAmount === String(amt) ? '#059669' : '#F1F5F9',
+                      color: enteredAmount === String(amt) ? 'white' : '#334155',
+                      border: 'none', borderRadius: 8, padding: '4px 8px', fontSize: 11,
+                      fontWeight: 800, cursor: 'pointer', flexShrink: 0
+                    }}
+                  >
+                    ₹{amt}
+                  </button>
+                ))}
+              </div>
+
+              {/* Calculation Preview */}
+              <div style={{ marginTop: 8, background: '#F8FAFC', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #E2E8F0' }}>
+                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Net to You (92%):</span>
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#059669' }}>₹{netEarning.toLocaleString('en-IN')} <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 500 }}>(Fee: ₹{platformFee})</span></span>
+              </div>
+            </div>
+
+            {/* 2. Customer 4-character PIN */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#1E293B', marginBottom: 6 }}>
+                🔑 Customer 4-Digit PIN
+              </label>
+              <input
+                type="text"
+                maxLength={4}
+                value={enteredPin}
+                onChange={(e) => {
+                  setEnteredPin(e.target.value.toUpperCase());
+                  setPinError('');
+                }}
+                placeholder="e.g. 8421"
+                style={{
+                  width: '100%', padding: '12px', textAlign: 'center', 
+                  fontSize: 22, fontWeight: 900, letterSpacing: '6px', 
+                  fontFamily: 'monospace', borderRadius: 14, border: '2px solid #E2E8F0',
+                  outline: 'none', color: '#0F172A', boxSizing: 'border-box'
+                }}
+              />
+            </div>
 
             {pinError && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#DC2626', fontSize: 12, fontWeight: 700, marginBottom: 14, justifyContent: 'center' }}>
-                <AlertCircle size={14} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#DC2626', fontSize: 12, fontWeight: 700, marginBottom: 12, justifyContent: 'center' }}>
+                <AlertCircle size={14} style={{ flexShrink: 0 }} />
                 <span>{pinError}</span>
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 10, marginTop: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: 10, marginTop: 10 }}>
               <button 
                 onClick={() => setPinModalBooking(null)} 
                 style={{ 
-                  padding: '13px', borderRadius: 14, border: '1px solid #E2E8F0', 
+                  padding: '12px', borderRadius: 12, border: '1px solid #E2E8F0', 
                   background: '#F8FAFC', color: '#475569', fontWeight: 800, 
                   fontSize: 13, cursor: 'pointer' 
                 }}
@@ -668,13 +735,13 @@ export default function RequestsScreen() {
               <button 
                 onClick={handleConfirmPin} 
                 style={{ 
-                  padding: '13px', borderRadius: 14, border: 'none', 
+                  padding: '12px', borderRadius: 12, border: 'none', 
                   background: 'linear-gradient(135deg, #059669, #047857)', 
-                  color: 'white', fontWeight: 900, fontSize: 14, cursor: 'pointer',
+                  color: 'white', fontWeight: 900, fontSize: 13, cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
                 }}
               >
-                Verify & Finish 💰
+                Verify & Finish (₹{parsedAmount})
               </button>
             </div>
           </div>

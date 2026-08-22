@@ -43,7 +43,7 @@ interface WorkerContextType {
   
   acceptOffer: (offerId: string, bookingId: string) => Promise<void>;
   declineOffer: (offerId: string, bookingId: string, status?: 'declined' | 'timed_out') => Promise<void>;
-  updateJobStatus: (id: string, status: Booking['status']) => Promise<void>;
+  updateJobStatus: (id: string, status: Booking['status'], finalPrice?: number) => Promise<void>;
 
   earnings: EarningsSummary;
   earningsPeriod: 'today' | 'week' | 'month';
@@ -453,15 +453,21 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [showToast]);
 
   // Active Job Lifecycle
-  const updateJobStatus = useCallback(async (id: string, status: Booking['status']) => {
-    const ok = await updateBookingStatus(id, status);
+  const updateJobStatus = useCallback(async (id: string, status: Booking['status'], finalPrice?: number) => {
+    const ok = await updateBookingStatus(id, status, finalPrice);
     if (ok) {
       if (status === 'completed' || status === 'cancelled') {
-        showToast(status === 'completed' ? 'Job marked complete! Earnings updated. 💰' : 'Job cancelled.', 'success');
-        await refreshBookings(); // will move it to history
+        const netAmt = finalPrice ? Math.round(finalPrice * (1 - COMMISSION_RATE)) : null;
+        showToast(
+          status === 'completed' 
+            ? `🎉 Job marked complete! ${netAmt ? `+₹${netAmt} added to earnings.` : 'Earnings updated. 💰'}` 
+            : 'Job cancelled.', 
+          'success'
+        );
+        await refreshBookings(); // will move it to history and recalculate earnings
       } else {
         // Update local state for in-progress / on_the_way
-        setActiveBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+        setActiveBookings(prev => prev.map(b => b.id === id ? { ...b, status, ...(finalPrice ? { final_price: finalPrice } : {}) } : b));
         showToast(`Job status updated to ${status.replace('_', ' ')}`);
       }
     } else {

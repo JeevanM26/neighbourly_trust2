@@ -2,6 +2,7 @@
 import React from 'react';
 import { useWorker, getBookingAmount } from '../../context/WorkerContext';
 import { COMMISSION_RATE } from '../../lib/types';
+import { format } from 'date-fns';
 
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -184,6 +185,53 @@ export default function EarningsScreen() {
             })}
           </div>
         )}
+
+        {/* Recent Completed Jobs & Settled Payouts */}
+        <div style={{ background: 'white', borderRadius: 20, padding: '20px', marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', margin: 0 }}>Recent Completed Jobs</h3>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: 8 }}>
+              {completedBookings.filter(b => b.status === 'completed').length} Settled
+            </span>
+          </div>
+
+          {completedBookings.filter(b => b.status === 'completed').length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#94A3B8' }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>🧾</div>
+              <p style={{ fontSize: 12, margin: 0, fontWeight: 500 }}>Completed jobs and collected amounts will appear here.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {completedBookings.filter(b => b.status === 'completed').slice(0, 10).map((b) => {
+                const gross = getBookingAmount(b);
+                const fee = Math.round(gross * COMMISSION_RATE);
+                const net = gross - fee;
+                const dateStr = b.completed_at || b.created_at;
+                let formattedDate = 'Recently';
+                try {
+                  if (dateStr) formattedDate = format(new Date(dateStr), 'dd MMM, hh:mm a');
+                } catch {}
+                return (
+                  <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#F8FAFC', borderRadius: 14, border: '1px solid #F1F5F9' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#1E293B' }}>{b.customer_name || 'Customer'}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#D1FAE5', padding: '1px 6px', borderRadius: 6 }}>{b.category_name || 'Service'}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, marginTop: 3 }}>
+                        {formattedDate} · Taken: ₹{gross} (Fee: -₹{fee})
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: '#059669' }}>+₹{net.toLocaleString('en-IN')}</div>
+                      <div style={{ fontSize: 10, color: '#10B981', fontWeight: 700 }}>Settled</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Tips */}
         <div style={{ background: 'linear-gradient(135deg, #ECFDF5, #D1FAE5)', borderRadius: 16, padding: '16px', border: '1px solid #A7F3D0' }}>
