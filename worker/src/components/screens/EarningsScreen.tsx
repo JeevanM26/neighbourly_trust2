@@ -124,6 +124,7 @@ export default function EarningsScreen() {
               </div>
             ))}
           </div>
+        </div>
       </div>
 
       <div style={{ padding: '20px 16px' }}>
