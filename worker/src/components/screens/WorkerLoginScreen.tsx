@@ -113,7 +113,7 @@ export default function WorkerLoginScreen() {
         }).eq('id', worker.id);
       }
       await completeOnboarding(name.trim(), Array.from(selectedCategories));
-      showToast('Profile setup complete! Welcome to Hands of Heros Partner 🛠️', 'success');
+      showToast('Profile setup complete! Welcome to HOS: Workers 🛠️', 'success');
     } catch (err) {
       console.warn('Partner onboarding notice:', err);
       completeOnboarding(name.trim(), Array.from(selectedCategories));

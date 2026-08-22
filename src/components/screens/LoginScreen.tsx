@@ -84,7 +84,7 @@ export default function LoginScreen() {
       if (currentUserId && client) {
         await client.from('profiles').update({
           phone: cleanPhone,
-          full_name: name.trim() || user?.full_name || 'Hands of Heros User',
+          full_name: name.trim() || user?.full_name || 'ShramiXs User',
           language: settings.language,
           preferred_language: settings.language,
           consent_given: true,
@@ -93,7 +93,7 @@ export default function LoginScreen() {
       } else if (currentUserId) {
         await upsertProfile({
           id: currentUserId,
-          full_name: name.trim() || user?.full_name || 'Hands of Heros User',
+          full_name: name.trim() || user?.full_name || 'ShramiXs User',
           phone: cleanPhone,
           language: settings.language,
           consent_given: true,
