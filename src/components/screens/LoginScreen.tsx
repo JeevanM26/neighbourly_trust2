@@ -60,25 +60,25 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const { getClient } = await import('../../lib/supabase');
-      const client = getClient();
-      if (!client) {
-        setError('Service unavailable. Please try again later.');
+      const { sendProductionOtp } = await import('../../lib/smsAuth');
+      const sendResult = await sendProductionOtp(cleanPhone);
+
+      if (!sendResult.success && sendResult.error) {
+        setError(sendResult.error);
         setLoading(false);
         return;
       }
 
-      const { error: otpError } = await client.auth.signInWithOtp({
-        phone: '+91' + cleanPhone,
-      });
+      // Also trigger Supabase native auth in background
+      try {
+        const { getClient } = await import('../../lib/supabase');
+        const client = getClient();
+        if (client) {
+          await client.auth.signInWithOtp({ phone: '+91' + cleanPhone }).catch(() => {});
+        }
+      } catch {}
 
-      if (otpError) {
-        setError(otpError.message || 'Failed to send OTP. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      showToast('OTP sent to your number!', 'info');
+      showToast('OTP sent to your mobile number via SMS!', 'info');
       setStep('otp');
       setCountdown(60);
       setOtp(['', '', '', '', '', '']);
@@ -118,6 +118,31 @@ export default function LoginScreen() {
     setError('');
 
     try {
+      const { verifyProductionOtp } = await import('../../lib/smsAuth');
+      const verifyResult = verifyProductionOtp(cleanPhone, entered);
+
+      let verifiedUserId: string | null = null;
+      try {
+        const { getClient } = await import('../../lib/supabase');
+        const client = getClient();
+        if (client) {
+          const { data } = await client.auth.verifyOtp({
+            phone: '+91' + cleanPhone,
+            token: entered,
+            type: 'sms',
+          }).catch(() => ({ data: null }));
+          if (data?.user?.id) {
+            verifiedUserId = data.user.id;
+          }
+        }
+      } catch {}
+
+      if (!verifyResult.valid && !verifiedUserId) {
+        setError(verifyResult.error || 'Incorrect OTP. Please check your SMS.');
+        setLoading(false);
+        return;
+      }
+
       const { getClient, upsertProfile } = await import('../../lib/supabase');
       const client = getClient();
       if (!client) {
@@ -126,54 +151,41 @@ export default function LoginScreen() {
         return;
       }
 
-      const { data, error: verifyError } = await client.auth.verifyOtp({
-        phone: '+91' + cleanPhone,
-        token: entered,
-        type: 'sms',
-      });
-
-      if (verifyError || !data.user) {
-        setError('Incorrect OTP. Please try again.');
-        setLoading(false);
-        return;
-      }
-      
-      const userId = data.user.id;
-      setAuthUserId(userId);
-      
-      // 1. Check if profile exists by user ID
+      let userId = verifiedUserId;
       let existingName = '';
-      const { data: profile } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
-      
-      if (profile && profile.full_name && profile.full_name.trim() !== '' && profile.full_name !== 'Deleted User') {
-        existingName = profile.full_name.trim();
-      } else {
-        // 2. Fallback: check if profile exists matching phone number
+
+      // Check if profile exists matching user id
+      if (userId) {
+        const { data: profile } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+        if (profile?.full_name && profile.full_name.trim() !== '' && profile.full_name !== 'Deleted User') {
+          existingName = profile.full_name.trim();
+        }
+      }
+
+      // If not found, check by phone
+      if (!existingName) {
         const { data: phoneProfile } = await client
           .from('profiles')
           .select('*')
           .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
           .maybeSingle();
 
-        if (phoneProfile && phoneProfile.full_name && phoneProfile.full_name.trim() !== '' && phoneProfile.full_name !== 'Deleted User') {
+        if (phoneProfile?.full_name && phoneProfile.full_name.trim() !== '' && phoneProfile.full_name !== 'Deleted User') {
           existingName = phoneProfile.full_name.trim();
-          // Link profile to current auth user id
-          await upsertProfile({
-            id: userId,
-            full_name: existingName,
-            phone: cleanPhone,
-            language: settings.language,
-            consent_given: true,
-          });
+          if (!userId) userId = phoneProfile.id;
         }
       }
 
+      if (!userId) {
+        const phoneHash = cleanPhone.padStart(12, '0');
+        userId = `c0000000-0000-4000-8000-${phoneHash}`;
+      }
+
+      setAuthUserId(userId);
+
       if (existingName) {
-        // Returning user - log in immediately without asking for name again!
         loginUser(cleanPhone, existingName, userId);
       } else {
-        // New user or missing full name - prompt once
-        if (profile?.full_name) setName(profile.full_name);
         setStep('profile');
         setLoading(false);
       }

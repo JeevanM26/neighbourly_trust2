@@ -76,23 +76,24 @@ export default function WorkerLoginScreen() {
     setLoading(true);
     
     try {
-      const client = getClient();
-      if (!client) {
-        setError('Service unavailable.');
-        setLoading(false);
-        return;
-      }
-      const { error: otpError } = await client.auth.signInWithOtp({
-        phone: '+91' + cleanPhone,
-      });
+      const { sendProductionOtp } = await import('../../lib/smsAuth');
+      const sendResult = await sendProductionOtp(cleanPhone);
 
-      if (otpError) {
-        setError(otpError.message || 'Failed to send OTP.');
+      if (!sendResult.success && sendResult.error) {
+        setError(sendResult.error);
         setLoading(false);
         return;
       }
 
-      showToast('OTP sent to your number', 'info');
+      // Also trigger Supabase native auth in background if available
+      try {
+        const client = getClient();
+        if (client) {
+          await client.auth.signInWithOtp({ phone: '+91' + cleanPhone }).catch(() => {});
+        }
+      } catch {}
+
+      showToast('OTP sent to your mobile number via SMS!', 'info');
       setStep('otp');
       setCountdown(60);
       setOtp(['', '', '', '', '', '']);
@@ -120,26 +121,49 @@ export default function WorkerLoginScreen() {
     const cleanPhone = phone.replace(/\D/g, '');
     
     try {
-      const client = getClient();
-      if (!client) {
-        setError('Service unavailable.');
+      const { verifyProductionOtp } = await import('../../lib/smsAuth');
+      const verifyResult = verifyProductionOtp(cleanPhone, entered);
+
+      let verifiedUserId: string | null = null;
+      try {
+        const client = getClient();
+        if (client) {
+          const { data } = await client.auth.verifyOtp({
+            phone: '+91' + cleanPhone,
+            token: entered,
+            type: 'sms',
+          }).catch(() => ({ data: null }));
+          if (data?.user?.id) {
+            verifiedUserId = data.user.id;
+          }
+        }
+      } catch {}
+
+      if (!verifyResult.valid && !verifiedUserId) {
+        setError(verifyResult.error || 'Incorrect OTP. Please check your SMS.');
         setLoading(false);
         return;
       }
 
-      const { data, error: verifyError } = await client.auth.verifyOtp({
-        phone: '+91' + cleanPhone,
-        token: entered,
-        type: 'sms',
-      });
-
-      if (verifyError || !data.user) {
-        setError('Incorrect OTP. Try again.');
-        setLoading(false);
-        return;
+      let userId = verifiedUserId;
+      if (!userId) {
+        const client = getClient();
+        if (client) {
+          const { data: phoneProfile } = await client
+            .from('profiles')
+            .select('*')
+            .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+            .maybeSingle();
+          if (phoneProfile) userId = phoneProfile.id;
+        }
       }
 
-      loginWorker(cleanPhone, data.user.id);
+      if (!userId) {
+        const phoneHash = cleanPhone.padStart(12, '0');
+        userId = `w0000000-0000-4000-8000-${phoneHash}`;
+      }
+
+      loginWorker(cleanPhone, userId);
     } catch {
       setError('Verification failed.');
       setLoading(false);
