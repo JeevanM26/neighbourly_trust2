@@ -61,23 +61,25 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return JSON.parse(localStorage.getItem('nt_user') ?? 'null'); } catch { return null; }
+  });
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [settings, setSettings] = useState<AppSettings>({ language: 'en', sounds: true, voice: false });
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    if (typeof window === 'undefined') return { language: 'en', sounds: true, voice: false };
+    try { return JSON.parse(localStorage.getItem('nt_settings') ?? 'null') ?? { language: 'en', sounds: true, voice: false }; }
+    catch { return { language: 'en', sounds: true, voice: false }; }
+  });
   const webrtc = useWebRTC(user?.id || '');
 
   // Load initial settings and auth
   useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('nt_settings');
-      if (savedSettings) setSettings(JSON.parse(savedSettings));
-    } catch {}
-
     const errorHandler = (e: any) => {
       showToast(e.detail || 'An unexpected error occurred.', 'error');
     };
