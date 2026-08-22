@@ -68,12 +68,12 @@ if %errorlevel% neq 0 (
 :: Copy APKs to top-level apks folder for easy access
 cd /d "%~dp0"
 if not exist "apks" mkdir "apks"
-copy /Y "android\app\build\outputs\apk\debug\app-debug.apk" "apks\HeroHand-Customer.apk" >nul
-copy /Y "worker\android\app\build\outputs\apk\debug\app-debug.apk" "apks\HeroHand-Partner.apk" >nul
+copy /Y "android\app\build\outputs\apk\debug\app-debug.apk" "apks\HandsOfHeros-Customer.apk" >nul
+copy /Y "worker\android\app\build\outputs\apk\debug\app-debug.apk" "apks\HandsOfHeros-Partner.apk" >nul
 
 echo.
 echo ===================================================
 echo   BUILD SUCCESSFUL!
-echo   Customer APK: %~dp0apks\HeroHand-Customer.apk
-echo   Partner APK:  %~dp0apks\HeroHand-Partner.apk
+echo   Customer APK: %~dp0apks\HandsOfHeros-Customer.apk
+echo   Partner APK:  %~dp0apks\HandsOfHeros-Partner.apk
 echo ===================================================
