@@ -9,9 +9,7 @@ import {
   Sparkles, CheckCircle2, MessageSquare, Send, ArrowRight,
   Radio, Car, Flame, Zap
 } from 'lucide-react';
-import { EmptyState } from '../ui/EmptyState';
 import CustomerMap from '../CustomerMap';
-import confetti from 'canvas-confetti';
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string; step: number }> = {
   searching:   { label: 'Searching',   color: '#D97706', bg: '#FEF3C7', border: '#FDE68A', step: 1 },

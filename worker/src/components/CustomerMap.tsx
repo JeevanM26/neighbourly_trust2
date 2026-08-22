@@ -1,7 +1,4 @@
-'use client';
-
 import React, { useEffect, useRef } from 'react';
-import 'leaflet/dist/leaflet.css';
 
 interface CustomerMapProps {
   customerLoc: { lat: number; lng: number };
@@ -14,6 +11,15 @@ export default function CustomerMap({ customerLoc }: CustomerMapProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return;
+
+    // Load Leaflet CSS dynamically if not present
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css';
+      document.head.appendChild(link);
+    }
 
     import('leaflet').then((L) => {
       // Fix default marker icon issues in Leaflet Webpack/Next builds

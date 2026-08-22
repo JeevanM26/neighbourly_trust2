@@ -3,7 +3,8 @@ import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, ShieldCheck } from 'luc
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallAudioSynthesizer, formatCallDuration } from '../lib/callEngine';
 
-export function CallOverlay({ webrtc }: { webrtc: ReturnType<typeof useWebRTC> }) {
+export function CallOverlay({ webrtc }: { webrtc?: ReturnType<typeof useWebRTC> }) {
+  if (!webrtc) return null;
   const { callStatus, incomingCall, answerCall, declineCall, endCall, toggleMute, toggleSpeaker, isMuted, isSpeakerOn, audioRef } = webrtc;
   
   const [duration, setDuration] = useState(0);

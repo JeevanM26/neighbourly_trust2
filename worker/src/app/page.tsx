@@ -9,7 +9,6 @@ import RequestsScreen from '../components/screens/RequestsScreen';
 import JobsScreen from '../components/screens/JobsScreen';
 import EarningsScreen from '../components/screens/EarningsScreen';
 import WorkerProfileScreen from '../components/screens/WorkerProfileScreen';
-import { CallOverlay } from '../components/CallOverlay';
 
 type Tab = 'dashboard' | 'requests' | 'jobs' | 'earnings' | 'profile';
 
@@ -124,21 +123,6 @@ export default function WorkerMainPage() {
           );
         })}
       </nav>
-
-      {/* WebRTC Call Overlay if active */}
-      {webrtc && webrtc.callState !== 'idle' && (
-        <CallOverlay 
-          callState={webrtc.callState}
-          remoteName="Customer"
-          isMuted={webrtc.isMuted}
-          isSpeakerOn={webrtc.isSpeakerOn}
-          onAccept={() => webrtc.acceptCall()}
-          onReject={() => webrtc.rejectCall()}
-          onHangup={() => webrtc.endCall()}
-          onToggleMute={() => webrtc.toggleMute()}
-          onToggleSpeaker={() => webrtc.toggleSpeaker()}
-        />
-      )}
 
       <Toast />
     </div>
