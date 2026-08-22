@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.shramixs.worker',
+  appId: 'com.neighborly.trust.worker',
   appName: 'HOS: Workers',
   webDir: 'out',
   server: {

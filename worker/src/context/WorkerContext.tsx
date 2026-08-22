@@ -331,10 +331,14 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       showToast(`🔔 New ${newOffer.booking?.category_name || 'Job'} offer!`, 'info');
       // Browser notification
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification('New Job Offer!', {
-          body: `A new job is waiting for you to accept.`,
-          icon: '/icon-192.png',
-        });
+        try {
+          new Notification('New Job Offer!', {
+            body: `A new job is waiting for you to accept.`,
+            icon: '/icon-192.png',
+          });
+        } catch (e) {
+          // Android WebView requires ServiceWorker for Notification, safely catch
+        }
       }
     });
     realtimeRef.current = channel;

@@ -52,12 +52,16 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
         });
 
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          persistentNotifRef.current = new Notification('Hero Hand', {
-            body: "You're online and visible to nearby customers",
-            icon: '/icon-192.png',
-            requireInteraction: true,
-            tag: 'nt-worker-online'
-          });
+          try {
+            persistentNotifRef.current = new Notification('Hero Hand', {
+              body: "You're online and visible to nearby customers",
+              icon: '/icon-192.png',
+              requireInteraction: true,
+              tag: 'nt-worker-online'
+            });
+          } catch (e) {
+            // Android WebView requires ServiceWorker for Notification, safely catch
+          }
         }
       }
     } else {
