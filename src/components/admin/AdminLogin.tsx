@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { Shield, Lock, Phone, ArrowRight, ShieldCheck } from 'lucide-react';
-import { getAssetPath } from '../../lib/types';
 
 const SUPER_ADMIN_PHONE = '7975182162';
 
@@ -17,7 +16,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
     const cleanPhone = phone.replace(/\D/g, '');
 
     if (!cleanPhone) {
-      setError('Please enter your admin phone number.');
+      setError('Please enter your admin mobile number.');
       return;
     }
 
@@ -31,7 +30,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
     const isAuthorized = authorizedList.some((a: any) => a.phone === cleanPhone) || cleanPhone === SUPER_ADMIN_PHONE;
 
     if (!isAuthorized) {
-      setError(`Access denied. +91 ${cleanPhone} is not an authorized Admin. Contact Super Admin (+91 ${SUPER_ADMIN_PHONE}).`);
+      setError('Access denied. This number is not an authorized administrator.');
       return;
     }
 
@@ -60,25 +59,25 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
       <div style={{ width: '100%', maxWidth: 420, background: 'rgba(255, 255, 255, 0.96)', borderRadius: 24, padding: '36px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.4)' }}>
         
         {/* Header Icon */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ width: 72, height: 72, borderRadius: 22, background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(11,61,102,0.35)' }}>
             <Shield size={36} color="#F59E0B" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 6px', letterSpacing: '-0.4px' }}>
             Hands of Heros
           </h1>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF3C7', color: '#92400E', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF3C7', color: '#92400E', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             <ShieldCheck size={13} /> Management Portal
           </div>
         </div>
 
         {error && (
-          <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '10px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, marginBottom: 18, lineHeight: 1.4 }}>
+          <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '12px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, marginBottom: 18, lineHeight: 1.4 }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
               Authorized Admin Mobile Number
@@ -91,15 +90,12 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                placeholder="7975182162"
+                placeholder="Enter registered mobile number"
                 maxLength={10}
                 style={{ width: '100%', padding: '12px 14px 12px 76px', borderRadius: 12, border: '1.5px solid #CBD5E1', fontSize: 14, fontWeight: 700, outline: 'none', background: '#F8FAFC' }}
                 required
               />
             </div>
-            <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>
-              Primary Super Admin: <b>7975182162</b>
-            </span>
           </div>
 
           <div>
@@ -112,7 +108,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
                 type="password"
                 value={pin}
                 onChange={e => setPin(e.target.value)}
-                placeholder="Enter 4-digit PIN (default: 7975)"
+                placeholder="••••"
                 style={{ width: '100%', padding: '12px 14px 12px 42px', borderRadius: 12, border: '1.5px solid #CBD5E1', fontSize: 14, fontWeight: 700, outline: 'none', background: '#F8FAFC' }}
                 required
               />
@@ -148,8 +144,8 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 11, color: '#94A3B8' }}>
-          🔒 Protected System · Hands of Heros Super Admin
+        <div style={{ textAlign: 'center', marginTop: 26, fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>
+          🔒 Protected System · Authorized Management Only
         </div>
 
       </div>

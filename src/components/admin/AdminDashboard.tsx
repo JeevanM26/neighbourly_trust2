@@ -515,7 +515,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                 </span>
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: '3px 0 0', fontWeight: 500 }}>
-                Super Admin: <b>+91 {SUPER_ADMIN_PHONE}</b> · Daily Work Done & Review Engine
+                Platform Operations · Daily Work Done & Review Engine
               </p>
             </div>
           </div>
@@ -1479,7 +1479,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                 Admin Access & Security Controls
               </h2>
               <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
-                Super Admin: <b>+91 {SUPER_ADMIN_PHONE}</b>. Add or remove secondary admins and change master PIN.
+                Manage authorized admin accounts, grant access, and update security credentials.
               </p>
             </div>
 
@@ -1633,7 +1633,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                   <Lock size={18} color="#0B3D66" /> Change Super Admin Master PIN
                 </h3>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px' }}>
-                  Current PIN is set for <b>+91 {SUPER_ADMIN_PHONE}</b>. You can update your master security PIN anytime.
+                  Update your master security PIN anytime to keep your portal secure.
                 </p>
 
                 <form onSubmit={handleUpdateMasterPin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
