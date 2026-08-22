@@ -12,9 +12,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Hero Hand — Worker Portal',
-  description: 'Manage your service bookings, skills, and earnings. Accept jobs, track your income, and grow your business.',
-  authors: [{ name: 'Hero Hand' }],
+  title: 'HOS: Workers — One App. All Workers.',
+  description: 'Manage your service bookings, skills, and earnings with HOS: Workers by ShramiXs. Accept jobs, track income, and grow your business.',
+  authors: [{ name: 'ShramiXs' }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

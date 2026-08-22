@@ -60,11 +60,14 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
         
         {/* Header Icon */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 22, background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(11,61,102,0.35)' }}>
+          <div style={{ width: 72, height: 72, borderRadius: 22, background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(11,61,102,0.35)', overflow: 'hidden' }}>
+            <img src="/logo.png" alt="Hands of ShramiXs" style={{ width: 56, height: 56, objectFit: 'contain' }} onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }} />
             <Shield size={36} color="#F59E0B" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 6px', letterSpacing: '-0.4px' }}>
-            Hands of Heros
+            Hands of ShramiXs
           </h1>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF3C7', color: '#92400E', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             <ShieldCheck size={13} /> Management Portal

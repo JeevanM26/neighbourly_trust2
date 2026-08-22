@@ -502,13 +502,16 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
       <header style={{ background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)', color: 'white', padding: '20px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+              <img src="/logo.png" alt="Hands of ShramiXs" style={{ width: 42, height: 42, objectFit: 'contain' }} onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }} />
               <Shield size={26} color="#F59E0B" />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.4px', margin: 0 }}>
-                  Hands of Heros
+                  Hands of ShramiXs
                 </h1>
                 <span style={{ background: '#F59E0B', color: '#041B30', fontSize: 10, fontWeight: 900, padding: '2px 7px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Admin Hub
@@ -726,7 +729,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                                 <Phone size={13} /> Call for Review
                               </a>
                               <a
-                                href={`https://wa.me/91${custPhone}?text=${encodeURIComponent(`Hello ${b.customer?.full_name || 'there'}, this is Hands of Heros Management following up on your ${b.category_name} service completed today. How was your experience with the technician?`)}`}
+                                href={`https://wa.me/91${custPhone}?text=${encodeURIComponent(`Hello ${b.customer?.full_name || 'there'}, this is Hands of ShramiXs Management following up on your ${b.category_name} service completed today. How was your experience with the technician?`)}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 style={{
@@ -854,7 +857,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                   ₹{stats.totalCommission.toLocaleString('en-IN')}
                 </div>
                 <div style={{ fontSize: 12, color: '#D1FAE5', fontWeight: 600 }}>
-                  Hands of Heros net commission
+                  Hands of ShramiXs net commission
                 </div>
               </div>
 
@@ -1076,7 +1079,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                                 <Phone size={12} /> Call Customer
                               </a>
                               <a
-                                href={`https://wa.me/91${custPhone}?text=${encodeURIComponent(`Hello ${b.customer?.full_name || 'there'}, this is Hands of Heros Support following up on your ${b.category_name} service. How was your experience with the technician?`)}`}
+                                href={`https://wa.me/91${custPhone}?text=${encodeURIComponent(`Hello ${b.customer?.full_name || 'there'}, this is Hands of ShramiXs Support following up on your ${b.category_name} service. How was your experience with the technician?`)}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 style={{
@@ -1333,7 +1336,7 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
                   Registered Customers ({customers.length})
                 </h2>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
-                  All users who have signed up and booked through Hands of Heros
+                  All users who have signed up and booked through Hands of ShramiXs
                 </p>
               </div>
 

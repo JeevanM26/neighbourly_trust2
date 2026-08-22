@@ -12,13 +12,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Hero Hand — Find Local Service Specialists",
+  title: "ShramiXs — Find Local Service Specialists",
   description:
-    "Book verified local electricians, plumbers, carpenters, and home cleaners in your area. Fast, reliable, and trustworthy service at your doorstep.",
-  keywords: "electrician, plumber, carpenter, home cleaning, local services, book service, nearby workers, trusted providers",
-  authors: [{ name: "Hero Hand" }],
+    "Book verified local electricians, plumbers, carpenters, and home cleaners in your area with ShramiXs. Skills, Effort, Better Tomorrows.",
+  keywords: "electrician, plumber, carpenter, home cleaning, local services, book service, nearby workers, trusted providers, shramixs",
+  authors: [{ name: "ShramiXs" }],
   openGraph: {
-    title: "Hero Hand",
+    title: "Hands of ShramiXs",
     description: "Find and book verified local service specialists near you.",
     type: "website",
   },

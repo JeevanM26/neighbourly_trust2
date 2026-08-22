@@ -128,16 +128,16 @@ export default function WorkerLoginScreen() {
       <div style={{ height: '100%', overflowY: 'auto', background: '#F0FDF4', display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: 'linear-gradient(160deg, #065F46 0%, #059669 100%)', padding: '52px 24px 36px', textAlign: 'center' }}>
           <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)', boxShadow: '0 8px 30px rgba(0,0,0,0.15)' }}>
-            <img src={getAssetPath('/logo.png')} alt="Hands of Heros Partner" style={{ width: 52, height: 52, objectFit: 'contain' }} onError={(e) => {
+            <img src={getAssetPath('/logo.png')} alt="HOS: Workers" style={{ width: 62, height: 62, objectFit: 'contain' }} onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }} />
             <ShieldCheck size={42} color="#FCD34D" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
-            Hands of Heros Partner
+            HOS: Workers
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 500, margin: '0 0 16px' }}>
-            Specialist & Partner App
+            One App. All Workers. · ShramiXs Partner
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
