@@ -28,7 +28,37 @@ export default function WorkerLoginScreen() {
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(true);
   const [error, setError] = useState('');
-  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
+  // Listen directly to Supabase Auth State for instant OAuth Deep Link return
+  useEffect(() => {
+    let sub: any = null;
+    import('../../lib/supabase').then(({ getClient }) => {
+      const client = getClient();
+      if (client) {
+        const { data } = client.auth.onAuthStateChange((event, session) => {
+          if (session?.user) {
+            setLoading(false);
+            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'HOS Partner';
+            const userEmail = session.user.email || '';
+            setName(fullName);
+            setEmail(userEmail);
+            setStep('skills');
+          }
+        });
+        sub = data.subscription;
+      }
+    });
+    return () => {
+      if (sub) sub.unsubscribe();
+    };
+  }, []);
+
+  // Safety timeout: Auto-reset loading
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setLoading(false), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Initialize Google GIS One Tap
   useEffect(() => {

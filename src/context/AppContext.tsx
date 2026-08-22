@@ -145,6 +145,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
 
+      // Native Deep Link Listener for Google OAuth Return
+      if (typeof window !== 'undefined') {
+        const handleCustomUrl = async (urlStr: string) => {
+          try {
+            if (!urlStr) return;
+            const hashIndex = urlStr.indexOf('#');
+            if (hashIndex !== -1) {
+              const hash = urlStr.substring(hashIndex + 1);
+              const params = new URLSearchParams(hash);
+              const accessToken = params.get('access_token');
+              const refreshToken = params.get('refresh_token');
+              if (accessToken && refreshToken && client) {
+                await client.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
+              }
+            }
+          } catch (err) {
+            console.warn('[DeepLink Auth Error]', err);
+          }
+        };
+
+        if (window.location.hash.includes('access_token')) {
+          handleCustomUrl(window.location.href);
+        }
+
+        import('@capacitor/app').then(({ App }) => {
+          App.addListener('appUrlOpen', (data) => {
+            handleCustomUrl(data.url);
+          });
+        }).catch(() => {});
+      }
+
       return () => {
         subscription.unsubscribe();
         window.removeEventListener('app-error', errorHandler);

@@ -35,13 +35,46 @@ export default function LoginScreen() {
   // If user already authenticated in Supabase but lacks phone
   useEffect(() => {
     if (user) {
+      setLoading(false);
+      setName(user.full_name || '');
+      setEmail(user.email || '');
       if (!user.phone || user.phone.trim() === '') {
-        setName(user.full_name || '');
-        setEmail(user.email || '');
         setStep('complete_phone');
       }
     }
   }, [user]);
+
+  // Listen directly to Supabase Auth State for instant OAuth Deep Link return
+  useEffect(() => {
+    let sub: any = null;
+    import('../../lib/supabase').then(({ getClient }) => {
+      const client = getClient();
+      if (client) {
+        const { data } = client.auth.onAuthStateChange((event, session) => {
+          if (session?.user) {
+            setLoading(false);
+            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'ShramiXs User';
+            const userEmail = session.user.email || '';
+            setName(fullName);
+            setEmail(userEmail);
+            setStep('complete_phone');
+          }
+        });
+        sub = data.subscription;
+      }
+    });
+    return () => {
+      if (sub) sub.unsubscribe();
+    };
+  }, []);
+
+  // Safety timeout: Auto-reset loading if OAuth return takes more than 10s
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setLoading(false), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Load and initialize official Google Identity Services (GIS) One-Tap SDK
   useEffect(() => {
