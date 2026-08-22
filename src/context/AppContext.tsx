@@ -87,27 +87,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const client = getClient();
     if (client) {
+      const handleUserSession = async (authUser: any) => {
+        try {
+          const { data: profileData } = await client!.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+          const name = profileData?.full_name || authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Hands of Heros User';
+          const userPhone = authUser.phone || authUser.user_metadata?.phone || profileData?.phone || '';
+          
+          if (!profileData) {
+            try {
+              await client!.from('profiles').upsert({
+                id: authUser.id,
+                full_name: name,
+                phone: userPhone,
+                role: 'customer',
+                consent_given: true,
+              });
+            } catch {}
+          }
+
+          setUser({
+            id: authUser.id,
+            full_name: name,
+            phone: userPhone,
+            role: 'customer',
+            language: (profileData?.preferred_language || profileData?.language || settings.language || 'en') as LanguageCode,
+            consent_given: true,
+          });
+        } catch (e) {
+          console.error('[Auth Profile Init Error]', e);
+        }
+      };
+
       client!.auth.getSession().then(async ({ data }) => {
         if (data.session?.user) {
-          const authUser = data.session.user;
-          // check if profile exists
-          const { data: profileData } = await client!.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
-          if (profileData && profileData.full_name && profileData.full_name.trim() !== '' && profileData.full_name !== 'Deleted User') {
-            setUser({
-              id: authUser.id,
-              full_name: profileData.full_name,
-              phone: authUser.phone || '',
-              role: 'customer',
-              language: (profileData.preferred_language || profileData.language || 'en') as LanguageCode,
-              consent_given: true,
-            });
-          }
+          await handleUserSession(data.session.user);
         }
         setIsAuthLoading(false);
       }).catch(() => setIsAuthLoading(false));
 
-      const { data: { subscription } } = client!.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
+      const { data: { subscription } } = client!.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await handleUserSession(session.user);
+        } else if (event === 'SIGNED_OUT' || !session) {
           setUser(null);
           setBookings([]);
           localStorage.removeItem('nt_user');

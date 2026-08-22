@@ -116,7 +116,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
     const { data: onlineWorkers } = await client
       .from('worker_profiles')
       .select(`
-        profile_id, avg_rating, total_jobs, hourly_rate, is_online, is_verified, location,
+        profile_id, avg_rating, total_jobs, is_online, is_verified, location,
         profiles!profile_id ( full_name, avatar_url, phone ),
         worker_categories ( category_id, service_categories ( id, name_en, slug, icon_url ) )
       `)
