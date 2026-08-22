@@ -179,22 +179,41 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const client = getClient();
     if (client) {
-      client!.auth.getSession().then(async ({ data }) => {
-        if (data.session?.user) {
-          accessTokenRef.current = data.session.access_token;
-          const authUser = data.session.user;
+      const handleWorkerSession = async (authUser: any) => {
+        try {
           const prof = await fetchWorkerProfile(authUser.id);
           if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
             const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('nt_worker_online') : null;
             const effectiveOnline = savedOnline !== null ? JSON.parse(savedOnline) : prof.is_online;
             setWorker({ ...prof, is_online: effectiveOnline, phone: authUser.phone || prof.phone || '' });
             setIsOnline(effectiveOnline);
+            setIsNewWorker(false);
           } else {
-            const savedWorker = localStorage.getItem('nt_worker');
-            if (savedWorker) {
-              try { setWorker(JSON.parse(savedWorker)); } catch {}
-            }
+            const defaultName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Partner';
+            const initialProf: WorkerProfile = {
+              id: authUser.id,
+              full_name: defaultName,
+              phone: authUser.phone || authUser.user_metadata?.phone || '',
+              rating: 5.0,
+              review_count: 0,
+              experience_years: 1,
+              skills: [],
+              is_online: true,
+              wallet_balance: 0,
+              created_at: new Date().toISOString(),
+            };
+            setWorker(initialProf);
+            setIsNewWorker(true);
           }
+        } catch (err) {
+          console.error("Worker Auth error:", err);
+        }
+      };
+
+      client!.auth.getSession().then(async ({ data }) => {
+        if (data.session?.user) {
+          accessTokenRef.current = data.session.access_token;
+          await handleWorkerSession(data.session.user);
         }
         setIsAuthLoading(false);
       }).catch(err => {
@@ -202,13 +221,15 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsAuthLoading(false);
       });
 
-      const { data: { subscription } } = client!.auth.onAuthStateChange((event, session) => {
+      const { data: { subscription } } = client!.auth.onAuthStateChange(async (event, session) => {
         if (session) {
           accessTokenRef.current = session.access_token;
         } else {
           accessTokenRef.current = null;
         }
-        if (event === 'SIGNED_OUT' || !session) {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await handleWorkerSession(session.user);
+        } else if (event === 'SIGNED_OUT' || !session) {
           setWorker(null);
           setActiveBookings([]);
           setCompletedBookings([]);

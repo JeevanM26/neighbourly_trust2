@@ -8,7 +8,7 @@ import LoginScreen from '../../components/screens/LoginScreen';
 import Toast from '../../components/Toast'; // Needs to be extracted
 
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, isAuthLoading, bookings } = useApp();
+  const { user, isLoggedIn, isAuthLoading, bookings } = useApp();
 
   if (isAuthLoading) {
     return (
@@ -28,13 +28,15 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
           <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: '-0.3px' }}>
-          Hero Hand
+          Hands of Heros
         </h1>
       </div>
     );
   }
 
-  if (!isLoggedIn) {
+  const needsPhone = !user || !user.phone || user.phone.trim() === '';
+
+  if (needsPhone) {
     return (
       <>
         <div className="screen" style={{ flex: 1 }}>
