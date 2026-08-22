@@ -23,8 +23,9 @@ function getLocalIp() {
 
 const localIp = getLocalIp();
 
-const customerApkPath = path.join(__dirname, 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
-const workerApkPath = path.join(__dirname, 'worker', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+const customerApkPath = path.join(__dirname, 'apks', 'ShramiXs-Customer.apk');
+const workerApkPath = path.join(__dirname, 'apks', 'HOS-Workers.apk');
+const adminApkPath = path.join(__dirname, 'apks', 'ShramiXs-Admin.apk');
 
 const server = http.createServer((req, res) => {
   const url = req.url || '/';
@@ -35,12 +36,12 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
         'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="Neighborly-Customer.apk"',
+        'Content-Disposition': 'attachment; filename="ShramiXs-Customer.apk"',
       });
       fs.createReadStream(customerApkPath).pipe(res);
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Customer APK is still compiling. Please refresh in a moment.');
+      res.end('Customer APK not found.');
     }
     return;
   }
@@ -51,88 +52,126 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
         'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="Neighborly-Worker.apk"',
+        'Content-Disposition': 'attachment; filename="HOS-Workers.apk"',
       });
       fs.createReadStream(workerApkPath).pipe(res);
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Worker APK is still compiling. Please refresh in a moment.');
+      res.end('Worker APK not found.');
+    }
+    return;
+  }
+
+  if (url === '/download/admin.apk') {
+    if (fs.existsSync(adminApkPath)) {
+      const stat = fs.statSync(adminApkPath);
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.android.package-archive',
+        'Content-Length': stat.size,
+        'Content-Disposition': 'attachment; filename="ShramiXs-Admin.apk"',
+      });
+      fs.createReadStream(adminApkPath).pipe(res);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Admin APK not found.');
     }
     return;
   }
 
   const customerExists = fs.existsSync(customerApkPath);
   const workerExists = fs.existsSync(workerApkPath);
+  const adminExists = fs.existsSync(adminApkPath);
 
-  const customerSize = customerExists ? (fs.statSync(customerApkPath).size / (1024 * 1024)).toFixed(1) + ' MB' : 'Compiling...';
-  const workerSize = workerExists ? (fs.statSync(workerApkPath).size / (1024 * 1024)).toFixed(1) + ' MB' : 'Compiling...';
+  const customerSize = customerExists ? (fs.statSync(customerApkPath).size / (1024 * 1024)).toFixed(1) + ' MB' : 'Available';
+  const workerSize = workerExists ? (fs.statSync(workerApkPath).size / (1024 * 1024)).toFixed(1) + ' MB' : 'Available';
+  const adminSize = adminExists ? (fs.statSync(adminApkPath).size / (1024 * 1024)).toFixed(1) + ' MB' : 'Available';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Neighborly Trust — Download Apps</title>
+  <title>ShramiXs — Download Mobile Apps (Android & iOS)</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #041B30; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; }
+    body { background: #041B30; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 32px 16px; }
     .header { text-align: center; margin-bottom: 24px; }
-    .header h1 { font-size: 26px; font-weight: 800; color: #60A5FA; margin-bottom: 6px; }
+    .header h1 { font-size: 28px; font-weight: 900; color: #F59E0B; margin-bottom: 6px; letter-spacing: -0.5px; }
     .header p { color: #94A3B8; font-size: 14px; }
-    .card { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 22px; width: 100%; max-width: 440px; margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .card-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+    .card { background: rgba(15, 23, 42, 0.9); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 22px; padding: 22px; width: 100%; max-width: 480px; margin-bottom: 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.35); }
+    .card-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; }
     .badge-customer { background: #1E3A8A; color: #93C5FD; }
     .badge-worker { background: #065F46; color: #6EE7B7; }
-    .desc { color: #CBD5E1; font-size: 13px; margin-bottom: 18px; line-height: 1.4; }
-    .btn { display: block; width: 100%; text-align: center; text-decoration: none; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; transition: transform 0.1s; }
-    .btn-blue { background: #2563EB; color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.4); }
-    .btn-green { background: #059669; color: #fff; box-shadow: 0 4px 14px rgba(5,150,105,0.4); }
+    .badge-admin { background: #78350F; color: #FDE68A; }
+    .desc { color: #CBD5E1; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
+    .btn { display: block; width: 100%; text-align: center; text-decoration: none; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 14px; transition: transform 0.1s; }
+    .btn-blue { background: linear-gradient(135deg, #2563EB, #1D4ED8); color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.4); }
+    .btn-green { background: linear-gradient(135deg, #059669, #047857); color: #fff; box-shadow: 0 4px 14px rgba(5,150,105,0.4); }
+    .btn-amber { background: linear-gradient(135deg, #D97706, #B45309); color: #fff; box-shadow: 0 4px 14px rgba(217,119,6,0.4); }
     .btn:active { transform: scale(0.98); }
-    .instructions { background: rgba(30, 58, 138, 0.25); border: 1px dashed rgba(96, 165, 250, 0.3); border-radius: 16px; padding: 16px; width: 100%; max-width: 440px; font-size: 12px; color: #93C5FD; line-height: 1.5; }
-    .instructions h4 { margin-bottom: 8px; color: #BFDBFE; font-size: 13px; font-weight: 700; }
+    .instructions { background: rgba(30, 58, 138, 0.25); border: 1px dashed rgba(96, 165, 250, 0.35); border-radius: 18px; padding: 18px; width: 100%; max-width: 480px; font-size: 13px; color: #93C5FD; line-height: 1.5; margin-bottom: 16px; }
+    .instructions h4 { margin-bottom: 8px; color: #BFDBFE; font-size: 14px; font-weight: 800; }
     .instructions ol { margin-left: 20px; }
     .instructions li { margin-bottom: 4px; }
+    .ios-box { background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 18px; padding: 18px; width: 100%; max-width: 480px; font-size: 13px; color: #FDE68A; line-height: 1.5; }
+    .ios-box h4 { margin-bottom: 8px; color: #F59E0B; font-size: 14px; font-weight: 800; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Neighborly Trust</h1>
-    <p>Mobile Test Hub &amp; APK Installer</p>
+    <h1>Hands of ShramiXs</h1>
+    <p>Mobile App Packages &amp; APK Installer</p>
   </div>
 
-  <!-- Customer App Card -->
+  <!-- 1. Customer App Card -->
   <div class="card">
     <div class="card-title">
-      <h2 style="font-size: 18px;">Customer App</h2>
+      <h2 style="font-size: 18px; font-weight: 800;">📱 Customer App (ShramiXs)</h2>
       <span class="badge badge-customer">${customerSize}</span>
     </div>
-    <p class="desc">Book local trusted service professionals, verify 4-digit PINs, and make encrypted WebRTC phone calls.</p>
-    ${customerExists 
-      ? `<a class="btn btn-blue" href="/download/customer.apk" download="Neighborly-Customer.apk">⬇️ Download Customer APK</a>`
-      : `<button class="btn btn-blue" style="opacity:0.6;" disabled>⏳ Compiling APK...</button>`}
+    <p class="desc">Book verified electricians, plumbers, and home cleaners with 15-min instant dispatch and live tracking.</p>
+    <a class="btn btn-blue" href="/download/customer.apk" download="ShramiXs-Customer.apk">⬇️ Download Customer APK (Android)</a>
   </div>
 
-  <!-- Worker Partner App Card -->
+  <!-- 2. Worker Partner App Card -->
   <div class="card">
     <div class="card-title">
-      <h2 style="font-size: 18px;">Worker Partner App</h2>
+      <h2 style="font-size: 18px; font-weight: 800;">🛠️ Partner App (HOS: Workers)</h2>
       <span class="badge badge-worker">${workerSize}</span>
     </div>
-    <p class="desc">Receive instant booking radar notifications, accept gigs, navigate to customer locations, and track earnings.</p>
-    ${workerExists 
-      ? `<a class="btn btn-green" href="/download/worker.apk" download="Neighborly-Worker.apk">⬇️ Download Worker APK</a>`
-      : `<button class="btn btn-green" style="opacity:0.6;" disabled>⏳ Compiling APK...</button>`}
+    <p class="desc">Receive instant gig dispatch radar alerts, accept customer jobs, navigate, and manage daily earnings.</p>
+    <a class="btn btn-green" href="/download/worker.apk" download="HOS-Workers.apk">⬇️ Download Worker APK (Android)</a>
   </div>
 
-  <!-- Install Guide -->
+  <!-- 3. Admin Hub Card -->
+  <div class="card">
+    <div class="card-title">
+      <h2 style="font-size: 18px; font-weight: 800;">👑 Super Admin Hub</h2>
+      <span class="badge badge-admin">${adminSize}</span>
+    </div>
+    <p class="desc">Private management cockpit: Monitor live tasks, call customers for reviews, and track platform finances.</p>
+    <a class="btn btn-amber" href="/download/admin.apk" download="ShramiXs-Admin.apk">⬇️ Download Private Admin APK (Android)</a>
+  </div>
+
+  <!-- Android Guide -->
   <div class="instructions">
-    <h4>📲 How to Install on Android:</h4>
+    <h4>🤖 How to Install on Android:</h4>
     <ol>
-      <li>Tap the download button above on your phone.</li>
-      <li>When prompted <i>"File might be harmful"</i>, tap <b>Download anyway</b>.</li>
-      <li>Open the downloaded APK and tap <b>Install</b> (allow <i>Install unknown apps</i> if asked).</li>
-      <li>Open Neighborly Trust and enjoy! 🎉</li>
+      <li>Tap the download button above on your Android phone.</li>
+      <li>Tap <b>Download anyway</b> if prompted.</li>
+      <li>Open the APK file and tap <b>Install</b>.</li>
+    </ol>
+  </div>
+
+  <!-- iOS / iPhone Guide -->
+  <div class="ios-box">
+    <h4>🍎 How to Install on iPhone (iOS):</h4>
+    <ol style="margin-left: 20px;">
+      <li>Open Safari on your iPhone and visit the deployment link (e.g. <b>https://neighbourly-trust2.vercel.app</b>).</li>
+      <li>Tap the <b>Share button</b> (square with arrow at the bottom).</li>
+      <li>Scroll down and tap <b>"Add to Home Screen"</b>.</li>
+      <li>The app icon will appear on your iPhone screen and run in <b>full-screen standalone app mode</b> with offline support! 🎉</li>
     </ol>
   </div>
 </body>
@@ -144,8 +183,9 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
-  console.log(`🚀 Mobile Test Hub Running!`);
-  console.log(`👉 Open on your phone browser (same Wi-Fi): http://${localIp}:${PORT}`);
-  console.log(`👉 Or on this computer: http://localhost:${PORT}`);
+  console.log(`  SHRAMIXS MOBILE APP DOWNLOAD SERVER RUNNING`);
+  console.log(`======================================================`);
+  console.log(`  Local URL:   http://localhost:${PORT}`);
+  console.log(`  Phone URL:   http://${localIp}:${PORT}`);
   console.log(`======================================================\n`);
 });
