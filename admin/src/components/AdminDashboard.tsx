@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
-import { getClient } from '../../lib/supabase';
+import { getClient } from '../lib/supabase';
 import { 
   Shield, Users, BarChart3, Briefcase, Phone, MessageSquare, 
   CheckCircle2, Clock, XCircle, Search, RefreshCw, Star, 
