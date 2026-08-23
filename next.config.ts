@@ -1,0 +1,23 @@
+import type { NextConfig } from 'next';
+import path from 'path';
+
+const isGithubActions = process.env.GITHUB_ACTIONS || false;
+const repoName = process.env.NEXT_PUBLIC_BASE_PATH || 'neighbourly_trust2';
+const basePath = isGithubActions ? `/${repoName}` : '';
+
+const nextConfig: NextConfig = {
+  output: 'export',
+  basePath: basePath,
+  trailingSlash: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true,
+  },
+  turbopack: {
+    root: path.resolve(__dirname, '..'),
+  },
+};
+
+export default nextConfig;

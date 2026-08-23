@@ -1,0 +1,39 @@
+{
+  "name": "neighborly-trust-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/geolocation": "^8.2.2",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@supabase/supabase-js": "^2.112.0",
+    "@types/leaflet": "^1.9.22",
+    "canvas-confetti": "^1.9.4",
+    "date-fns": "^4.4.0",
+    "firebase": "^12.17.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.28.0",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-is": "^19.2.8",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

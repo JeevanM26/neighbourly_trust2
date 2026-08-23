@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Drop Shadow -->
+    <filter id="mechanicShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#4F46E5" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.16"/>
+    </filter>
+
+    <!-- Chrome Wrench Metal Gradient -->
+    <linearGradient id="chromeMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="25%" stop-color="#E0E7FF"/>
+      <stop offset="50%" stop-color="#818CF8"/>
+      <stop offset="75%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+
+    <!-- Gear Metal Gradient -->
+    <linearGradient id="gearMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94A3B8"/>
+      <stop offset="50%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#mechanicShadow)" transform="translate(10, 10)">
+    
+    <!-- 3D Steel Gear in Background -->
+    <g transform="translate(105, 95)">
+      <circle cx="0" cy="0" r="38" fill="url(#gearMetal)"/>
+      <circle cx="0" cy="0" r="18" fill="#F8FAFC"/>
+      <circle cx="0" cy="0" r="14" fill="#0F172A"/>
+
+      <!-- Gear Cogs -->
+      <g fill="url(#gearMetal)">
+        <rect x="-6" y="-45" width="12" height="10" rx="3"/>
+        <rect x="-6" y="35" width="12" height="10" rx="3"/>
+        <rect x="-45" y="-6" width="10" height="12" rx="3"/>
+        <rect x="35" y="-6" width="10" height="12" rx="3"/>
+        <rect x="-32" y="-32" width="12" height="12" rx="3" transform="rotate(45)"/>
+        <rect x="20" y="20" width="12" height="12" rx="3" transform="rotate(45)"/>
+        <rect x="-32" y="20" width="12" height="12" rx="3" transform="rotate(-45)"/>
+        <rect x="20" y="-32" width="12" height="12" rx="3" transform="rotate(-45)"/>
+      </g>
+    </g>
+
+    <!-- 3D Chrome Double-Ended Spanner Wrench -->
+    <g transform="rotate(-38 90 90)">
+      <!-- Wrench Handle -->
+      <rect x="42" y="78" width="96" height="24" rx="12" fill="url(#chromeMetal)"/>
+      <rect x="52" y="84" width="76" height="6" rx="3" fill="#FFFFFF" opacity="0.6"/>
+      <text x="90" y="94" font-family="-apple-system, sans-serif" font-size="10" font-weight="900" fill="#312E81" text-anchor="middle" letter-spacing="1">14MM</text>
+
+      <!-- Left Open Wrench Jaw Head -->
+      <g transform="translate(32, 90)">
+        <circle cx="0" cy="0" r="24" fill="url(#chromeMetal)"/>
+        <polygon points="-6,-18 20,0 -6,18 -18,10 -18,-10" fill="#F8FAFC"/>
+        <polygon points="-6,-18 20,0 -6,18 -18,10 -18,-10" fill="#0F172A" opacity="0.95"/>
+      </g>
+
+      <!-- Right Ring Spanner Head -->
+      <g transform="translate(148, 90)">
+        <circle cx="0" cy="0" r="24" fill="url(#chromeMetal)"/>
+        <circle cx="0" cy="0" r="14" fill="#0F172A"/>
+        <circle cx="0" cy="0" r="10" fill="#F8FAFC"/>
+      </g>
+    </g>
+
+    <!-- Sparkle Glint -->
+    <g transform="translate(132, 38) scale(0.6)">
+      <path d="M 12 0 L 15 9 L 24 12 L 15 15 L 12 24 L 9 15 L 0 12 L 9 9 Z" fill="#FFFFFF"/>
+    </g>
+  </g>
+</svg>

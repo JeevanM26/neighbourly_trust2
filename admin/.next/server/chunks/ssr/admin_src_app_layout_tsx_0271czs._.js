@@ -1,0 +1,3 @@
+module.exports=[60519,a=>{"use strict";var b=a.i(61909);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"en",children:(0,b.jsx)("body",{style:{margin:0,padding:0,background:"#0F172A",color:"#F8FAFC",fontFamily:"system-ui, -apple-system, sans-serif",WebkitTapHighlightColor:"transparent"},children:a})})},"metadata",0,{title:"Hands of ShramiXs — Admin Hub",description:"Super Admin Command Center for Hands of ShramiXs",manifest:"/manifest.json",icons:{icon:"/icon.png",apple:"/icon.png"}},"viewport",0,{width:"device-width",initialScale:1,maximumScale:1,userScalable:!1,themeColor:"#041B30"}])},94544,a=>{a.n(a.i(60519))}];
+
+//# sourceMappingURL=admin_src_app_layout_tsx_0271czs._.js.map

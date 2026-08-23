@@ -1,0 +1,11 @@
+{
+	"appId": "com.shramixs.customer",
+	"appName": "ShramiXs",
+	"webDir": "out",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"WebRTC": {}
+	}
+}

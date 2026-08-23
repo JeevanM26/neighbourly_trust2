@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Drop Shadow -->
+    <filter id="salonShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#EC4899" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+
+    <!-- Rose Gold / Luxury Pink Gradient -->
+    <linearGradient id="roseGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F472B6"/>
+      <stop offset="40%" stop-color="#EC4899"/>
+      <stop offset="80%" stop-color="#DB2777"/>
+      <stop offset="100%" stop-color="#BE185D"/>
+    </linearGradient>
+
+    <!-- Chrome Blade Gradient -->
+    <linearGradient id="steelBlade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="45%" stop-color="#CBD5E1"/>
+      <stop offset="85%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#64748B"/>
+    </linearGradient>
+
+    <!-- Gold Comb Gradient -->
+    <linearGradient id="goldComb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#salonShadow)" transform="translate(10, 8)">
+    
+    <!-- 3D Hair Comb in Background -->
+    <g transform="rotate(-28 100 100)">
+      <!-- Comb Spine -->
+      <rect x="35" y="40" width="130" height="22" rx="11" fill="url(#goldComb)"/>
+      <rect x="42" y="44" width="116" height="5" rx="2.5" fill="#FEF3C7" opacity="0.6"/>
+      
+      <!-- Comb Teeth -->
+      <g fill="url(#goldComb)">
+        <rect x="45" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="54" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="63" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="72" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="81" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="90" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="99" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="108" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="117" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="126" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="135" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="144" y="62" width="4.5" height="32" rx="2"/>
+        <rect x="153" y="62" width="4.5" height="32" rx="2"/>
+      </g>
+    </g>
+
+    <!-- 3D Glossy Hairdressing Scissors (Shears) -->
+    <!-- Blade 1 -->
+    <path d="M 68 152 L 142 42 Q 146 36 142 34 L 138 34 Q 134 36 130 42 L 58 144 Z" fill="url(#steelBlade)"/>
+    
+    <!-- Blade 2 -->
+    <path d="M 116 152 L 42 42 Q 38 36 42 34 L 46 34 Q 50 36 54 42 L 126 144 Z" fill="url(#steelBlade)"/>
+    
+    <!-- Left Rose Gold Finger Loop -->
+    <circle cx="56" cy="154" r="22" fill="none" stroke="url(#roseGold)" stroke-width="11"/>
+    <circle cx="56" cy="154" r="22" fill="none" stroke="#F472B6" stroke-width="2" opacity="0.7"/>
+
+    <!-- Right Rose Gold Finger Loop -->
+    <circle cx="128" cy="154" r="22" fill="none" stroke="url(#roseGold)" stroke-width="11"/>
+    <circle cx="128" cy="154" r="22" fill="none" stroke="#F472B6" stroke-width="2" opacity="0.7"/>
+
+    <!-- Center Pivot Screw with Gem Reflection -->
+    <circle cx="92" cy="102" r="9" fill="url(#goldComb)" stroke="#BE185D" stroke-width="2"/>
+    <circle cx="92" cy="102" r="5" fill="#FFFFFF"/>
+
+    <!-- Sparkle Stars -->
+    <g transform="translate(150, 48) scale(0.65)">
+      <path d="M 12 0 L 15 9 L 24 12 L 15 15 L 12 24 L 9 15 L 0 12 L 9 9 Z" fill="#F472B6"/>
+    </g>
+    <g transform="translate(26, 68) scale(0.5)">
+      <path d="M 12 0 L 15 9 L 24 12 L 15 15 L 12 24 L 9 15 L 0 12 L 9 9 Z" fill="#FDE68A"/>
+    </g>
+  </g>
+</svg>

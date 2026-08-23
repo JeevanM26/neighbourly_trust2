@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Drop Shadows -->
+    <filter id="pestShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#DC2626" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.18"/>
+    </filter>
+
+    <!-- 3D Tank Gradients -->
+    <linearGradient id="tankBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F87171"/>
+      <stop offset="35%" stop-color="#EF4444"/>
+      <stop offset="80%" stop-color="#B91C1C"/>
+      <stop offset="100%" stop-color="#7F1D1D"/>
+    </linearGradient>
+
+    <!-- Handle & Pump -->
+    <linearGradient id="pumpGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <linearGradient id="wandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 3D Sprayer Tank -->
+  <g filter="url(#pestShadow)" transform="translate(10, 0)">
+    
+    <!-- Pressure Pump Handle T-Bar -->
+    <path d="M 65 30 C 65 24 105 24 105 30 L 98 38 C 98 42 72 42 72 38 Z" fill="url(#pumpGrad)" stroke="#B45309" stroke-width="1.5"/>
+    <rect x="80" y="36" width="10" height="20" rx="3" fill="url(#wandGrad)"/>
+
+    <!-- Tank Top Dome -->
+    <ellipse cx="85" cy="62" rx="36" ry="14" fill="#F87171"/>
+    
+    <!-- Tank Main Cylinder -->
+    <rect x="49" y="62" width="72" height="92" rx="12" fill="url(#tankBodyGrad)"/>
+    
+    <!-- Specular Highlight Strip -->
+    <rect x="58" y="66" width="8" height="84" rx="4" fill="#FFFFFF" opacity="0.35"/>
+    
+    <!-- Tank Bottom Base -->
+    <ellipse cx="85" cy="154" rx="36" ry="12" fill="#7F1D1D"/>
+
+    <!-- Pressure Gauge Gauge Ring -->
+    <circle cx="85" cy="92" r="18" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3"/>
+    <circle cx="85" cy="92" r="14" fill="#F8FAFC"/>
+    <!-- Gauge Meter Needle -->
+    <line x1="85" y1="92" x2="94" y2="84" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="85" cy="92" r="3" fill="#0F172A"/>
+
+    <!-- Safety Eco Shield Emblem -->
+    <g transform="translate(68, 114) scale(0.65)" filter="url(#pestShadow)">
+      <path d="M 26 4 C 42 4 50 14 50 28 C 50 44 26 56 26 56 C 26 56 2 44 2 28 C 2 14 10 4 26 4 Z" fill="url(#shieldGrad)"/>
+      <path d="M 16 28 L 23 35 L 36 20" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Spray Brass Wand Tube -->
+    <path d="M 120 70 Q 155 75 145 120" fill="none" stroke="#0F172A" stroke-width="6" stroke-linecap="round"/>
+    <!-- Chrome Wand Nozzle -->
+    <line x1="145" y1="120" x2="165" y2="65" stroke="url(#wandGrad)" stroke-width="5" stroke-linecap="round"/>
+    <polygon points="163,65 172,60 168,70" fill="url(#pumpGrad)"/>
+
+    <!-- Spray Mist Particles -->
+    <circle cx="178" cy="54" r="4.5" fill="#38BDF8" opacity="0.8"/>
+    <circle cx="186" cy="46" r="3" fill="#38BDF8" opacity="0.6"/>
+    <circle cx="176" cy="40" r="2.5" fill="#38BDF8" opacity="0.7"/>
+    <circle cx="190" cy="58" r="2" fill="#38BDF8" opacity="0.5"/>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.neighborly.trust",
+      "sha256_cert_fingerprints": [
+        "TODO: INJECT_PRODUCTION_SHA256_FINGERPRINT_DURING_CICD_BUILD",
+        "TODO: INJECT_PLAY_CONSOLE_APP_SIGNING_FINGERPRINT_DURING_CICD_BUILD"
+      ]
+    }
+  }
+]
