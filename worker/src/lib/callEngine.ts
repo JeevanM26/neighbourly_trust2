@@ -132,43 +132,60 @@ export class CallAudioSynthesizer {
 
   /**
    * New Booking Request Alert Tone (Ascending Arpeggio + Urgent Haptic Pulses)
+   * Loops continuously until accept, decline, or modal timeout.
    */
   playNewBookingAlert(customerName: string = 'Customer', categoryName: string = 'Service') {
     this.stop();
     this.initContext();
 
-    if (this.audioCtx && this.audioCtx.state !== 'suspended') {
+    const playAlertChime = () => {
+      if (!this.audioCtx) this.initContext();
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
+      if (!this.audioCtx) return;
+
       try {
         const now = this.audioCtx.currentTime;
-        // 4-tone ascending alert arpeggio (D5 -> F#5 -> A5 -> D6)
+        // 4-tone loud attention-grabbing ascending arpeggio (D5 -> F#5 -> A5 -> D6)
         const freqs = [587.33, 739.99, 880.00, 1174.66];
         freqs.forEach((freq, idx) => {
           if (!this.audioCtx) return;
           const osc = this.audioCtx.createOscillator();
           const gain = this.audioCtx.createGain();
 
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.14);
 
-          gain.gain.setValueAtTime(0, now + idx * 0.12);
-          gain.gain.linearRampToValueAtTime(0.35, now + idx * 0.12 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.28);
+          gain.gain.setValueAtTime(0, now + idx * 0.14);
+          gain.gain.linearRampToValueAtTime(0.40, now + idx * 0.14 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.32);
 
           osc.connect(gain);
           gain.connect(this.audioCtx.destination);
 
-          osc.start(now + idx * 0.12);
-          osc.stop(now + idx * 0.12 + 0.3);
+          osc.start(now + idx * 0.14);
+          osc.stop(now + idx * 0.14 + 0.35);
         });
-      } catch {}
-    }
+      } catch (e) {
+        console.warn('[WebRTC Audio] Booking alert chime error:', e);
+      }
+    };
 
-    // Strong Vibration pattern for new booking offer
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate([500, 200, 500, 200, 800]);
-      } catch {}
-    }
+    // Play chime immediately and repeat every 2.4s
+    playAlertChime();
+    this.ringTimer = setInterval(playAlertChime, 2400);
+
+    // Urgent repeating vibration
+    const triggerBookingVibration = () => {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([600, 200, 600, 200, 800]);
+        } catch {}
+      }
+    };
+    triggerBookingVibration();
+    this.vibrateTimer = setInterval(triggerBookingVibration, 2400);
   }
 
   /**

@@ -4,7 +4,7 @@ import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory, getAssetPath } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { 
-  ShieldCheck, Check, ChevronRight,
+  ShieldCheck, Check, ChevronRight, Bell, MapPin, Mic, Lock,
   Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench, Bug, Flame, Scissors, Car, User
 } from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
@@ -33,6 +33,7 @@ export default function WorkerLoginScreen() {
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
@@ -42,24 +43,78 @@ export default function WorkerLoginScreen() {
   }, []);
 
   useEffect(() => {
+    let sub: any = null;
+    const client = getClient();
+    if (client) {
+      const { data } = client.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          setLoading(false);
+          const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'HeroHand Partner';
+          setName(fullName);
+          if (session.user.phone) setPhone(session.user.phone);
+          setStep('profile_phone');
+        }
+      });
+      sub = data?.subscription;
+    }
+    return () => {
+      sub?.unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
     if (worker) {
       setLoading(false);
       if (worker.full_name) setName(worker.full_name);
       if (worker.phone) setPhone(worker.phone);
 
-      if (isNewWorker || !worker.phone || worker.phone.trim() === '') {
+      const hasCategories = (worker.categories && worker.categories.length > 0) || (worker.skills && worker.skills.length > 0);
+      const hasPhone = !!worker.phone && worker.phone.trim().replace(/\D/g, '').length >= 10;
+
+      if (!hasPhone || isNewWorker) {
         setStep('profile_phone');
-      } else if (!worker.skills || worker.skills.length === 0) {
+      } else if (!hasCategories) {
         setStep('skills');
       }
     }
   }, [worker, isNewWorker]);
 
-  const handleGoogleSignIn = async () => {
+  const requestAllPermissions = async () => {
+    try {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      await PushNotifications.requestPermissions();
+      await PushNotifications.register().catch(() => {});
+    } catch (e) {}
+
+    try {
+      const { Geolocation } = await import('@capacitor/geolocation');
+      await Geolocation.requestPermissions();
+    } catch (e) {}
+
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
+      }
+    } catch (e) {}
+  };
+
+  const handleStartGoogleAuth = () => {
     if (!consent) {
       setError('Please agree to the Partner Terms & Privacy Policy.');
       return;
     }
+    setError('');
+    // Proactively show permissions explanation dialog before opening Google auth on native app
+    const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
+    if (isNative) {
+      setShowPermissionsModal(true);
+    } else {
+      executeGoogleSignIn();
+    }
+  };
+
+  const executeGoogleSignIn = async () => {
+    setShowPermissionsModal(false);
     setError('');
     setLoading(true);
     try {
@@ -71,7 +126,7 @@ export default function WorkerLoginScreen() {
       }
       const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
       const redirectUrl = isNative 
-        ? 'com.shramixs.worker://google-auth'
+        ? 'com.neighborly.trust.worker://google-auth'
         : (typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined);
 
       const { data, error: authErr } = await client.auth.signInWithOAuth({
@@ -87,7 +142,6 @@ export default function WorkerLoginScreen() {
         const { Browser } = await import('@capacitor/browser');
         await Browser.open({
           url: data.url,
-          windowName: '_self',
           presentationStyle: 'popover',
         });
         setLoading(false);
@@ -129,11 +183,12 @@ export default function WorkerLoginScreen() {
           updated_at: new Date().toISOString(),
         }).eq('id', worker.id);
       }
-      await completeOnboarding(name.trim(), Array.from(selectedCategories));
+      await completeOnboarding(name.trim(), Array.from(selectedCategories), cleanPhone);
       showToast('Profile setup complete! Welcome to HeroHand 🛠️', 'success');
     } catch (err) {
       console.warn('Partner onboarding notice:', err);
-      completeOnboarding(name.trim(), Array.from(selectedCategories));
+      const cleanPhone = phone.replace(/\D/g, '');
+      await completeOnboarding(name.trim(), Array.from(selectedCategories), cleanPhone);
     } finally {
       setLoading(false);
     }
@@ -154,7 +209,7 @@ export default function WorkerLoginScreen() {
             HeroHand
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 500, margin: '0 0 16px' }}>
-            One App. All Workers. · HeroHand
+            One App. All Workers. · Partner Portal
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -180,7 +235,7 @@ export default function WorkerLoginScreen() {
             </p>
 
             <button
-              onClick={handleGoogleSignIn}
+              onClick={handleStartGoogleAuth}
               disabled={loading}
               type="button"
               style={{
@@ -252,6 +307,94 @@ export default function WorkerLoginScreen() {
             )}
           </div>
         </div>
+
+        {/* ── Pre-Login Permissions Modal ── */}
+        {showPermissionsModal && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+          }}>
+            <div style={{
+              background: 'white', borderRadius: 28, maxWidth: 380, width: '100%',
+              padding: '28px 22px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+              display: 'flex', flexDirection: 'column', gap: 16
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: 20, background: '#D1FAE5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px'
+                }}>
+                  <ShieldCheck size={32} color="#059669" />
+                </div>
+                <h3 style={{ fontSize: 19, fontWeight: 900, color: '#0F172A', margin: '0 0 4px' }}>
+                  Enable Partner Permissions
+                </h3>
+                <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.4 }}>
+                  HeroHand needs these 3 permissions to alert you when nearby customers book:
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '8px 0' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#F8FAFC', padding: 12, borderRadius: 16, border: '1px solid #E2E8F0' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Bell size={18} color="#0284C7" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>Job Alerts & Sounds</div>
+                    <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>Plays loud ringtone & notification when customer books you, even in pocket/locked.</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#F8FAFC', padding: 12, borderRadius: 16, border: '1px solid #E2E8F0' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <MapPin size={18} color="#16A34A" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>Live Location</div>
+                    <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>Matches you with service jobs in your area and shows estimated arrival.</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#F8FAFC', padding: 12, borderRadius: 16, border: '1px solid #E2E8F0' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Mic size={18} color="#9333EA" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>Customer Voice Calls</div>
+                    <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>Enables free direct in-app voice calling between you and customers.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    await requestAllPermissions();
+                    executeGoogleSignIn();
+                  }}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: 14,
+                    background: 'linear-gradient(135deg, #059669, #065F46)',
+                    color: 'white', fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(5,150,105,0.3)'
+                  }}
+                >
+                  Grant Permissions & Sign In
+                </button>
+                <button
+                  onClick={() => executeGoogleSignIn()}
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: 12,
+                    background: 'transparent', color: '#64748B', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer'
+                  }}
+                >
+                  Skip for Now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <PrivacyPolicyModal
           isOpen={showPrivacyModal}

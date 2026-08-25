@@ -4,16 +4,20 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Map, BookOpen, User } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { getNavLabel } from '../lib/i18n';
 
 const NAV_ITEMS = [
-  { key: 'home',     label: 'Home',     icon: Home,     path: '/home' },
-  { key: 'map',      label: 'Map',      icon: Map,      path: '/map' },
-  { key: 'bookings', label: 'Bookings', icon: BookOpen, path: '/bookings' },
-  { key: 'profile',  label: 'Profile',  icon: User,     path: '/profile' },
+  { key: 'home',     defaultLabel: 'Home',     icon: Home,     path: '/home' },
+  { key: 'map',      defaultLabel: 'Map',      icon: Map,      path: '/map' },
+  { key: 'bookings', defaultLabel: 'Bookings', icon: BookOpen, path: '/bookings' },
+  { key: 'profile',  defaultLabel: 'Profile',  icon: User,     path: '/profile' },
 ];
 
 export function BottomNav({ pendingCount }: { pendingCount: number }) {
   const pathname = usePathname();
+  const { settings } = useApp();
+  const lang = settings?.language || 'en';
 
   return (
     <nav
@@ -23,6 +27,8 @@ export function BottomNav({ pendingCount }: { pendingCount: number }) {
     >
       {NAV_ITEMS.map(item => {
         const isActive = pathname?.startsWith(item.path) || (pathname === '/' && item.path === '/home');
+        const label = getNavLabel(item.key, lang);
+
         return (
           <Link
             href={item.path}
@@ -49,7 +55,7 @@ export function BottomNav({ pendingCount }: { pendingCount: number }) {
               )}
             </div>
             <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>
-              {item.label}
+              {label}
             </span>
             <div className="nav-item-dot" />
           </Link>

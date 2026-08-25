@@ -28,9 +28,12 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.neighborly.trust.worker" />
+                <data android:scheme="com.shramixs.worker" android:host="google-auth" />
+                <data android:scheme="com.neighborly.trust.worker" android:host="google-auth" />
                 <data android:scheme="com.shramixs.worker" />
-                <data android:scheme="hos-worker" />
+                <data android:scheme="com.neighborly.trust.worker" />
+                <data android:scheme="com.neighborly.trust" android:host="google-auth" />
+                <data android:scheme="com.neighborly.trust" />
             </intent-filter>
 
             <!-- Handle FCM notification tap to open app -->

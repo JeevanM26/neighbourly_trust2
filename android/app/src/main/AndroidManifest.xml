@@ -27,6 +27,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.shramixs.customer" android:host="google-auth" />
+                <data android:scheme="com.neighborly.trust" android:host="google-auth" />
                 <data android:scheme="com.shramixs.customer" />
                 <data android:scheme="com.neighborly.trust" />
             </intent-filter>

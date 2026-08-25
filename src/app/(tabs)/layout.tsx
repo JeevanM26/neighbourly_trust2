@@ -28,7 +28,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
           <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: '-0.3px' }}>
-          Hands of Heros
+          HeroHand
         </h1>
       </div>
     );

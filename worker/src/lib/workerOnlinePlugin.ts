@@ -2,7 +2,7 @@
  * workerOnlinePlugin.ts
  *
  * TypeScript wrapper around the native Android WorkerOnlinePlugin.
- * Provides type-safe access to the foreground service controls.
+ * Provides type-safe access to the foreground service controls and native booking alerts.
  *
  * On non-Android platforms (web, iOS) these calls are no-ops.
  */
@@ -13,6 +13,8 @@ export interface WorkerOnlinePluginInterface {
   startOnlineService(): Promise<void>;
   /** Stop the foreground service — call when worker goes Offline or logs out */
   stopOnlineService(): Promise<void>;
+  /** Trigger a native heads-up notification with sound & vibration for new booking offers */
+  triggerBookingAlert(options: { title: string; message: string; bookingId?: string }): Promise<void>;
 }
 
 const WorkerOnlinePlugin = registerPlugin<WorkerOnlinePluginInterface>(
@@ -22,6 +24,7 @@ const WorkerOnlinePlugin = registerPlugin<WorkerOnlinePluginInterface>(
     web: {
       startOnlineService: async () => { console.log('[WorkerOnlinePlugin] web stub: startOnlineService'); },
       stopOnlineService:  async () => { console.log('[WorkerOnlinePlugin] web stub: stopOnlineService'); },
+      triggerBookingAlert: async (options) => { console.log('[WorkerOnlinePlugin] web stub: triggerBookingAlert', options); },
     },
   }
 );

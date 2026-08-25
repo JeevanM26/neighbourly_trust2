@@ -8,7 +8,6 @@ const WorkerLocationContext = createContext<null>(null);
 export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { worker, isOnline, activeBookings } = useWorker();
   const geoWatchRef = useRef<number | null>(null);
-  const persistentNotifRef = useRef<Notification | null>(null);
   const activeBookingsRef = useRef(activeBookings);
 
   useEffect(() => {
@@ -20,10 +19,6 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
 
     if (isOnline) {
       if (typeof window !== 'undefined' && navigator.geolocation) {
-        if ('Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission();
-        }
-
         navigator.geolocation.getCurrentPosition(async (pos) => {
           await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
         }, () => {
@@ -50,24 +45,11 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
           enableHighAccuracy: true,
           maximumAge: 10000,
         });
-
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          persistentNotifRef.current = new Notification('Hero Hand', {
-            body: "You're online and visible to nearby customers",
-            icon: '/icon-192.png',
-            requireInteraction: true,
-            tag: 'nt-worker-online'
-          });
-        }
       }
     } else {
       if (geoWatchRef.current !== null && typeof window !== 'undefined' && navigator.geolocation) {
         navigator.geolocation.clearWatch(geoWatchRef.current);
         geoWatchRef.current = null;
-      }
-      if (persistentNotifRef.current) {
-        persistentNotifRef.current.close();
-        persistentNotifRef.current = null;
       }
     }
 
@@ -75,10 +57,6 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
       if (geoWatchRef.current !== null && typeof window !== 'undefined' && navigator.geolocation) {
         navigator.geolocation.clearWatch(geoWatchRef.current);
         geoWatchRef.current = null;
-      }
-      if (persistentNotifRef.current) {
-        persistentNotifRef.current.close();
-        persistentNotifRef.current = null;
       }
     };
   }, [isOnline, worker?.id]);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookingOffer } from '../lib/types';
+import { CallAudioSynthesizer } from '../lib/callEngine';
 import { Clock, MapPin, X } from 'lucide-react';
 
 interface JobOfferModalProps {
@@ -44,13 +45,14 @@ export function JobOfferModal({ offer, onAccept, onDecline }: JobOfferModalProps
     return () => clearInterval(timer);
   }, [timeLeft, offer, onDecline]);
 
-  // Ensure notification sound is played when modal mounts
+  // Ensure continuous attention-grabbing alert tone & phone vibration while modal is open
   useEffect(() => {
-    try {
-      const audio = new Audio('/notification.mp3'); // Fallback to generic if none exists
-      audio.play().catch(e => console.log('Audio autoplay blocked', e));
-    } catch (e) {}
-  }, []);
+    const synth = new CallAudioSynthesizer();
+    synth.playNewBookingAlert(offer.booking?.customer_name || 'Customer', offer.booking?.category_name || 'Job');
+    return () => {
+      synth.stop();
+    };
+  }, [offer.booking?.customer_name, offer.booking?.category_name]);
 
   return (
     <div style={{

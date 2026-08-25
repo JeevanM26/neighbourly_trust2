@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, Check, ChevronRight, Sparkles, User, AlertCircle } from 'lucide-react';
 import { getAssetPath } from '../../lib/types';
@@ -7,15 +7,13 @@ import PrivacyPolicyModal from '../PrivacyPolicyModal';
 
 type Step = 'language' | 'login' | 'complete_phone';
 
-const GOOGLE_CLIENT_ID = '281299979796-1i0mjfdb7ensasgkq6dj8uhiqpoor6ai.apps.googleusercontent.com';
-
 const LANGUAGES = [
   { code: 'en', label: 'English',    native: 'English'   },
   { code: 'kn', label: 'Kannada',    native: 'ಕನ್ನಡ'      },
   { code: 'hi', label: 'Hindi',      native: 'हिंदी'      },
   { code: 'te', label: 'Telugu',     native: 'తెలుగు'     },
   { code: 'ta', label: 'Tamil',      native: 'தமிழ்'      },
-  { code: 'mr', label: 'Marathi',    native: 'मराठी'      },
+  { code: 'mr', label: 'Marathi',    native: 'ಮರಾಠಿ'      },
   { code: 'bn', label: 'Bengali',    native: 'বাংলা'      },
   { code: 'gu', label: 'Gujarati',   native: 'ગુજરાતી'    },
 ];
@@ -30,7 +28,6 @@ export default function LoginScreen() {
   const [consent, setConsent] = useState(true);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState('');
-  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
   // If user already authenticated in Supabase but lacks phone
   useEffect(() => {
@@ -53,7 +50,7 @@ export default function LoginScreen() {
         const { data } = client.auth.onAuthStateChange((event, session) => {
           if (session?.user) {
             setLoading(false);
-            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'ShramiXs User';
+            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'HeroHand User';
             const userEmail = session.user.email || '';
             setName(fullName);
             setEmail(userEmail);
@@ -68,122 +65,15 @@ export default function LoginScreen() {
     };
   }, []);
 
-  // Safety timeout: Auto-reset loading if OAuth return takes more than 10s
+  // Safety timeout: Auto-reset loading if OAuth return takes more than 15s
   useEffect(() => {
     if (loading) {
-      const timer = setTimeout(() => setLoading(false), 10000);
+      const timer = setTimeout(() => setLoading(false), 15000);
       return () => clearTimeout(timer);
     }
   }, [loading]);
 
-  // Load and initialize official Google Identity Services (GIS) One-Tap SDK
-  useEffect(() => {
-    const loadGoogleGis = () => {
-      if (typeof window === 'undefined') return;
-
-      const scriptId = 'google-gis-script';
-      if (!document.getElementById(scriptId)) {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = initGoogleOneTap;
-        document.head.appendChild(script);
-      } else if ((window as any).google?.accounts?.id) {
-        initGoogleOneTap();
-      }
-    };
-
-    const initGoogleOneTap = () => {
-      const google = (window as any).google;
-      if (!google?.accounts?.id) return;
-
-      try {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          context: 'signin',
-        });
-
-        // Render official GIS button if container is available
-        if (googleBtnContainerRef.current) {
-          google.accounts.id.renderButton(googleBtnContainerRef.current, {
-            type: 'standard',
-            theme: 'outline',
-            size: 'large',
-            text: 'continue_with',
-            shape: 'rectangular',
-            logo_alignment: 'center',
-            width: 320,
-          });
-        }
-      } catch (e) {
-        console.warn('Google GIS initialization:', e);
-      }
-    };
-
-    loadGoogleGis();
-  }, [step]);
-
-  // Handle real cryptographically verified Google JWT from GIS
-  const handleGoogleCredentialResponse = async (response: any) => {
-    if (!response || !response.credential) {
-      setError('Google Sign-in was cancelled or returned no credential.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const { getClient, upsertProfile } = await import('../../lib/supabase');
-      const client = getClient();
-      if (!client) {
-        throw new Error('Supabase client connection unavailable.');
-      }
-
-      // 1. Send real Google ID Token to Supabase backend
-      const { data, error: authErr } = await client.auth.signInWithIdToken({
-        provider: 'google',
-        token: response.credential,
-      });
-
-      if (authErr) {
-        console.warn('signInWithIdToken note:', authErr);
-      }
-
-      const authUser = data?.user || (await client.auth.getUser()).data.user;
-      const fullName = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || 'ShramiXs User';
-      const userEmail = authUser?.email || '';
-      const userId = authUser?.id;
-
-      if (userId) {
-        await upsertProfile({
-          id: userId,
-          full_name: fullName,
-          email: userEmail,
-          role: 'customer',
-          language: settings.language,
-          preferred_language: settings.language,
-          consent_given: true,
-        });
-      }
-
-      setName(fullName);
-      setEmail(userEmail);
-      setStep('complete_phone');
-    } catch (err: any) {
-      console.error('Google One-Tap Error:', err);
-      setError(err?.message || 'Failed to authenticate with Google. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Trigger Google One-Tap or OAuth Fallback
+  // Direct, rock-solid Native & Web Google Sign-In (no broken GIS iframes)
   const handleGoogleSignInClick = async () => {
     if (!consent) {
       setError('Please accept the Terms of Service & Privacy Policy to continue.');
@@ -192,32 +82,14 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
 
-    const google = (window as any).google;
-    if (google?.accounts?.id) {
-      try {
-        google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // If One-Tap is suppressed, trigger OAuth flow with deep link
-            triggerGoogleOAuthFallback();
-          } else {
-            setLoading(false);
-          }
-        });
-        return;
-      } catch (e) {
-        console.warn('GIS prompt error:', e);
-      }
-    }
-
-    // Fallback to standard Supabase Google OAuth
-    await triggerGoogleOAuthFallback();
-  };
-
-  const triggerGoogleOAuthFallback = async () => {
     try {
       const { getClient } = await import('../../lib/supabase');
       const client = getClient();
-      if (!client) throw new Error('Database service unavailable.');
+      if (!client) {
+        setError('Database connection unavailable.');
+        setLoading(false);
+        return;
+      }
 
       const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
       const redirectUrl = isNative 
@@ -231,18 +103,21 @@ export default function LoginScreen() {
           skipBrowserRedirect: isNative,
         },
       });
+
       if (oauthErr) throw oauthErr;
 
       if (isNative && data?.url) {
         const { Browser } = await import('@capacitor/browser');
         await Browser.open({
           url: data.url,
-          windowName: '_self',
           presentationStyle: 'popover',
         });
+        // Reset loading once browser opens so user isn't locked if they cancel
+        setLoading(false);
       }
     } catch (err: any) {
-      setError(err?.message || 'Authentication error.');
+      console.error('Google Sign-In Error:', err);
+      setError(err?.message || 'Google Sign-in failed. Please try again.');
       setLoading(false);
     }
   };
@@ -266,7 +141,7 @@ export default function LoginScreen() {
       if (currentUserId && client) {
         await client.from('profiles').update({
           phone: cleanPhone,
-          full_name: name.trim() || user?.full_name || 'ShramiXs User',
+          full_name: name.trim() || user?.full_name || 'HeroHand User',
           email: email.trim() || user?.email || undefined,
           language: settings.language,
           preferred_language: settings.language,
@@ -276,7 +151,7 @@ export default function LoginScreen() {
       } else if (currentUserId) {
         await upsertProfile({
           id: currentUserId,
-          full_name: name.trim() || user?.full_name || 'ShramiXs User',
+          full_name: name.trim() || user?.full_name || 'HeroHand User',
           phone: cleanPhone,
           email: email.trim() || undefined,
           language: settings.language,
@@ -285,12 +160,12 @@ export default function LoginScreen() {
         });
       }
 
-      await loginUser(cleanPhone, name.trim() || user?.full_name || 'ShramiXs User', 'customer');
-      showToast('Profile ready! Welcome to Hands of ShramiXs 🎉', 'success');
+      await loginUser(cleanPhone, name.trim() || user?.full_name || 'HeroHand User', 'customer');
+      showToast('Profile ready! Welcome to HeroHand 🎉', 'success');
     } catch (err: any) {
       console.warn('Profile save notice:', err);
-      await loginUser(cleanPhone, name.trim() || user?.full_name || 'ShramiXs User', 'customer');
-      showToast('Welcome to Hands of ShramiXs 🎉', 'success');
+      await loginUser(cleanPhone, name.trim() || user?.full_name || 'HeroHand User', 'customer');
+      showToast('Welcome to HeroHand 🎉', 'success');
     } finally {
       setLoading(false);
     }
@@ -302,13 +177,13 @@ export default function LoginScreen() {
       <div style={{ height: '100%', overflowY: 'auto', background: '#F0F7FF', display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '48px 24px 32px', textAlign: 'center' }}>
           <div style={{ width: 72, height: 72, borderRadius: 22, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', backdropFilter: 'blur(8px)', boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}>
-            <img src={getAssetPath('/logo.png')} alt="Hands of ShramiXs" style={{ width: 54, height: 54, objectFit: 'contain' }} onError={(e) => {
+            <img src={getAssetPath('/logo.png')} alt="HeroHand" style={{ width: 54, height: 54, objectFit: 'contain' }} onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }} />
             <ShieldCheck size={36} color="#F59E0B" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: 'white', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
-            Hands of ShramiXs
+            HeroHand
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500, margin: 0 }}>
             Select your preferred language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ
@@ -394,7 +269,7 @@ export default function LoginScreen() {
             Welcome, {name.split(' ')[0] || 'User'}! 👋
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
-            Please enter your 10-digit mobile number so local service specialists can call you when arriving.
+            Please enter your 10-digit mobile number so local service specialists can contact you.
           </p>
         </div>
 
@@ -491,22 +366,22 @@ export default function LoginScreen() {
     );
   }
 
-  // ── 3. Front Page: Real Google Identity Services (GIS) One-Tap ──
+  // ── 3. Front Page: Clean Native/Web Google Sign-In ──
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: '#F0F7FF', display: 'flex', flexDirection: 'column' }}>
       {/* Hero Header */}
       <div style={{ background: 'linear-gradient(160deg, #041B30 0%, #0B3D66 100%)', padding: '52px 24px 36px', textAlign: 'center', position: 'relative' }}>
         <div style={{ width: 84, height: 84, borderRadius: 26, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <img src={getAssetPath('/logo.png')} alt="Hands of ShramiXs" style={{ width: 62, height: 62, objectFit: 'contain' }} onError={(e) => {
+          <img src={getAssetPath('/logo.png')} alt="HeroHand" style={{ width: 62, height: 62, objectFit: 'contain' }} onError={(e) => {
             (e.target as HTMLElement).style.display = 'none';
           }} />
           <ShieldCheck size={44} color="#F59E0B" strokeWidth={2.5} />
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', margin: '0 0 6px', letterSpacing: '-0.5px' }}>
-          Hands of ShramiXs
+          HeroHand
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500, margin: '0 0 16px' }}>
-          Skills · Effort · Better Tomorrows
+          Hands That Work · Heros Will Serve
         </p>
 
         {/* Feature Badges */}
@@ -530,7 +405,7 @@ export default function LoginScreen() {
             Get Started
           </h2>
           <p style={{ fontSize: 13, color: '#64748B', fontWeight: 500, marginBottom: 24, lineHeight: 1.4 }}>
-            Sign in with your Google account in 1 click with Google One-Tap.
+            Sign in with your Google account to connect with verified local specialists.
           </p>
 
           {/* Real Google Sign-In Trigger */}
@@ -571,9 +446,6 @@ export default function LoginScreen() {
               </>
             )}
           </button>
-
-          {/* Official Google Identity Services Container */}
-          <div ref={googleBtnContainerRef} style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }} />
 
           {error && (
             <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '10px 14px', marginBottom: 18, color: '#DC2626', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>

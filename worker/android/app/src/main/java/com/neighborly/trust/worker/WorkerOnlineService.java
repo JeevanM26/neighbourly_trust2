@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
+import android.content.pm.ServiceInfo;
+import androidx.core.app.ServiceCompat;
 
 /**
  * WorkerOnlineService — Foreground Service
@@ -49,7 +51,15 @@ public class WorkerOnlineService extends Service {
         }
 
         Log.d(TAG, "Starting foreground service — worker is now Online");
-        startForeground(NOTIFICATION_ID, buildNotification());
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34
+                ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            } else {
+                startForeground(NOTIFICATION_ID, buildNotification());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start foreground service: ", e);
+        }
         // Re-deliver intent on crash so the service restarts automatically
         return START_STICKY;
     }

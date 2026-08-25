@@ -111,14 +111,59 @@ const CategoryIcon = ({ slug, size = 58 }: { slug: string, size?: number }) => {
   );
 };
 
-const PRESET_CHIPS = [
-  { label: '⚡ Light repair',   query: 'Light is not working'          },
-  { label: '🚰 Water leakage',  query: 'Water tap leaking'             },
-  { label: '🧹 Cleaning maid',  query: 'House cleaning helper needed'  },
-  { label: '🔧 Motor pump',     query: 'Borewell motor pump repair'    },
-  { label: '🪚 Carpenter',      query: 'Door lock repair carpenter'    },
-  { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
-];
+import { getCategoryLocalizedName } from '../../lib/i18n';
+
+const getVoiceLanguageTag = (lang: string) => {
+  const map: Record<string, string> = {
+    kn: 'kn-IN', hi: 'hi-IN', te: 'te-IN', ta: 'ta-IN', mr: 'mr-IN', bn: 'bn-IN', gu: 'gu-IN', en: 'en-IN'
+  };
+  return map[lang] || 'en-IN';
+};
+
+const getPresetChips = (lang: string) => {
+  const map: Record<string, { label: string; query: string }[]> = {
+    kn: [
+      { label: '⚡ ಕರೆಂಟ್ ರಿಪೇರಿ', query: 'Light is not working' },
+      { label: '🚰 ನೀರಿನ ಸೋರಿಕೆ', query: 'Water tap leaking' },
+      { label: '🧹 ಮನೆ ಸ್ವಚ್ಛತೆ', query: 'House cleaning helper needed' },
+      { label: '🔧 ಮೋಟಾರ್ ಪಂಪ್', query: 'Borewell motor pump repair' },
+      { label: '🪚 ಬಡಗಿ ಕೆಲಸ', query: 'Door lock repair carpenter' },
+      { label: '🎨 ವಾಲ್ ಪೇಂಟಿಂಗ್', query: 'Wall paint color work' },
+    ],
+    hi: [
+      { label: '⚡ लाइट रिपेयर', query: 'Light is not working' },
+      { label: '🚰 पानी लीकेज', query: 'Water tap leaking' },
+      { label: '🧹 घर की सफाई', query: 'House cleaning helper needed' },
+      { label: '🔧 मोटर पंप', query: 'Borewell motor pump repair' },
+      { label: '🪚 बढ़ई काम', query: 'Door lock repair carpenter' },
+      { label: '🎨 वॉल पेंटिंग', query: 'Wall paint color work' },
+    ],
+    te: [
+      { label: '⚡ కరెంట్ రిపేర్', query: 'Light is not working' },
+      { label: '🚰 నీటి లీకేజ్', query: 'Water tap leaking' },
+      { label: '🧹 ఇంటి శుభ్రత', query: 'House cleaning helper needed' },
+      { label: '🔧 మోటార్ పంప్', query: 'Borewell motor pump repair' },
+      { label: '🪚 వడ్రంగి పని', query: 'Door lock repair carpenter' },
+      { label: '🎨 వాల్ పెయింటింగ్', query: 'Wall paint color work' },
+    ],
+    ta: [
+      { label: '⚡ மின்சார பழுது', query: 'Light is not working' },
+      { label: '🚰 தண்ணீர் கசிவு', query: 'Water tap leaking' },
+      { label: '🧹 வீட்டு சுத்தம்', query: 'House cleaning helper needed' },
+      { label: '🔧 மோட்டார் பம்ப்', query: 'Borewell motor pump repair' },
+      { label: '🪚 தச்சர் வேலை', query: 'Door lock repair carpenter' },
+      { label: '🎨 சுவர் ஓவியம்', query: 'Wall paint color work' },
+    ],
+  };
+  return map[lang] || [
+    { label: '⚡ Light repair',   query: 'Light is not working'          },
+    { label: '🚰 Water leakage',  query: 'Water tap leaking'             },
+    { label: '🧹 Cleaning maid',  query: 'House cleaning helper needed'  },
+    { label: '🔧 Motor pump',     query: 'Borewell motor pump repair'    },
+    { label: '🪚 Carpenter',      query: 'Door lock repair carpenter'    },
+    { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
+  ];
+};
 
 export default function HomeScreen({ 
   onSelectCategory,
@@ -278,11 +323,10 @@ export default function HomeScreen({
 
         {/* Search Component Wrapper */}
         <div style={{ padding: '0 20px', position: 'relative' }}>
-          {/* We wrap SearchWithVoice to hide its hardcoded padding and styles if possible, or just render it */}
           <SearchWithVoice 
             value={searchQuery}
             onSearchChange={setSearchQuery} 
-            selectedLanguage={settings?.language === 'hi' ? 'hi-IN' : 'en-IN'}
+            selectedLanguage={getVoiceLanguageTag(settings?.language || 'en')}
             placeholder={t('searchPlaceholder')}
             listeningPlaceholder={t('listening')}
           />
@@ -290,7 +334,7 @@ export default function HomeScreen({
 
         {/* Quick Chips */}
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px 24px', scrollbarWidth: 'none' }}>
-          {PRESET_CHIPS.map((chip, idx) => (
+          {getPresetChips(settings?.language || 'en').map((chip, idx) => (
             <button key={idx} 
               onClick={() => setSearchQuery(chip.query)}
               style={{
@@ -312,7 +356,7 @@ export default function HomeScreen({
               {t('allServices')}
             </h2>
             <span style={{ fontSize: 11, color: '#38BDF8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
-              Swipe to explore →
+              {settings?.language === 'kn' ? 'ವೀಕ್ಷಿಸಲು ಸ್ವೈಪ್ ಮಾಡಿ →' : settings?.language === 'hi' ? 'देखने के लिए स्वाइप करें →' : 'Swipe to explore →'}
             </span>
           </div>
 
@@ -322,6 +366,7 @@ export default function HomeScreen({
             scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch'
           }}>
             {categories.map(cat => {
+              const localizedName = getCategoryLocalizedName(cat, settings?.language || 'en');
               const isSelected = (searchQuery.toLowerCase() === cat.name_en.toLowerCase()) || activeCategory === cat.id;
               return (
                 <button
@@ -356,7 +401,7 @@ export default function HomeScreen({
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%',
                     transition: 'color 0.2s ease'
                   }}>
-                    {cat.name_en === 'House Cleaning' ? 'Cleaning' : cat.name_en === 'AC & Appliance Repair' ? 'AC Repair' : cat.name_en}
+                    {localizedName}
                   </span>
                 </button>
               );

@@ -257,6 +257,19 @@ export async function createBooking(params: {
       console.warn("Booking notice:", error);
       return null;
     }
+
+    if (data?.id && params.workerId) {
+      try {
+        await client.from('booking_offers').insert({
+          booking_id: data.id,
+          worker_id: params.workerId,
+          status: 'offered',
+        });
+      } catch (e) {
+        console.warn("booking_offers insert notice:", e);
+      }
+    }
+
     return data?.id ?? null;
   } catch { return null; }
 }

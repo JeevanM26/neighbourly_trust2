@@ -418,6 +418,38 @@ export async function deleteWorkerAccount(workerId: string): Promise<boolean> {
   }
 }
 
+// ─── Fetch Pending Offers ─────────────────────────────────
+export async function fetchPendingOffers(workerId: string): Promise<BookingOffer[]> {
+  const client = getClient();
+  if (!client) return [];
+  try {
+    const { data: offers } = await client
+      .from('booking_offers')
+      .select('id, booking_id, worker_id, status, offered_at')
+      .eq('worker_id', workerId)
+      .eq('status', 'offered');
+
+    const results: BookingOffer[] = [];
+    for (const off of offers || []) {
+      const booking = await fetchBookingDetails(off.booking_id);
+      if (booking && ['searching', 'pending'].includes(booking.status)) {
+        results.push({
+          id: off.id,
+          booking_id: off.booking_id,
+          worker_id: off.worker_id,
+          status: off.status,
+          offered_at: off.offered_at,
+          booking,
+        });
+      }
+    }
+    return results;
+  } catch (e) {
+    console.warn("fetchPendingOffers notice:", e);
+    return [];
+  }
+}
+
 // ─── Real-time Offers Subscription ────────────────────────
 export function subscribeToBookingOffers(
   workerId: string,
@@ -436,7 +468,6 @@ export function subscribeToBookingOffers(
     }, async (payload) => {
       const offer = payload.new as any;
       if (offer.status === 'offered') {
-        // Fetch booking details
         const booking = await fetchBookingDetails(offer.booking_id);
         if (booking) {
           onNewOffer({
@@ -445,6 +476,27 @@ export function subscribeToBookingOffers(
             worker_id: offer.worker_id,
             status: offer.status,
             offered_at: offer.offered_at,
+            booking,
+          });
+        }
+      }
+    })
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'bookings',
+      filter: `worker_id=eq.${workerId}`,
+    }, async (payload) => {
+      const b = payload.new as any;
+      if (b.status === 'searching' || b.status === 'pending') {
+        const booking = await fetchBookingDetails(b.id);
+        if (booking) {
+          onNewOffer({
+            id: `direct_${b.id}`,
+            booking_id: b.id,
+            worker_id: workerId,
+            status: 'offered',
+            offered_at: b.created_at || new Date().toISOString(),
             booking,
           });
         }

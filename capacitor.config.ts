@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.shramixs.customer',
-  appName: 'ShramiXs',
+  appName: 'HeroHand',
   webDir: 'out',
   server: {
     androidScheme: 'https'

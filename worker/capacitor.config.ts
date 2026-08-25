@@ -2,10 +2,11 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.neighborly.trust.worker',
-  appName: 'HeroHand',
+  appName: 'HeroHand Partner',
   webDir: 'out',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    errorPath: '404.html'
   },
   plugins: {
     WebRTC: {}

@@ -212,10 +212,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         import('@capacitor/app').then(({ App }) => {
           App.addListener('appUrlOpen', async (data) => {
-            try {
-              const { Browser } = await import('@capacitor/browser');
-              await Browser.close().catch(() => {});
-            } catch (e) {}
+            setTimeout(async () => {
+              try {
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.close().catch(() => {});
+              } catch (e) {}
+            }, 500);
             handleCustomUrl(data.url);
           });
         }).catch(() => {});

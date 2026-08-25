@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">HeroHand</string>
-    <string name="title_activity_main">HeroHand</string>
+    <string name="app_name">HeroHand Partner</string>
+    <string name="title_activity_main">HeroHand Partner</string>
     <string name="package_name">com.neighborly.trust.worker</string>
     <string name="custom_url_scheme">com.neighborly.trust.worker</string>
 </resources>

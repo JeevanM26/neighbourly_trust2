@@ -6,6 +6,20 @@ import { Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarDays, Phon
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { getClient } from '../../lib/supabase';
+import { getStatusLabel } from '../../lib/i18n';
+
+const getStepLabels = (lang: string) => {
+  const map: Record<string, string[]> = {
+    kn: ['ವಿನಂತಿ', 'ನಿಯೋಜನೆ', 'ದಾರಿಯಲ್ಲಿ', 'ಕೆಲಸ', 'ಪೂರ್ಣ'],
+    hi: ['अनुरोध', 'आवंटित', 'रास्ते में', 'कार्यरत', 'पूर्ण'],
+    te: ['అభ్యర్థన', 'కేటాయింపు', 'దారిలో', 'పని', 'పూర్తి'],
+    ta: ['கோரிக்கை', 'ஒதுக்கீடு', 'வழியில்', 'வேலை', 'முடிவு'],
+    mr: ['विनंती', 'नियुक्त', 'मार्गावर', 'काम', 'पूर्ण'],
+    bn: ['অনুরোধ', 'নির্ধারিত', 'পথে', 'কাজ', 'সম্পন্ন'],
+    gu: ['વિનંતી', 'સોંપાયેલ', 'રસ્તામાં', 'કામ', 'પૂર્ણ'],
+  };
+  return map[lang] || ['Requested', 'Assigned', 'On the Way', 'Working', 'Done'];
+};
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; emoji: string; step: number }> = {
   searching:        { label: 'Finding Nearby Pro', color: '#B45309', bg: '#FEF3C7', border: '#FDE68A', emoji: '🔍', step: 1 },
@@ -18,8 +32,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   no_workers_found: { label: 'No Pros Nearby',     color: '#DC2626', bg: '#FEE2E2', border: '#FECACA', emoji: '⚠️', step: 0 },
 };
 
-const STEP_LABELS = ['Requested', 'Assigned', 'On the Way', 'Working', 'Done'];
-
 function BookingCard({ 
   booking, 
   onOpenReview,
@@ -31,8 +43,11 @@ function BookingCard({
   onOpenSos: (b: Booking) => void;
   onQuickMessage: (b: Booking, msg: string) => void;
 }) {
-  const { user, webrtc } = useApp();
+  const { user, webrtc, settings } = useApp();
+  const lang = settings?.language || 'en';
   const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
+  const statusLabel = getStatusLabel(booking.status, lang);
+  const stepLabels = getStepLabels(lang);
 
   const formattedDate = (() => {
     try {
@@ -91,7 +106,7 @@ function BookingCard({
             borderRadius: 20, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4,
           }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: status.color }}>
-              {status.label}
+              {statusLabel}
             </span>
           </div>
         </div>
@@ -107,11 +122,11 @@ function BookingCard({
               }} />
               <div style={{
                 position: 'absolute', top: 12, left: 16,
-                width: `${Math.max(0, (status.step - 1) / (STEP_LABELS.length - 1)) * 100}%`,
+                width: `${Math.max(0, (status.step - 1) / (stepLabels.length - 1)) * 100}%`,
                 height: 3, background: '#0B3D66', zIndex: 1, transition: 'width 0.4s ease',
               }} />
 
-              {STEP_LABELS.map((label, idx) => {
+              {stepLabels.map((label, idx) => {
                 const stepNum = idx + 1;
                 const isPassed = stepNum <= status.step;
                 const isCurrent = stepNum === status.step;

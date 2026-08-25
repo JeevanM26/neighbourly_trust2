@@ -668,11 +668,112 @@ export function getTranslation(lang: LanguageCode, key: string): string {
   
   // L2: English fallback
   if (TRANSLATIONS['en'] && key in TRANSLATIONS['en']) {
-    console.warn(`[i18n] Missing translation for key '${key}' in '${lang}'. Falling back to 'en'.`);
     return TRANSLATIONS['en'][key];
   }
   
-  // L3: Bounded raw string fallback
-  console.error(`[i18n] CRITICAL MISSING KEY: '${key}' in all languages.`);
-  return `[MISSING_KEY: ${key}]`;
+  return key;
 }
+
+export function getCategoryLocalizedName(cat: { slug?: string; name_en?: string }, lang: LanguageCode): string {
+  const s = (cat.slug || cat.name_en || '').toLowerCase();
+  if (s.includes('elec')) return getTranslation(lang, 'electrician');
+  if (s.includes('plumb')) return getTranslation(lang, 'plumber');
+  if (s.includes('carp')) return getTranslation(lang, 'carpenter');
+  if (s.includes('paint')) return getTranslation(lang, 'repairs');
+  if (s.includes('clean')) {
+    const cleanMap: Record<string, string> = {
+      kn: 'ಮನೆ ಸ್ವಚ್ಛತೆ', hi: 'घर की सफाई', te: 'ఇంటి శుభ్రత', ta: 'வீட்டு சுத்தம்',
+      mr: 'घराची स्वच्छता', bn: 'বাড়ি পরিষ্কার', gu: 'ઘરની સફાઈ', en: 'Cleaning'
+    };
+    return cleanMap[lang] || 'Cleaning';
+  }
+  if (s.includes('pest')) {
+    const pestMap: Record<string, string> = {
+      kn: 'ಕೀಟ ನಿಯಂತ್ರಣ', hi: 'कीट नियंत्रण', te: 'కీటకాల నియంత్రణ', ta: 'பூச்சி கட்டுப்பாடு',
+      mr: 'कीटक नियंत्रण', bn: 'কীটপতঙ্গ নিয়ন্ত্রণ', gu: 'જંતુ નિયંત્રણ', en: 'Pest Control'
+    };
+    return pestMap[lang] || 'Pest Control';
+  }
+  if (s.includes('ac') || s.includes('appliance')) {
+    const acMap: Record<string, string> = {
+      kn: 'ಎಸಿ / ಉಪಕರಣ ರಿಪೇರಿ', hi: 'एसी रिपेयर', te: 'ఏసీ రిపేర్', ta: 'ஏசி பழுது',
+      mr: 'एसी दुरुस्ती', bn: 'এসি মেরামত', gu: 'એસી રિપેરિંગ', en: 'AC Repair'
+    };
+    return acMap[lang] || 'AC Repair';
+  }
+  if (s.includes('salon') || s.includes('barber')) {
+    const salonMap: Record<string, string> = {
+      kn: 'ಸಲೂನ್ / ಕೇಶವಿನ್ಯಾಸ', hi: 'सैलून सेवाएँ', te: 'సెలూన్', ta: 'சலூன்',
+      mr: 'सलून', bn: 'সেলুন', gu: 'સલૂન', en: 'Salon'
+    };
+    return salonMap[lang] || 'Salon';
+  }
+  if (s.includes('mechanic') || s.includes('auto')) {
+    const mechMap: Record<string, string> = {
+      kn: 'ಮೆಕ್ಯಾನಿಕ್', hi: 'मैकेनिक', te: 'మెకానిక్', ta: 'மெக்கானிக்',
+      mr: 'मेकॅनिक', bn: 'মেকানিক', gu: 'મિકેનિક', en: 'Mechanic'
+    };
+    return mechMap[lang] || 'Mechanic';
+  }
+  return cat.name_en || 'Service';
+}
+
+export function getNavLabel(key: string, lang: LanguageCode): string {
+  const map: Record<string, Record<string, string>> = {
+    home: {
+      en: 'Home', kn: 'ಮುಖಪುಟ', hi: 'होम', te: 'హోమ్', ta: 'முகப்பு', mr: 'मुख्यपृष्ठ', bn: 'হোম', gu: 'હોમ'
+    },
+    map: {
+      en: 'Map', kn: 'ನಕ್ಷೆ', hi: 'नक्शा', te: 'మ్యాప్', ta: 'வரைபடம்', mr: 'नकाशा', bn: 'মানচিত্র', gu: 'નકશો'
+    },
+    bookings: {
+      en: 'Bookings', kn: 'ಬುಕಿಂಗ್‌ಗಳು', hi: 'बुकिंग', te: 'బుకింగ్స్', ta: 'முன்பதிவுகள்', mr: 'बुकिंग', bn: 'বুকিং', gu: 'બુકિંગ્સ'
+    },
+    profile: {
+      en: 'Profile', kn: 'ಪ್ರೊಫೈಲ್', hi: 'प्रोफ़ाइल', te: 'ప్రొఫైల్', ta: 'சுயவிவரம்', mr: 'प्रोफाइल', bn: 'প্রোফাইল', gu: 'પ્રોફાઇલ'
+    }
+  };
+  return map[key]?.[lang] || map[key]?.['en'] || key;
+}
+
+export function getStatusLabel(status: string, lang: LanguageCode): string {
+  const map: Record<string, Record<string, string>> = {
+    searching: {
+      en: 'Finding Nearby Pro', kn: 'ಸಮೀಪದ ತಜ್ಞರನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ', hi: 'विशेषज्ञ की खोज जारी है',
+      te: 'సమీపంలోని నిపుణులను వెతుకుతోంది', ta: 'அருகிலுள்ள நிபுணரைத் தேடுகிறது',
+      mr: 'जवळचा तज्ज्ञ शोधत आहे', bn: 'কাছের বিশেষজ্ঞ খোঁজা হচ্ছে', gu: 'નજીકના નિષ્ણાતને શોધી રહ્યા છીએ'
+    },
+    pending: {
+      en: 'Request Sent', kn: 'ವಿನಂತಿ ಕಳುಹಿಸಲಾಗಿದೆ', hi: 'अनुरोध भेजा गया',
+      te: 'అభ్యర్థన పంపబడింది', ta: 'கோரிக்கை அனுப்பப்பட்டது',
+      mr: 'विनंती पाठवली', bn: 'অনুরোধ পাঠানো হয়েছে', gu: 'વિનંતી મોકલી'
+    },
+    accepted: {
+      en: 'Pro Assigned', kn: 'ತಜ್ಞರನ್ನು ನಿಯೋಜಿಸಲಾಗಿದೆ', hi: 'विशेषज्ञ आवंटित',
+      te: 'నిపుణుడు కేటాయించబడ్డాడు', ta: 'நிபுணர் நியமிக்கப்பட்டார்',
+      mr: 'तज्ज्ञ नियुक्त केला', bn: 'বিশেষজ্ঞ নির্ধারিত', gu: 'નિષ્ણાત સોંપાયા'
+    },
+    on_the_way: {
+      en: 'On The Way', kn: 'ದಾರಿಯಲ್ಲಿದ್ದಾರೆ', hi: 'रास्ते में हैं',
+      te: 'దారిలో ఉన్నారు', ta: 'வழியில் உள்ளார்',
+      mr: 'रस्त्यात आहेत', bn: 'পথে আছেন', gu: 'રસ્તામાં છે'
+    },
+    in_progress: {
+      en: 'Work In Progress', kn: 'ಕೆಲಸ ಪ್ರಗತಿಯಲ್ಲಿದೆ', hi: 'कार्य प्रगति पर है',
+      te: 'పని జరుగుతోంది', ta: 'வேலை நடக்கிறது',
+      mr: 'काम सुरू आहे', bn: 'কাজ চলছে', gu: 'કામ ચાલુ છે'
+    },
+    completed: {
+      en: 'Completed', kn: 'ಪೂರ್ಣಗೊಂಡಿದೆ', hi: 'पूर्ण हुआ',
+      te: 'పూర్తయింది', ta: 'முடிந்தது',
+      mr: 'पूर्ण झाले', bn: 'সম্পন্ন হয়েছে', gu: 'પૂર્ણ થયું'
+    },
+    cancelled: {
+      en: 'Cancelled', kn: 'ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ', hi: 'रद्द कर दिया गया',
+      te: 'రద్దు చేయబడింది', ta: 'ரத்து செய்யப்பட்டது',
+      mr: 'रद्द केले', bn: 'বাতিল হয়েছে', gu: 'રદ કર્યું'
+    }
+  };
+  return map[status]?.[lang] || map[status]?.['en'] || status;
+}
+

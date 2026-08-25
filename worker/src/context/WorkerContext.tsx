@@ -10,7 +10,7 @@ import {
   subscribeToBookingOffers, isConfigured, getClient,
   fetchActiveBookings, fetchBookingHistory,
   deleteWorkerAccount, createWorkerProfile, fetchWorkerProfile,
-  updateWorkerProfileData, fetchServiceCategories
+  updateWorkerProfileData, fetchServiceCategories, fetchPendingOffers
 } from '../lib/supabase';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallOverlay } from '../components/CallOverlay';
@@ -250,27 +250,33 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           const prof = await fetchWorkerProfile(authUser.id);
           const userEmail = authUser.email || '';
-          if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User') {
+          const userPhone = authUser.phone || authUser.user_metadata?.phone || prof?.phone || '';
+          const hasCategories = (prof?.categories && prof.categories.length > 0) || (prof?.skills && prof.skills.length > 0);
+          const hasValidPhone = !!userPhone && userPhone.replace(/\D/g, '').length >= 10;
+
+          if (prof && prof.full_name && prof.full_name.trim() !== '' && prof.full_name !== 'Deleted User' && hasValidPhone && hasCategories) {
             const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('nt_worker_online') : null;
             const effectiveOnline = savedOnline !== null ? JSON.parse(savedOnline) : prof.is_online;
-            setWorker({ ...prof, is_online: effectiveOnline, phone: authUser.phone || prof.phone || '', email: userEmail || prof.email });
+            setWorker({ ...prof, is_online: effectiveOnline, phone: userPhone, email: userEmail || prof.email });
             setIsOnline(effectiveOnline);
             setIsNewWorker(false);
           } else {
-            const defaultName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Partner';
+            const defaultName = prof?.full_name || authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Partner';
             const initialProf: WorkerProfile = {
               id: authUser.id,
               full_name: defaultName,
-              phone: authUser.phone || authUser.user_metadata?.phone || '',
+              phone: userPhone,
               email: userEmail,
+              language: 'en',
               avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || undefined,
-              rating: 5.0,
-              review_count: 0,
-              experience_years: 1,
-              skills: [],
+              rating: prof?.rating || 5.0,
+              review_count: prof?.review_count || 0,
+              experience_years: prof?.experience_years || 1,
+              skills: prof?.skills || [],
+              categories: prof?.categories || [],
               is_online: true,
-              wallet_balance: 0,
-              created_at: new Date().toISOString(),
+              wallet_balance: prof?.wallet_balance || 0,
+              created_at: prof?.created_at || new Date().toISOString(),
             };
             setWorker(initialProf);
             setIsNewWorker(true);
@@ -280,6 +286,93 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       };
 
+      // Native Deep Link Listener for Google OAuth Return in Worker App
+      // Uses safe string-index parsing (no new URL()) to support custom schemes
+      const handleCustomUrl = async (urlStr: string) => {
+        try {
+          if (!urlStr || !client) return;
+
+          // 1. Try parsing query params (PKCE flow e.g. ?code=...)
+          const qIndex = urlStr.indexOf('?');
+          if (qIndex !== -1) {
+            const queryPart = urlStr.substring(qIndex + 1).split('#')[0];
+            const qParams = new URLSearchParams(queryPart);
+            const code = qParams.get('code');
+            if (code) {
+              const { data } = await client.auth.exchangeCodeForSession(code);
+              if (data?.user) {
+                await handleWorkerSession(data.user);
+                return;
+              }
+            }
+            const qAccess = qParams.get('access_token');
+            const qRefresh = qParams.get('refresh_token');
+            if (qAccess && qRefresh) {
+              const { data } = await client.auth.setSession({
+                access_token: qAccess,
+                refresh_token: qRefresh,
+              });
+              if (data?.user) {
+                await handleWorkerSession(data.user);
+                return;
+              }
+            }
+          }
+
+          // 2. Try parsing hash fragment (Implicit flow e.g. #access_token=...&refresh_token=...)
+          const hashIndex = urlStr.indexOf('#');
+          if (hashIndex !== -1) {
+            const hash = urlStr.substring(hashIndex + 1);
+            const params = new URLSearchParams(hash);
+            const code = params.get('code');
+            if (code) {
+              const { data } = await client.auth.exchangeCodeForSession(code);
+              if (data?.user) {
+                await handleWorkerSession(data.user);
+                return;
+              }
+            }
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            if (accessToken && refreshToken) {
+              const { data } = await client.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (data?.user) {
+                await handleWorkerSession(data.user);
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[DeepLink Worker Auth Error]', err);
+        }
+      };
+
+      // Handle case where app was opened via deep link with auth params
+      if (typeof window !== 'undefined') {
+        if (window.location.hash.includes('access_token') || window.location.href.includes('code=')) {
+          handleCustomUrl(window.location.href);
+        }
+      }
+
+      let appListenerCleanup: (() => void) | null = null;
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('appUrlOpen', async (data) => {
+          setTimeout(async () => {
+            try {
+              const { Browser } = await import('@capacitor/browser');
+              await Browser.close().catch(() => {});
+            } catch (e) {}
+          }, 500);
+          handleCustomUrl(data.url);
+        }).then((handle) => {
+          appListenerCleanup = () => handle.remove();
+        });
+      }).catch(() => {});
+
+      // ── Get existing session on mount ──
       client!.auth.getSession().then(async ({ data }) => {
         if (data.session?.user) {
           accessTokenRef.current = data.session.access_token;
@@ -291,7 +384,9 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsAuthLoading(false);
       });
 
+      // ── Listen for auth state changes (fires on SIGNED_IN after deep link) ──
       const { data: { subscription } } = client!.auth.onAuthStateChange(async (event, session) => {
+        console.log('[WorkerAuth] onAuthStateChange:', event, !!session);
         if (session) {
           accessTokenRef.current = session.access_token;
         } else {
@@ -310,87 +405,9 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsAuthLoading(false);
       });
 
-      // Native Deep Link Listener for Google OAuth Return in Worker App
-      if (typeof window !== 'undefined') {
-        const handleCustomUrl = async (urlStr: string) => {
-          try {
-            if (!urlStr || !client) return;
-
-            // 1. Try parsing query params (PKCE flow e.g. ?code=...)
-            const qIndex = urlStr.indexOf('?');
-            if (qIndex !== -1) {
-              const queryPart = urlStr.substring(qIndex + 1).split('#')[0];
-              const qParams = new URLSearchParams(queryPart);
-              const code = qParams.get('code');
-              if (code) {
-                const { data, error } = await client.auth.exchangeCodeForSession(code);
-                if (data?.user) {
-                  await handleWorkerSession(data.user);
-                  return;
-                }
-              }
-              const qAccess = qParams.get('access_token');
-              const qRefresh = qParams.get('refresh_token');
-              if (qAccess && qRefresh) {
-                const { data } = await client.auth.setSession({
-                  access_token: qAccess,
-                  refresh_token: qRefresh,
-                });
-                if (data?.user) {
-                  await handleWorkerSession(data.user);
-                  return;
-                }
-              }
-            }
-
-            // 2. Try parsing hash fragment (Implicit flow e.g. #access_token=...&refresh_token=...)
-            const hashIndex = urlStr.indexOf('#');
-            if (hashIndex !== -1) {
-              const hash = urlStr.substring(hashIndex + 1);
-              const params = new URLSearchParams(hash);
-              const code = params.get('code');
-              if (code) {
-                const { data, error } = await client.auth.exchangeCodeForSession(code);
-                if (data?.user) {
-                  await handleWorkerSession(data.user);
-                  return;
-                }
-              }
-              const accessToken = params.get('access_token');
-              const refreshToken = params.get('refresh_token');
-              if (accessToken && refreshToken) {
-                const { data } = await client.auth.setSession({
-                  access_token: accessToken,
-                  refresh_token: refreshToken,
-                });
-                if (data?.user) {
-                  await handleWorkerSession(data.user);
-                  return;
-                }
-              }
-            }
-          } catch (err) {
-            console.warn('[DeepLink Worker Auth Error]', err);
-          }
-        };
-
-        if (window.location.href.includes('access_token') || window.location.href.includes('code=')) {
-          handleCustomUrl(window.location.href);
-        }
-
-        import('@capacitor/app').then(({ App }) => {
-          App.addListener('appUrlOpen', async (data) => {
-            try {
-              const { Browser } = await import('@capacitor/browser');
-              await Browser.close().catch(() => {});
-            } catch (e) {}
-            handleCustomUrl(data.url);
-          });
-        }).catch(() => {});
-      }
-
       return () => {
         subscription.unsubscribe();
+        if (appListenerCleanup) appListenerCleanup();
       };
     } else {
       setIsAuthLoading(false);
@@ -424,6 +441,13 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!worker) return;
     refreshBookings();
 
+    // Fetch any existing pending offers on mount
+    fetchPendingOffers(worker.id).then(pending => {
+      if (pending && pending.length > 0) {
+        setOffers(pending);
+      }
+    });
+
     // Real-time subscription to Booking Offers
     const alertSynth = new CallAudioSynthesizer();
     const channel = subscribeToBookingOffers(worker.id, (newOffer) => {
@@ -434,20 +458,26 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return [newOffer, ...prev];
       });
 
-      // Play loud attention-grabbing arpeggio and trigger urgent phone vibration
-      alertSynth.playNewBookingAlert(
-        newOffer.booking?.customer_name || 'Customer',
-        newOffer.booking?.category_name || 'Job'
-      );
+      const customerName = newOffer.booking?.customer_name || 'Customer';
+      const categoryName = newOffer.booking?.category_name || 'Service';
+      const addressText = newOffer.booking?.address_text || 'Nearby Location';
 
-      showToast(`🔔 New ${newOffer.booking?.category_name || 'Job'} offer!`, 'info');
-      // Browser notification
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification('New Job Offer!', {
-          body: `A new job is waiting for you to accept.`,
-          icon: '/icon-192.png',
-        });
-      }
+      // 1. Play loud attention-grabbing arpeggio and speech (when in foreground)
+      try {
+        alertSynth.playNewBookingAlert(customerName, categoryName);
+      } catch (e) {}
+
+      // 2. Trigger native Android notification with sound & vibration (works in background & pocket)
+      WorkerOnlinePlugin.triggerBookingAlert({
+        title: `🚨 New ${categoryName} Booking Request!`,
+        message: `${customerName} wants to book you (${addressText}). Tap to view and accept!`,
+        bookingId: newOffer.booking_id,
+      }).catch((err) => {
+        console.warn('[Alert] Native alert fallback:', err);
+      });
+
+      // 3. Show in-app toast
+      showToast(`🔔 New ${categoryName} offer from ${customerName}!`, 'info');
     });
     realtimeRef.current = channel;
     return () => {
@@ -463,50 +493,35 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Check if worker profile exists in DB (by ID or phone)
     fetchWorkerProfile(authUserId, cleanPhone).then(profile => {
       if (profile && profile.full_name && profile.full_name.trim() !== '' && profile.full_name !== 'Deleted User') {
-        if (profile.categories && profile.categories.length > 0) {
-          setWorker({ ...profile, phone: cleanPhone });
-          showToast(`Welcome back, ${profile.full_name.split(' ')[0]}! 👋`);
-          setIsNewWorker(false);
-          return;
-        } else {
-          // Profile exists with name, just needs skills selection
-          setWorker({ ...profile, phone: cleanPhone });
-          setIsNewWorker(true);
-          return;
-        }
+        const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('nt_worker_online') : null;
+        const effectiveOnline = savedOnline !== null ? JSON.parse(savedOnline) : profile.is_online;
+        setWorker({ ...profile, is_online: effectiveOnline, phone: cleanPhone });
+        setIsOnline(effectiveOnline);
+        setIsNewWorker(false);
+        return;
+      } else {
+        // Profile exists with name, just needs skills selection
+        setWorker({ ...profile, phone: cleanPhone } as WorkerProfile);
+        setIsNewWorker(true);
+        return;
       }
-      
-      // New worker — needs onboarding
-      setWorker({
-        id: authUserId,
-        full_name: '', // Will be set during onboarding
-        phone: cleanPhone,
-        language: 'en',
-        is_online: false,
-        is_verified: false,
-        rating: 5.0,
-        total_jobs: 0,
-        years_experience: 0,
-        service_radius_km: 8,
-        categories: [],
-      });
-      setIsNewWorker(true);
     });
   }, [showToast]);
 
-  const completeOnboarding = useCallback(async (name: string, categoryIds: string[]) => {
+  const completeOnboarding = useCallback(async (name: string, categoryIds: string[], phone?: string) => {
     if (!worker?.id) return;
+    const effectivePhone = phone || worker.phone;
     
     const success = await createWorkerProfile({
       id: worker.id,
       name: name,
       categoryIds,
-      phone: worker.phone
+      phone: effectivePhone
     });
     
     if (success) {
-      const profile = await fetchWorkerProfile(worker.id, worker.phone);
-      if (profile) setWorker({ ...profile, phone: worker.phone });
+      const profile = await fetchWorkerProfile(worker.id, effectivePhone);
+      if (profile) setWorker({ ...profile, phone: effectivePhone });
       setIsNewWorker(false);
       showToast('Profile created! You\'re ready to take bookings 🎉');
     } else {

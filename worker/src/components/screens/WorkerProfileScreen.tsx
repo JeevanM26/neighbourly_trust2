@@ -200,9 +200,11 @@ export default function WorkerProfileScreen() {
               </div>
             )}
             
-            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, margin: '2px 0 8px', fontWeight: 600 }}>
-              +91 {worker.phone || '7975182162'}
-            </p>
+            {worker.phone ? (
+              <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, margin: '2px 0 8px', fontWeight: 600 }}>
+                +91 {worker.phone}
+              </p>
+            ) : null}
 
             {/* Badges Bar */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

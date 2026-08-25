@@ -26,15 +26,21 @@ export interface WorkerProfile {
   
   // From worker_profiles
   bio?: string;
-  years_experience: number;
+  years_experience?: number;
+  experience_years?: number;
   is_online: boolean;
-  is_verified: boolean;
-  service_radius_km: number;
-  rating: number; // avg_rating
-  total_jobs: number;
+  is_verified?: boolean;
+  service_radius_km?: number;
+  rating?: number; // avg_rating
+  total_jobs?: number;
+  review_count?: number;
+  wallet_balance?: number;
+  location?: { lat: number; lng: number; address?: string };
+  skills?: string[];
+  created_at?: string;
   
   // From worker_categories join
-  categories: ServiceCategory[];
+  categories?: ServiceCategory[];
 }
 
 // ─── Booking (matches target schema) ───────────────────────
