@@ -115,7 +115,7 @@ const isSameDay = (dateStr?: string) => {
   );
 };
 
-export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
+export default function AdminDashboard({ onLogout, credentials }: { onLogout?: () => void; credentials?: { phone: string; pin: string } }) {
   const [tab, setTab] = useState<AdminTab>('today');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -139,11 +139,11 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
   // New Admin Form State
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminPhone, setNewAdminPhone] = useState('');
-  const [newAdminPin, setNewAdminPin] = useState('');
+  const [newAdminRole, setNewAdminRole] = useState<'admin' | 'finance' | 'support'>('admin');
   const [adminActionMsg, setAdminActionMsg] = useState('');
 
-  // Password / PIN Change State
-  const [masterPassword, setMasterPassword] = useState(() => {
+  // PIN settings
+  const [masterPassword, setMasterPassword] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('hoh_admin_master_pin') || '7975';
     }
@@ -162,6 +162,104 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
     try {
       const client = getClient();
       if (!client) return;
+
+      // Try secure server-side RPC first
+      try {
+        const { data: rpcData, error: rpcError } = await client.rpc('get_admin_dashboard_data', {
+          p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
+          p_pin: credentials?.pin || '7975',
+        });
+
+        if (!rpcError && rpcData && rpcData.success) {
+          const catMap: Record<string, { name: string; slug: string }> = {};
+          const catCounts: Record<string, number> = {};
+          (rpcData.categories || []).forEach((c: any) => {
+            catMap[c.id] = { name: c.name_en, slug: c.slug };
+            catCounts[c.name_en] = 0;
+          });
+
+          const parsedBookings: AdminBooking[] = (rpcData.bookings || []).map((b: any) => {
+            const catInfo = b.category_id ? catMap[b.category_id] : undefined;
+            return {
+              id: b.id,
+              created_at: b.created_at,
+              completed_at: b.completed_at || (b.status === 'completed' ? b.created_at : undefined),
+              status: b.status || 'searching',
+              description: b.description,
+              price_estimate: Number(b.price_estimate) || 350,
+              final_price: Number(b.final_price) || (b.price_estimate ? Number(b.price_estimate) : 350),
+              address_text: b.address_text || 'Standard Location',
+              category_id: b.category_id,
+              category_name: catInfo?.name || 'Home Service',
+              customer: b.customer,
+              worker: b.worker,
+            };
+          });
+          setBookings(parsedBookings);
+
+          const workerCatMap: Record<string, string[]> = {};
+          (rpcData.worker_categories || []).forEach((wc: any) => {
+            const catName = catMap[wc.category_id]?.name || 'General';
+            if (!workerCatMap[wc.worker_id]) workerCatMap[wc.worker_id] = [];
+            workerCatMap[wc.worker_id].push(catName);
+          });
+
+          const parsedWorkers: AdminWorker[] = (rpcData.workers || []).map((w: any) => {
+            const cats = workerCatMap[w.id] || ['General Specialist'];
+            cats.forEach(c => {
+              catCounts[c] = (catCounts[c] || 0) + 1;
+            });
+            return {
+              id: w.id,
+              full_name: w.full_name,
+              phone: w.phone || '',
+              email: w.email || '',
+              avatar_url: w.avatar_url,
+              bio: w.bio,
+              years_experience: Number(w.years_experience) || 0,
+              is_online: !!w.is_online,
+              is_verified: !!w.is_verified,
+              rating: Number(w.rating) || 5.0,
+              total_jobs: Number(w.total_jobs) || 0,
+              service_radius_km: Number(w.service_radius_km) || 8,
+              categories: cats,
+              created_at: w.created_at,
+            };
+          });
+          setWorkers(parsedWorkers);
+          setCategoryCounts(catCounts);
+
+          const parsedCustomers: AdminCustomer[] = (rpcData.customers || []).map((c: any) => ({
+            id: c.id,
+            full_name: c.full_name,
+            phone: c.phone || '',
+            email: c.email || '',
+            avatar_url: c.avatar_url,
+            language: c.language || 'en',
+            created_at: c.created_at,
+          }));
+          setCustomers(parsedCustomers);
+
+          const parsedReviews: AdminReview[] = (rpcData.reviews || []).map((r: any) => ({
+            id: r.id,
+            booking_id: r.booking_id,
+            rating: Number(r.rating) || 5,
+            comment: r.comment,
+            created_at: r.created_at,
+            customer_name: r.customer_name,
+            customer_phone: r.customer_phone,
+            worker_name: r.worker_name,
+            worker_phone: r.worker_phone,
+          }));
+          setReviews(parsedReviews);
+
+          setLoading(false);
+          setRefreshing(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('RPC admin load failed, falling back to direct table queries:', e);
+      }
 
       // 1. Fetch Categories
       const { data: catData } = await client.from('service_categories').select('id, slug, name_en');
@@ -394,6 +492,19 @@ export default function AdminDashboard({ onLogout }: { onLogout?: () => void }) 
     try {
       const client = getClient();
       if (!client) return;
+
+      const { data, error } = await client.rpc('admin_toggle_worker_verification', {
+        p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
+        p_pin: credentials?.pin || '7975',
+        p_worker_id: workerId,
+        p_status: !currentStatus,
+      });
+
+      if (!error && data && data.success) {
+        setWorkers(prev => prev.map(w => w.id === workerId ? { ...w, is_verified: !currentStatus } : w));
+        return;
+      }
+
       await client.from('worker_profiles').update({ is_verified: !currentStatus }).eq('profile_id', workerId);
       setWorkers(prev => prev.map(w => w.id === workerId ? { ...w, is_verified: !currentStatus } : w));
     } catch (e) {

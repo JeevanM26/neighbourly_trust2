@@ -4,7 +4,7 @@ import { Shield, Lock, Phone, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const SUPER_ADMIN_PHONE = '7975182162';
 
-export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => void }) {
+export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: (creds: { phone: string; pin: string }) => void }) {
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -50,7 +50,7 @@ export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess: () => v
         localStorage.setItem('hoh_admin_auth', JSON.stringify({ phone: cleanPhone, timestamp: Date.now() }));
       }
       setLoading(false);
-      onLoginSuccess();
+      onLoginSuccess({ phone: cleanPhone, pin: pin.trim() });
     }, 400);
   };
 
