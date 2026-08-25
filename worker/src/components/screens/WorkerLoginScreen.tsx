@@ -127,7 +127,7 @@ export default function WorkerLoginScreen() {
       const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
       const redirectUrl = isNative 
         ? 'com.neighborly.trust.worker://google-auth'
-        : (typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined);
+        : (typeof window !== 'undefined' ? `${window.location.origin}` : undefined);
 
       const { data, error: authErr } = await client.auth.signInWithOAuth({
         provider: 'google',
