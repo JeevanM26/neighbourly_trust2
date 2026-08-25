@@ -38,6 +38,13 @@ export default function LoginScreen() {
       if (!user.phone || user.phone.trim() === '') {
         setStep('complete_phone');
       }
+    } else {
+      setStep('login');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setLoading(false);
+      setError('');
     }
   }, [user]);
 
@@ -48,7 +55,14 @@ export default function LoginScreen() {
       const client = getClient();
       if (client) {
         const { data } = client.auth.onAuthStateChange((event, session) => {
-          if (session?.user) {
+          if (event === 'SIGNED_OUT' || !session?.user) {
+            setStep('login');
+            setLoading(false);
+            setName('');
+            setEmail('');
+            setPhone('');
+            setError('');
+          } else if (session?.user) {
             setLoading(false);
             const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'HeroHand User';
             const userEmail = session.user.email || '';

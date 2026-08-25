@@ -47,7 +47,13 @@ export default function WorkerLoginScreen() {
     const client = getClient();
     if (client) {
       const { data } = client.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          setStep('login');
+          setLoading(false);
+          setName('');
+          setPhone('');
+          setError('');
+        } else if (session?.user) {
           setLoading(false);
           const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'HeroHand Partner';
           setName(fullName);
@@ -76,6 +82,12 @@ export default function WorkerLoginScreen() {
       } else if (!hasCategories) {
         setStep('skills');
       }
+    } else {
+      setStep('login');
+      setName('');
+      setPhone('');
+      setLoading(false);
+      setError('');
     }
   }, [worker, isNewWorker]);
 
