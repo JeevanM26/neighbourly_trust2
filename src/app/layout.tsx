@@ -77,20 +77,52 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  name: 'HeroHand',
-  description: 'Hyperlocal verified services marketplace connecting customers with nearby electricians, plumbers, carpenters, and cleaners.',
-  url: 'https://herohand.me',
-  logo: 'https://herohand.me/icon-512.png',
-  areaServed: {
-    '@type': 'Country',
-    name: 'India',
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    name: 'HeroHand',
+    alternateName: ['Hero Hand', 'Hands of ShramiXs', 'HeroHand Partner'],
+    operatingSystem: 'ANDROID, IOS, WEB',
+    applicationCategory: 'UtilitiesApplication',
+    description: 'Book verified local electricians, plumbers, carpenters, cleaners, and appliance technicians in your area with HeroHand. Fast arrival, live map tracking, and trusted pricing.',
+    url: 'https://herohand.me',
+    downloadUrl: 'https://play.google.com/store/apps/details?id=com.neighborly.trust',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'INR',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      ratingCount: '1280',
+    },
   },
-  priceRange: '₹₹',
-  openingHours: 'Mo-Su 07:00-22:00',
-};
+  {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'HeroHand / Hands of ShramiXs',
+    alternateName: ['Hero Hand', 'Neighborly Trust Technologies'],
+    description: 'Hyperlocal verified services marketplace connecting customers with nearby electricians, plumbers, carpenters, and cleaners.',
+    url: 'https://herohand.me',
+    logo: 'https://herohand.me/icon-512.png',
+    telephone: '+918867269712',
+    email: 'herohand4@gmail.com',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Shivamogga',
+      addressRegion: 'Karnataka',
+      addressCountry: 'IN',
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'India',
+    },
+    priceRange: '₹₹',
+    openingHours: 'Mo-Su 00:00-23:59',
+  }
+];
 
 export default function RootLayout({
   children,

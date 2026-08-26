@@ -558,9 +558,21 @@ export default function BookingsScreen() {
                 <Phone size={16} />
               </a>
 
+              <a
+                href="tel:8867269712"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: '#0B3D66', color: 'white', textDecoration: 'none', padding: '14px 16px',
+                  borderRadius: 14, fontWeight: 800, fontSize: 14, boxShadow: '0 4px 12px rgba(11, 61, 102, 0.25)'
+                }}
+              >
+                <span>🛡️ HeroHand 24x7 Support (8867269712)</span>
+                <Phone size={16} />
+              </a>
+
               <button
                 onClick={() => {
-                  const shareText = `Neighborly Trust Order SOS: Active job ${sosBooking.category_name} with pro ${sosBooking.worker_name || 'Specialist'}. Status: ${sosBooking.status}.`;
+                  const shareText = `HeroHand Emergency Safety Alert: Active booking ${sosBooking.category_name} with specialist ${sosBooking.worker_name || 'Specialist'}. Status: ${sosBooking.status}. Support: 8867269712 / herohand4@gmail.com`;
                   window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
                 }}
                 style={{

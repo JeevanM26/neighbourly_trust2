@@ -19,31 +19,29 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
 
     if (isOnline) {
       if (typeof window !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
-        }, () => {
-          setWorkerOnline(worker.id, true, null, null);
-        }, { timeout: 10000 });
-
         let lastUpdate = 0;
         geoWatchRef.current = navigator.geolocation.watchPosition(async (pos) => {
           const now = Date.now();
-          if (now - lastUpdate > 20000) {
+          if (now - lastUpdate > 15000) {
             lastUpdate = now;
             let lat = pos.coords.latitude;
             let lng = pos.coords.longitude;
             const isActivelyAssigned = activeBookingsRef.current.some(b => b.status === 'accepted' || b.status === 'on_the_way' || b.status === 'in_progress');
             if (!isActivelyAssigned) {
-              lat = Math.round(lat * 1000) / 1000;
-              lng = Math.round(lng * 1000) / 1000;
+              lat = Math.round(lat * 10000) / 10000;
+              lng = Math.round(lng * 10000) / 10000;
             }
             await setWorkerOnline(worker.id, true, lat, lng);
           }
         }, (err) => {
           console.warn("Location watch error", err);
+          if (err.code === 1) {
+            // Permission denied while online: force offline
+            setWorkerOnline(worker.id, false, null, null);
+          }
         }, {
           enableHighAccuracy: true,
-          maximumAge: 10000,
+          maximumAge: 5000,
         });
       }
     } else {

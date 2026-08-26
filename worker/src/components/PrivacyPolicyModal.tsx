@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { X, ShieldCheck, MapPin, Mic, Lock, UserCheck, Trash2, Mail } from 'lucide-react';
+import { X, ShieldCheck, MapPin, Mic, Lock, UserCheck, Trash2, Mail, Phone } from 'lucide-react';
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
                 Partner Privacy Policy
               </h2>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '2px 0 0', fontWeight: 500 }}>
-                DPDP Act 2023 & Google Play Compliant
+                HeroHand Partner · DPDP Act 2023 & Google Play Compliant
               </p>
             </div>
           </div>
@@ -71,33 +71,33 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           fontSize: 13, color: '#334155', lineHeight: 1.6
         }}>
           <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 12, padding: '12px 14px', marginBottom: 18, fontSize: 12, color: '#047857', fontWeight: 600 }}>
-            📌 <b>Effective Date:</b> August 14, 2026<br />
-            <b>Entity:</b> Neighborly Trust Partner Portal, Shivamogga, Karnataka, India.
+            📌 <b>Effective Date:</b> August 2026<br />
+            <b>Entity:</b> Neighborly Trust Technologies (HeroHand Partner Portal), Shivamogga, Karnataka, India.
           </div>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 12, marginBottom: 6 }}>
             1. Specialist Information We Collect
           </h3>
           <ul style={{ paddingLeft: 20, margin: '0 0 14px' }}>
-            <li><b>Mobile Number & Name:</b> For OTP login, specialist authentication, and communication.</li>
+            <li><b>Mobile Number & Google Profile:</b> For secure sign-in, specialist authentication, and communication.</li>
             <li><b>Service Category & Hourly Rates:</b> To match you with appropriate customer leads in your trade.</li>
             <li><b>Location (GPS):</b> Used while online to receive job requests within your configured service radius (2–15 km).</li>
-            <li><b>Microphone / Audio:</b> Used for direct WebRTC voice calls with customers. <b>Calls are never recorded or stored.</b></li>
+            <li><b>Microphone / Audio:</b> Used for direct WebRTC voice calls with customers. <b>Calls are peer-to-peer encrypted and NEVER recorded or stored.</b></li>
             <li><b>UPI ID (Optional):</b> Provided by you for direct job payment settlements.</li>
           </ul>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            2. Privacy Shielding
+            2. Google User Data Protection
           </h3>
           <p style={{ margin: '0 0 14px' }}>
-            Your direct phone number is never broadcast publicly. Customers reach you via in-app WebRTC calls or system notifications.
+            We only access your Google name and email for partner authentication. We never sell, transfer, or share Google user data with external advertisers or data brokers.
           </p>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            3. Data Protection & Non-Disclosure
+            3. Privacy Shielding & Security
           </h3>
           <p style={{ margin: '0 0 14px' }}>
-            We strictly do NOT sell or distribute specialist personal data. All data is protected with TLS 1.3 encryption and PostgreSQL security controls.
+            Your direct phone number is never broadcast publicly. Customers reach you via in-app WebRTC calls or system notifications. All data is protected with TLS 1.3 encryption and PostgreSQL security controls.
           </p>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
@@ -108,13 +108,21 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           </p>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            5. Contact Information
+            5. Contact Partner Support
           </h3>
-          <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail size={16} color="#059669" />
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>
-              partners@neighborlytrust.in
-            </span>
+          <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Mail size={15} color="#059669" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>
+                herohand4@gmail.com
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Phone size={15} color="#059669" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>
+                +91 8867269712 · +91 9480150995 · +91 6364419562
+              </span>
+            </div>
           </div>
         </div>
 

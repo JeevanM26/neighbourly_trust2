@@ -259,15 +259,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       const searchLng = mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
       if (!searchLat || !searchLng) return;
       
-      let results: any[] = [];
-      if (activeFilter === 'All') {
-        const catPromises = categories.map(cat => findNearbyWorkers(cat.id, searchLat, searchLng));
-        const allRes = await Promise.all(catPromises);
-        results = allRes.flat();
-      } else {
-        const res = await findNearbyWorkers(activeFilter, searchLat, searchLng);
-        results = res.map(w => ({ ...w, __categoryId: activeFilter }));
-      }
+      const results = await findNearbyWorkers(activeFilter === 'All' ? 'all' : activeFilter, searchLat, searchLng);
 
       if (isMounted) {
         const unique = Array.from(new Map(results.map(w => [w.worker_id, w])).values());
@@ -276,9 +268,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       }
     }
 
-    if (categories.length > 0) {
-      timer = setTimeout(() => { fetchWorkers(); }, 400);
-    }
+    timer = setTimeout(() => { fetchWorkers(); }, 300);
     
     return () => { 
       isMounted = false; 

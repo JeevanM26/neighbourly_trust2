@@ -4,6 +4,7 @@ import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory } from '../../lib/types';
 import { fetchServiceCategories, fetchWorkerReviews } from '../../lib/supabase';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
+import HelpFaqModal from '../HelpFaqModal';
 import { 
   Star, Volume2, Globe, Shield, LogOut, Trash2, Edit3, Check, X, 
   Zap, Droplet, Hammer, Paintbrush, Wind, HardHat, Bug, Sparkles, 
@@ -59,6 +60,7 @@ export default function WorkerProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [resolvedAddress, setResolvedAddress] = useState<string>('Live GPS Location');
 
   useEffect(() => {
@@ -353,44 +355,124 @@ export default function WorkerProfileScreen() {
           </div>
         </div>
 
-        {/* ── Working Area & Service Radius ── */}
+        {/* ── 📍 Dedicated Live GPS Location & Radar Dispatch Tab ── */}
         <div style={{ 
-          background: 'white', borderRadius: 22, padding: '18px', marginBottom: 16, 
-          boxShadow: '0 4px 16px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0' 
+          background: 'white', borderRadius: 24, padding: '20px', marginBottom: 18, 
+          boxShadow: '0 6px 20px rgba(0,0,0,0.04)', border: '1px solid #E2E8F0' 
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={18} color="#0284C7" />
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ 
+                width: 42, height: 42, borderRadius: 14, 
+                background: isOnline ? 'linear-gradient(135deg, #059669, #047857)' : '#F1F5F9', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: isOnline ? '0 4px 12px rgba(5,150,105,0.25)' : 'none'
+              }}>
+                <MapPin size={22} color={isOnline ? 'white' : '#64748B'} />
               </div>
               <div>
-                <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0F172A', margin: 0 }}>Service Location</h3>
-                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{resolvedAddress}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                    Live GPS & Radar
+                  </h3>
+                  <span style={{ 
+                    fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 10,
+                    background: isOnline ? '#ECFDF5' : '#F1F5F9',
+                    color: isOnline ? '#059669' : '#64748B',
+                    border: `1px solid ${isOnline ? '#A7F3D0' : '#E2E8F0'}`
+                  }}>
+                    {isOnline ? '🟢 Live Broadcasting' : '⚪ Standby'}
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: '#64748B', fontWeight: 600, margin: '2px 0 0' }}>
+                  {resolvedAddress}
+                </p>
               </div>
             </div>
-            <div style={{ background: '#E0F2FE', border: '1px solid #BAE6FD', borderRadius: 12, padding: '4px 10px' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#0284C7' }}>{draftRadius} km radius</span>
-            </div>
           </div>
-          <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 10px', fontWeight: 500 }}>
-            You will only receive customer booking offers within this service distance.
-          </p>
-          <input 
-            type="range" 
-            min="2" 
-            max="15" 
-            step="1" 
-            value={draftRadius} 
-            onChange={(e) => {
-              setDraftRadius(Number(e.target.value));
-              showToast(`Radius set to ${e.target.value} km`);
-            }} 
-            style={{ width: '100%', accentColor: '#059669', cursor: 'pointer' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94A3B8', fontWeight: 600, marginTop: 2 }}>
-            <span>2 km (Local)</span>
-            <span>8 km</span>
-            <span>15 km (City-wide)</span>
+
+          {/* Coordinate Readout Pill */}
+          <div style={{ 
+            background: '#F8FAFC', borderRadius: 14, padding: '10px 14px', marginBottom: 14,
+            border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+          }}>
+            <div>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Active GPS Coordinates
+              </span>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', fontFamily: 'monospace', marginTop: 2 }}>
+                {worker.location?.lat && worker.location?.lng 
+                  ? `${worker.location.lat.toFixed(5)}° N, ${worker.location.lng.toFixed(5)}° E` 
+                  : 'Acquiring high-precision lock…'}
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                if (typeof window !== 'undefined' && navigator.geolocation) {
+                  showToast('Fetching latest GPS fix… 🛰️', 'info');
+                  navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    await setWorkerOnline(worker.id, isOnline, lat, lng);
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data?.display_name) {
+                          setResolvedAddress(data.display_name.split(',').slice(0, 3).join(',').trim());
+                        }
+                      }).catch(() => {});
+                    showToast('Live GPS location updated! 📍', 'success');
+                  }, () => {
+                    showToast('GPS permission required to update location.', 'error');
+                  }, { enableHighAccuracy: true, timeout: 10000 });
+                }
+              }}
+              style={{ 
+                background: '#ECFDF5', border: '1.5px solid #A7F3D0', borderRadius: 10,
+                padding: '7px 12px', fontSize: 11, fontWeight: 800, color: '#059669',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                boxShadow: '0 2px 6px rgba(5,150,105,0.08)'
+              }}
+            >
+              🔄 Refresh GPS
+            </button>
+          </div>
+
+          {/* Service Radar Distance Slider */}
+          <div style={{ marginTop: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#334155' }}>
+                📡 Gig Radar Coverage Radius
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 900, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 8, border: '1px solid #A7F3D0' }}>
+                {draftRadius} km
+              </span>
+            </div>
+            
+            <input 
+              type="range" 
+              min="2" 
+              max="25" 
+              step="1" 
+              value={draftRadius} 
+              onChange={(e) => {
+                setDraftRadius(Number(e.target.value));
+                showToast(`Radar radius set to ${e.target.value} km 📡`);
+              }} 
+              style={{ width: '100%', accentColor: '#059669', cursor: 'pointer' }}
+            />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94A3B8', fontWeight: 700, marginTop: 4 }}>
+              <span>2 km (Local)</span>
+              <span>8 km (Default)</span>
+              <span>25 km (Max Coverage)</span>
+            </div>
+            
+            <p style={{ fontSize: 11, color: '#64748B', fontWeight: 500, margin: '8px 0 0', lineHeight: 1.4 }}>
+              💡 Customers within <b>{draftRadius} km</b> of your live position will see your profile and can send instant booking requests.
+            </p>
           </div>
         </div>
 
@@ -502,6 +584,24 @@ export default function WorkerProfileScreen() {
         {/* ── Support & Policies ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
           <button 
+            onClick={() => setShowHelpModal(true)}
+            style={{ 
+              width: '100%', padding: '14px 16px', borderRadius: 16, 
+              border: '1.5px solid #E2E8F0', background: 'white', 
+              cursor: 'pointer', display: 'flex', alignItems: 'center', 
+              justifyContent: 'space-between', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Phone size={16} color="#059669" />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Partner Helplines & Support FAQ</span>
+            </div>
+            <ChevronRight size={16} color="#94A3B8" />
+          </button>
+
+          <button 
             onClick={() => setShowPrivacyModal(true)}
             style={{ 
               width: '100%', padding: '14px 16px', borderRadius: 16, 
@@ -560,6 +660,12 @@ export default function WorkerProfileScreen() {
         <PrivacyPolicyModal 
           isOpen={showPrivacyModal} 
           onClose={() => setShowPrivacyModal(false)} 
+        />
+
+        {/* Help & FAQ Modal */}
+        <HelpFaqModal 
+          isOpen={showHelpModal} 
+          onClose={() => setShowHelpModal(false)} 
         />
 
       </div>

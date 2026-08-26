@@ -79,24 +79,39 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'HeroHand Partner (WOH HeroHand)',
-  operatingSystem: 'Android, iOS, Web',
-  applicationCategory: 'BusinessApplication',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'INR',
-  },
-  description: 'Manage your service bookings, skills, and earnings with HeroHand Partner (WOH HeroHand).',
-  author: {
-    '@type': 'Organization',
-    name: 'HeroHand',
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    name: 'HeroHand Partner',
+    alternateName: ['Hero Hand Partner', 'WOH HeroHand', 'HeroHand Worker'],
+    operatingSystem: 'ANDROID, IOS, WEB',
+    applicationCategory: 'BusinessApplication',
+    description: 'Join HeroHand Partner — The premier platform for electricians, plumbers, carpenters, and technicians. Get instant nearby gig dispatches, loud audio alerts, and daily earnings payouts.',
     url: 'https://herohand.me',
+    downloadUrl: 'https://play.google.com/store/apps/details?id=com.neighborly.trust.worker',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'INR',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      ratingCount: '850',
+    },
   },
-};
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'HeroHand / Neighborly Trust Technologies',
+    alternateName: ['Hero Hand', 'Hands of ShramiXs'],
+    url: 'https://herohand.me',
+    logo: 'https://herohand.me/icon-512.png',
+    telephone: '+918867269712',
+    email: 'herohand4@gmail.com',
+  }
+];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

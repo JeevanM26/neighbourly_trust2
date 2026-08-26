@@ -23,9 +23,17 @@ function getLocalIp() {
 
 const localIp = getLocalIp();
 
-const customerApkPath = path.join(__dirname, 'apks', 'ShramiXs-Customer.apk');
-const workerApkPath = path.join(__dirname, 'apks', 'HOS-Workers.apk');
-const adminApkPath = path.join(__dirname, 'apks', 'ShramiXs-Admin.apk');
+const customerApkPath = fs.existsSync(path.join(__dirname, 'apks', 'HeroHand-Customer.apk')) 
+  ? path.join(__dirname, 'apks', 'HeroHand-Customer.apk') 
+  : path.join(__dirname, 'apks', 'HandsOfHeros-Customer.apk');
+
+const workerApkPath = fs.existsSync(path.join(__dirname, 'apks', 'HeroHand-Partner.apk')) 
+  ? path.join(__dirname, 'apks', 'HeroHand-Partner.apk') 
+  : path.join(__dirname, 'apks', 'HandsOfHeros-Partner.apk');
+
+const adminApkPath = fs.existsSync(path.join(__dirname, 'apks', 'HeroHand-Admin.apk')) 
+  ? path.join(__dirname, 'apks', 'HeroHand-Admin.apk') 
+  : path.join(__dirname, 'apks', 'ShramiXs-Admin.apk');
 
 const server = http.createServer((req, res) => {
   const url = req.url || '/';
@@ -36,7 +44,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
         'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="ShramiXs-Customer.apk"',
+        'Content-Disposition': 'attachment; filename="HeroHand-Customer.apk"',
       });
       fs.createReadStream(customerApkPath).pipe(res);
     } else {
@@ -52,7 +60,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
         'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="HOS-Workers.apk"',
+        'Content-Disposition': 'attachment; filename="HeroHand-Partner.apk"',
       });
       fs.createReadStream(workerApkPath).pipe(res);
     } else {
@@ -68,7 +76,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
         'Content-Length': stat.size,
-        'Content-Disposition': 'attachment; filename="ShramiXs-Admin.apk"',
+        'Content-Disposition': 'attachment; filename="HeroHand-Admin.apk"',
       });
       fs.createReadStream(adminApkPath).pipe(res);
     } else {
@@ -120,28 +128,29 @@ const server = http.createServer((req, res) => {
 </head>
 <body>
   <div class="header">
-    <h1>Hands of ShramiXs</h1>
-    <p>Mobile App Packages &amp; APK Installer</p>
+    <h1>HeroHand · Hands of ShramiXs</h1>
+    <p>Official Android Packages &amp; APK Installer</p>
+    <p style="font-size: 12px; color: #38BDF8; margin-top: 4px;">Helplines: 8867269712 · 9480150995 · 6364419562 | Email: herohand4@gmail.com</p>
   </div>
 
   <!-- 1. Customer App Card -->
   <div class="card">
     <div class="card-title">
-      <h2 style="font-size: 18px; font-weight: 800;">📱 Customer App (ShramiXs)</h2>
+      <h2 style="font-size: 18px; font-weight: 800;">📱 Customer App (HeroHand)</h2>
       <span class="badge badge-customer">${customerSize}</span>
     </div>
-    <p class="desc">Book verified electricians, plumbers, and home cleaners with 15-min instant dispatch and live tracking.</p>
-    <a class="btn btn-blue" href="/download/customer.apk" download="ShramiXs-Customer.apk">⬇️ Download Customer APK (Android)</a>
+    <p class="desc">Book verified electricians, plumbers, carpenters, and home cleaners with instant dispatch, map tracking, and free in-app calls.</p>
+    <a class="btn btn-blue" href="/download/customer.apk" download="HeroHand-Customer.apk">⬇️ Download Customer APK (Android)</a>
   </div>
 
   <!-- 2. Worker Partner App Card -->
   <div class="card">
     <div class="card-title">
-      <h2 style="font-size: 18px; font-weight: 800;">🛠️ Partner App (HOS: Workers)</h2>
+      <h2 style="font-size: 18px; font-weight: 800;">🛠️ Partner App (HeroHand Partner)</h2>
       <span class="badge badge-worker">${workerSize}</span>
     </div>
-    <p class="desc">Receive instant gig dispatch radar alerts, accept customer jobs, navigate, and manage daily earnings.</p>
-    <a class="btn btn-green" href="/download/worker.apk" download="HOS-Workers.apk">⬇️ Download Worker APK (Android)</a>
+    <p class="desc">Receive instant gig dispatch radar alerts, accept customer jobs, navigate, complete with 4-digit PIN, and manage daily earnings.</p>
+    <a class="btn btn-green" href="/download/worker.apk" download="HeroHand-Partner.apk">⬇️ Download Partner APK (Android)</a>
   </div>
 
   <!-- 3. Admin Hub Card -->
@@ -150,8 +159,8 @@ const server = http.createServer((req, res) => {
       <h2 style="font-size: 18px; font-weight: 800;">👑 Super Admin Hub</h2>
       <span class="badge badge-admin">${adminSize}</span>
     </div>
-    <p class="desc">Private management cockpit: Monitor live tasks, call customers for reviews, and track platform finances.</p>
-    <a class="btn btn-amber" href="/download/admin.apk" download="ShramiXs-Admin.apk">⬇️ Download Private Admin APK (Android)</a>
+    <p class="desc">Private management cockpit: Monitor live tasks, call customers for reviews, and track platform 8% commission finances.</p>
+    <a class="btn btn-amber" href="/download/admin.apk" download="HeroHand-Admin.apk">⬇️ Download Admin APK (Android)</a>
   </div>
 
   <!-- Android Guide -->

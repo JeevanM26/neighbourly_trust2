@@ -586,46 +586,79 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [worker, logoutWorker, showToast]);
 
-  // Online toggle & Location Stream
-  const toggleOnline = useCallback(async () => {
-    if (!worker) return;
+  // Online toggle & Location Stream (Strict GPS Required)
+  const toggleOnline = useCallback(async (): Promise<boolean> => {
+    if (!worker) return false;
     const next = !isOnline;
 
-    setIsOnline(next);
-    setWorker(prev => prev ? { ...prev, is_online: next } : null);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('nt_worker_online', JSON.stringify(next));
-    }
-
     if (next) {
-      // ── Going Online ──────────────────────────────────────────
-      // 1. Register FCM token (so backend can send push when app is closed)
-      registerFcmToken(worker.id).catch(() => {});
-
-      // 2. Start foreground service (keeps process alive in pocket/background)
-      startForegroundService().catch(() => {});
-
-      // 3. Update location + online status in DB
-      if (typeof window !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            await setWorkerOnline(worker.id, true, pos.coords.latitude, pos.coords.longitude);
-          },
-          async () => {
-            await setWorkerOnline(worker.id, true, null, null);
-          },
-          { timeout: 8000 }
-        );
-      } else {
-        await setWorkerOnline(worker.id, true, null, null);
+      // ── Going Online: STRICT LOCATION ENFORCEMENT ──
+      if (typeof window === 'undefined' || !navigator.geolocation) {
+        showToast('📍 Live GPS is required. Your device does not support GPS.', 'error');
+        return false;
       }
-      showToast("You're online — ready for bookings! ✅", 'success');
+
+      showToast('Acquiring high-accuracy GPS lock… 🛰️', 'info');
+
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
+          );
+        });
+
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setIsOnline(true);
+        setWorker(prev => prev ? { ...prev, is_online: true, location: { lat, lng } } : null);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nt_worker_online', JSON.stringify(true));
+        }
+
+        // 1. Register FCM token (so backend can send push when app is closed)
+        registerFcmToken(worker.id).catch(() => {});
+
+        // 2. Start foreground service (keeps process alive in pocket/background)
+        startForegroundService().catch(() => {});
+
+        // 3. Update location + online status in DB
+        await setWorkerOnline(worker.id, true, lat, lng);
+        showToast("You're online with live GPS broadcast! 🟢", 'success');
+        return true;
+      } catch (geoError: any) {
+        console.warn('Strict GPS required error:', geoError);
+        setIsOnline(false);
+        setWorker(prev => prev ? { ...prev, is_online: false } : null);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nt_worker_online', JSON.stringify(false));
+        }
+        await setWorkerOnline(worker.id, false, null, null);
+        
+        let msg = '📍 Strict Location Required: Please enable GPS/Location permissions to go Online.';
+        if (geoError?.code === 1) {
+          msg = '📍 Permission Denied: You must grant Location access in your phone settings to receive customer jobs.';
+        } else if (geoError?.code === 2) {
+          msg = '📍 GPS Signal Unavailable: Please turn ON your device GPS/Location and try again.';
+        } else if (geoError?.code === 3) {
+          msg = '📍 GPS Timed Out: Please ensure you have GPS signal and try again.';
+        }
+        showToast(msg, 'error');
+        return false;
+      }
     } else {
       // ── Going Offline ─────────────────────────────────────────
-      // Stop the foreground service to conserve battery
+      setIsOnline(false);
+      setWorker(prev => prev ? { ...prev, is_online: false } : null);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nt_worker_online', JSON.stringify(false));
+      }
       stopForegroundService().catch(() => {});
       await setWorkerOnline(worker.id, false, null, null);
       showToast("You're offline", 'info');
+      return true;
     }
   }, [isOnline, worker, showToast]);
 

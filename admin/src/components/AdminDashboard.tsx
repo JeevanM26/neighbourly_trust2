@@ -63,8 +63,31 @@ interface AdminWorker {
   rating: number;
   total_jobs: number;
   service_radius_km?: number;
+  location?: { lat: number; lng: number } | null;
   categories: string[];
   created_at?: string;
+}
+
+function parseWorkerLocation(loc: any): { lat: number; lng: number } | null {
+  if (!loc) return null;
+  if (typeof loc === 'object' && typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+    return { lat: loc.lat, lng: loc.lng };
+  }
+  if (typeof loc === 'object' && Array.isArray(loc.coordinates) && loc.coordinates.length >= 2) {
+    return { lat: Number(loc.coordinates[1]), lng: Number(loc.coordinates[0]) };
+  }
+  if (typeof loc === 'string') {
+    try {
+      const parsed = JSON.parse(loc);
+      if (parsed.lat && parsed.lng) return { lat: Number(parsed.lat), lng: Number(parsed.lng) };
+      if (Array.isArray(parsed.coordinates)) return { lat: Number(parsed.coordinates[1]), lng: Number(parsed.coordinates[0]) };
+    } catch {}
+    const match = loc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    if (match) {
+      return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) };
+    }
+  }
+  return null;
 }
 
 interface AdminCustomer {
@@ -301,7 +324,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
       const { data: rawWorkers } = await client
         .from('worker_profiles')
         .select(`
-          profile_id, bio, years_experience, is_online, is_verified, avg_rating, total_jobs, service_radius_km,
+          profile_id, bio, years_experience, is_online, is_verified, avg_rating, total_jobs, service_radius_km, location,
           profiles:profile_id (id, full_name, phone, email, avatar_url, created_at)
         `);
 
@@ -331,6 +354,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
           rating: Number(w.avg_rating) || 5.0,
           total_jobs: Number(w.total_jobs) || 0,
           service_radius_km: Number(w.service_radius_km) || 8,
+          location: parseWorkerLocation(w.location),
           categories: workerCatMap[w.profile_id] || ['General Specialist'],
           created_at: p.created_at,
         };
@@ -1387,6 +1411,38 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                           <Mail size={12} color="#64748B" />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.email}</span>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Live GPS Coordinates & Google Maps Link */}
+                    <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '8px 10px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <MapPin size={13} color={w.location ? '#059669' : '#94A3B8'} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: w.location ? '#0F172A' : '#94A3B8' }}>
+                          {w.location ? `${w.location.lat.toFixed(4)}°, ${w.location.lng.toFixed(4)}° (${w.service_radius_km || 8} km)` : 'No GPS Locked'}
+                        </span>
+                      </div>
+                      {w.location && (
+                        <a
+                          href={`https://www.google.com/maps?q=${w.location.lat},${w.location.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: '#ECFDF5',
+                            border: '1px solid #A7F3D0',
+                            borderRadius: 6,
+                            padding: '3px 8px',
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: '#059669',
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                        >
+                          <ExternalLink size={10} /> Live Map
+                        </a>
                       )}
                     </div>
 

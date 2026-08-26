@@ -8,6 +8,7 @@ import {
   Check, RefreshCw, Navigation, Building2, Trash2, Crosshair
 } from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
+import HelpFaqModal from '../HelpFaqModal';
 
 export interface SavedAddress {
   id: string;
@@ -64,6 +65,7 @@ export default function ProfileScreen() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Address state
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(DEFAULT_PRESETS);
@@ -499,7 +501,7 @@ export default function ProfileScreen() {
           icon={<HelpCircle size={18} color="#0B3D66" />}
           label="Help & FAQ"
           right={<ChevronRight size={14} color="#94A3B8" />}
-          onClick={() => showToast('Help center coming soon!', 'info')}
+          onClick={() => setShowHelpModal(true)}
         />
       </div>
 
@@ -531,6 +533,12 @@ export default function ProfileScreen() {
       <PrivacyPolicyModal 
         isOpen={showPrivacyModal} 
         onClose={() => setShowPrivacyModal(false)} 
+      />
+
+      {/* Help & FAQ Modal */}
+      <HelpFaqModal 
+        isOpen={showHelpModal} 
+        onClose={() => setShowHelpModal(false)} 
       />
 
       {/* Language Picker Modal */}

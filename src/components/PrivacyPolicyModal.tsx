@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { X, ShieldCheck, MapPin, Mic, Lock, UserCheck, Trash2, Mail, ExternalLink } from 'lucide-react';
+import { X, ShieldCheck, MapPin, Mic, Lock, UserCheck, Trash2, Mail, Phone, ExternalLink } from 'lucide-react';
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
                 Privacy Policy
               </h2>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: '2px 0 0', fontWeight: 500 }}>
-                DPDP Act 2023 & Google Play Compliant
+                HeroHand · DPDP Act 2023 & Google Play Compliant
               </p>
             </div>
           </div>
@@ -71,32 +71,39 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           fontSize: 13, color: '#334155', lineHeight: 1.6
         }}>
           <div style={{ background: '#F0F7FF', border: '1px solid #BAE6FD', borderRadius: 12, padding: '12px 14px', marginBottom: 18, fontSize: 12, color: '#0369A1', fontWeight: 600 }}>
-            📌 <b>Effective Date:</b> August 14, 2026<br />
-            <b>Entity:</b> Neighborly Trust Technologies, Shivamogga, Karnataka, India.
+            📌 <b>Effective Date:</b> August 2026<br />
+            <b>Entity:</b> Neighborly Trust Technologies (HeroHand / Hands of ShramiXs), Shivamogga, Karnataka, India.
           </div>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 12, marginBottom: 6 }}>
             1. Information We Collect
           </h3>
           <p style={{ margin: '0 0 10px' }}>
-            We only collect the minimum personal data strictly necessary to facilitate local home services:
+            We only collect the minimal personal data necessary to facilitate home services:
           </p>
           <ul style={{ paddingLeft: 20, margin: '0 0 14px' }}>
-            <li><b>Mobile Number:</b> Used exclusively for SMS OTP account verification and authentication.</li>
-            <li><b>Location (GPS):</b> Used in real-time to locate nearby electricians, plumbers, and technicians within your service radius. Location is <b>never tracked in the background</b> when the app is closed.</li>
+            <li><b>Mobile Number & Google Profile:</b> Used exclusively for account authentication, identification, and booking updates.</li>
+            <li><b>Location (GPS):</b> Used in real-time when browsing or booking to match you with nearby service technicians. Location is <b>never tracked in the background</b> when the app is closed.</li>
             <li><b>Audio / Microphone:</b> Used exclusively for live peer-to-peer WebRTC voice calls between you and your booked specialist. <b>Audio is NEVER recorded or stored.</b></li>
-            <li><b>Service Reviews:</b> Star ratings and comments you voluntarily submit for completed jobs.</li>
+            <li><b>PIN & Service Reviews:</b> A 4-digit security PIN confirms service delivery. Ratings and reviews maintain quality.</li>
           </ul>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            2. Number Privacy Shield & WebRTC
+            2. Google User Data Protection
           </h3>
           <p style={{ margin: '0 0 14px' }}>
-            Your phone number is masked in the app interface. When contacting a specialist, voice calls are established directly via encrypted peer-to-peer WebRTC, meaning neither party needs to reveal their private phone number.
+            When logging in via Google Sign-In, we only receive your basic profile data (Name, Email, Avatar) for secure account setup. We <b>DO NOT sell or share Google user data</b> with third-party advertisers or data brokers.
           </p>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            3. How We Use & Protect Your Data
+            3. Number Privacy Shield & WebRTC
+          </h3>
+          <p style={{ margin: '0 0 14px' }}>
+            Your personal phone number is masked in the app interface. When contacting a specialist, voice calls are established directly via encrypted peer-to-peer WebRTC, meaning neither party needs to reveal their private phone number.
+          </p>
+
+          <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
+            4. How We Protect Your Data
           </h3>
           <ul style={{ paddingLeft: 20, margin: '0 0 14px' }}>
             <li>We <b>DO NOT sell, rent, or trade</b> your personal data to any third-party advertisers.</li>
@@ -105,30 +112,31 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           </ul>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            4. Your Rights & Account Deletion (DPDP Act 2023)
+            5. Your Rights & Account Deletion (DPDP Act 2023)
           </h3>
           <p style={{ margin: '0 0 14px' }}>
             Under India's Digital Personal Data Protection (DPDP) Act 2023, you have the absolute right to access, rectify, or erase your data at any time. You can permanently delete your account and all associated data directly from the <b>Profile</b> screen with 1 tap.
           </p>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
-            5. Children's Privacy
-          </h3>
-          <p style={{ margin: '0 0 14px' }}>
-            Neighborly Trust is intended for users who are at least 18 years of age. We do not knowingly collect personal information from minors.
-          </p>
-
-          <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 16, marginBottom: 6 }}>
             6. Contact Data Protection Officer
           </h3>
-          <p style={{ margin: '0 0 4px' }}>
+          <p style={{ margin: '0 0 8px' }}>
             For privacy inquiries, data deletion requests, or grievance redressal:
           </p>
-          <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail size={16} color="#0B3D66" />
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#0B3D66' }}>
-              privacy@neighborlytrust.in
-            </span>
+          <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Mail size={15} color="#0B3D66" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0B3D66' }}>
+                herohand4@gmail.com
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Phone size={15} color="#0B3D66" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0B3D66' }}>
+                +91 8867269712 · +91 9480150995 · +91 6364419562
+              </span>
+            </div>
           </div>
         </div>
 
