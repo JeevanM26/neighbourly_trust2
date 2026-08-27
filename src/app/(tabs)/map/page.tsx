@@ -41,12 +41,12 @@ function MapScreenContent() {
     router.push(`/map?category=${catId}`);
   };
 
-  if (workerId && categoryId) {
+  if (workerId) {
     return (
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <WorkerProfileSheet
           workerId={workerId}
-          categoryId={categoryId}
+          categoryId={categoryId || ''}
           onBack={handleBackToResults}
           onBooked={handleBooked}
         />

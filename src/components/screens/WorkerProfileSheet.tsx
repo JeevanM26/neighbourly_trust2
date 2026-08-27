@@ -3,56 +3,55 @@ import React, { useEffect, useState } from 'react';
 import { getClient } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { WorkerProfile, DEFAULT_LOCATION } from '../../lib/types';
-import { findNearbyWorkers } from '../../lib/supabase';
+import { getWorkerProfile } from '../../lib/supabase';
 import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, Shield, X, Zap, Clock } from 'lucide-react';
 import { useLocation } from '../../context/LocationContext';
 
 export default function WorkerProfileSheet({
   workerId,
   categoryId,
+  initialWorker,
   onBack,
   onBooked,
 }: {
   workerId: string;
   categoryId: string;
+  initialWorker?: WorkerProfile | null;
   onBack: () => void;
   onBooked: () => void;
 }) {
   const { bookWorker, categories, webrtc, bookings, user, refreshBookings } = useApp();
   const { requestLocation, searchLocation, userLocation } = useLocation();
-  const [worker, setWorker] = useState<WorkerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [worker, setWorker] = useState<WorkerProfile | null>(initialWorker || null);
+  const [loading, setLoading] = useState(!initialWorker);
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'booking' | 'success'>('idle');
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
 
-  const category = categories.find(c => c.id === categoryId);
+  const category = categories.find(c => c.id === (categoryId || worker?.category_id));
 
   useEffect(() => {
     let isMounted = true;
     async function loadWorker() {
-      const loc = searchLocation || userLocation;
-      if (loc && loc.lat) {
-        const data = await findNearbyWorkers(categoryId, loc.lat, loc.lng);
+      try {
+        const w = await getWorkerProfile(workerId);
         if (isMounted) {
-          const w = data.find(x => x.worker_id === workerId);
-          setWorker(w || null);
+          if (w) setWorker(w);
           setLoading(false);
         }
-      } else {
-        const fallbackLoc = await requestLocation();
-        if (fallbackLoc) {
-          const data = await findNearbyWorkers(categoryId, fallbackLoc.lat, fallbackLoc.lng);
-          if (isMounted) {
-            const w = data.find(x => x.worker_id === workerId);
-            setWorker(w || null);
-            setLoading(false);
-          }
-        }
+      } catch (err) {
+        if (isMounted) setLoading(false);
       }
     }
-    loadWorker();
+
+    if (!worker || worker.worker_id !== workerId) {
+      setLoading(true);
+      loadWorker();
+    } else {
+      setLoading(false);
+    }
+
     return () => { isMounted = false; };
-  }, [categoryId, workerId, searchLocation, userLocation, requestLocation]);
+  }, [workerId]);
 
   // Determine if there is an active booking related to this specific worker session
   const activeBooking = activeBookingId
@@ -78,6 +77,7 @@ export default function WorkerProfileSheet({
 
   const handleBook = async () => {
     setBookingStatus('booking');
+    const effectiveCatId = categoryId || worker?.category_id || (categories && categories[0]?.id) || '';
     let loc = searchLocation || userLocation;
     if (!loc) {
       loc = await requestLocation();
@@ -85,7 +85,7 @@ export default function WorkerProfileSheet({
     const customerLat = loc?.lat ?? userLocation?.lat ?? DEFAULT_LOCATION.lat;
     const customerLng = loc?.lng ?? userLocation?.lng ?? DEFAULT_LOCATION.lng;
 
-    const id = await bookWorker(categoryId, workerId, {
+    const id = await bookWorker(effectiveCatId, workerId, {
         lat: customerLat,
         lng: customerLng
     });
@@ -99,8 +99,9 @@ export default function WorkerProfileSheet({
 
   if (loading) {
     return (
-      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
-        <div style={{ animation: 'pulse 1.5s infinite' }}>Loading profile...</div>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', gap: 12 }}>
+        <Loader2 className="animate-spin" size={32} color="#0B3D66" />
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#64748B' }}>Loading profile...</div>
       </div>
     );
   }
