@@ -94,9 +94,18 @@ export interface AppSettings {
   voice: boolean;
 }
 
-// ─── Owner Config ─────────────────────────────────────────
-export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '';
-export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') : [];
+// ─── Owner & Helpline Config ─────────────────────────────────
+export const EMERGENCY_HELPLINE_NUMBERS = [
+  { phone: '+918867269712', display: '+91 88672 69712', raw: '8867269712', label: 'Emergency Line 1' },
+  { phone: '+919480150995', display: '+91 94801 50995', raw: '9480150995', label: 'Emergency Line 2' },
+  { phone: '+916364419592', display: '+91 63644 19592', raw: '6364419592', label: 'Emergency Line 3' },
+  { phone: '+917975182162', display: '+91 79751 82162', raw: '7975182162', label: 'Emergency Line 4' },
+];
+
+export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '+918867269712';
+export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES 
+  ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') 
+  : ['8867269712', '9480150995', '6364419592', '7975182162', '+918867269712', '+919480150995', '+916364419592', '+917975182162'];
 export const OWNER_PHONE_NUMBERS = OWNER_PHONES;
 export const DEFAULT_OWNER_PHONE_NUMBERS = OWNER_PHONES;
 

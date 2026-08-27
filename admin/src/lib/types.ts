@@ -95,8 +95,10 @@ export interface AppSettings {
 }
 
 // ─── Owner Config ─────────────────────────────────────────
-export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '';
-export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') : [];
+export const PRIMARY_SUPER_OWNER = process.env.NEXT_PUBLIC_PRIMARY_OWNER_PHONE || '+918867269712';
+export const OWNER_PHONES: string[] = process.env.NEXT_PUBLIC_OWNER_PHONES 
+  ? process.env.NEXT_PUBLIC_OWNER_PHONES.split(',') 
+  : ['8867269712', '9480150995', '6364419592', '7975182162', '+918867269712', '+919480150995', '+916364419592', '+917975182162'];
 export const OWNER_PHONE_NUMBERS = OWNER_PHONES;
 export const DEFAULT_OWNER_PHONE_NUMBERS = OWNER_PHONES;
 

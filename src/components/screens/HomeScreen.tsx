@@ -186,6 +186,13 @@ const getHelplineInfo = (lang: string) => {
   };
 };
 
+const HELPLINE_NUMBERS = [
+  { phone: '+918867269712', display: '+91 88672 69712', raw: '8867269712', labelEn: 'Line 1 · Emergency Lead', labelKn: 'ಲೈನ್ 1 · ತುರ್ತು ಮುಖ್ಯಸ್ಥರು', labelHi: 'लाइन 1 · मुख्य आपातकालीन' },
+  { phone: '+919480150995', display: '+91 94801 50995', raw: '9480150995', labelEn: 'Line 2 · Standby Support', labelKn: 'ಲೈನ್ 2 · ಸಹಾಯಕ ಸಿಬ್ಬಂದಿ', labelHi: 'लाइन 2 · बैकअप सपोर्ट' },
+  { phone: '+916364419592', display: '+91 63644 19592', raw: '6364419592', labelEn: 'Line 3 · Dispatch Desk', labelKn: 'ಲೈನ್ 3 · ಸೇವಾ ಡೆಸ್ಕ್', labelHi: 'लाइन 3 · डिस्पैच डेस्क' },
+  { phone: '+917975182162', display: '+91 79751 82162', raw: '7975182162', labelEn: 'Line 4 · Priority Standby', labelKn: 'ಲೈನ್ 4 · ಆದ್ಯತೆಯ ಸಹಾಯವಾಣಿ', labelHi: 'लाइन 4 · प्राथमिकता सेवा' },
+];
+
 export default function HomeScreen({ 
   onSelectCategory,
   onSelectWorker
@@ -198,6 +205,7 @@ export default function HomeScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showHelpline, setShowHelpline] = useState(false);
+  const [showNumbersModal, setShowNumbersModal] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
   const helpline = getHelplineInfo(settings?.language || 'en');
   
@@ -446,7 +454,7 @@ export default function HomeScreen({
               {/* Call Now Action Button & Close */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <a
-                  href="tel:+919900011222"
+                  href={`tel:${HELPLINE_NUMBERS[0].phone}`}
                   style={{
                     textDecoration: 'none',
                     background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
@@ -466,6 +474,30 @@ export default function HomeScreen({
                   <PhoneCall size={13} strokeWidth={2.5} />
                   <span>{helpline.callBtn}</span>
                 </a>
+
+                {/* 4 Lines Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setShowNumbersModal(true)}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    color: '#38BDF8',
+                    padding: '8px 10px',
+                    borderRadius: 11,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
+                  }}
+                >
+                  <span>4 Lines</span>
+                  <ChevronDown size={13} strokeWidth={2.5} />
+                </button>
 
                 {/* Close button to slide back */}
                 <button
@@ -833,6 +865,160 @@ export default function HomeScreen({
                     <div style={{ fontSize: 9, opacity: 0.65 }}>{lang.name}</div>
                   </div>
                 </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Emergency Helpline 4 Numbers Modal Sheet ─── */}
+      {showNumbersModal && (
+        <div 
+          onClick={() => setShowNumbersModal(false)}
+          onTouchEnd={(e) => {
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              setShowNumbersModal(false);
+            }
+          }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            animation: 'fadeIn 0.2s ease',
+            touchAction: 'manipulation'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{
+              background: '#0F172A',
+              borderTop: '1.5px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '24px 24px 0 0',
+              padding: '24px 20px 36px',
+              width: '100%', maxWidth: 480,
+              boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.5)',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 12,
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.45)'
+                }}>
+                  <PhoneCall size={18} strokeWidth={2.4} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.3px' }}>
+                    {settings?.language === 'kn' ? '24/7 ತುರ್ತು ಸೇವಾ ಸಂಖ್ಯೆಗಳು' : settings?.language === 'hi' ? '24/7 आपातकालीन हेल्पलाइन नंबर' : '24/7 Emergency Helpline Lines'}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px #22C55E' }} />
+                    <span style={{ fontSize: 11, color: '#38BDF8', fontWeight: 700 }}>4 Dedicated Dispatch Lines Online</span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowNumbersModal(false)}
+                style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.1)', border: 'none',
+                  color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 12, color: '#94A3B8', margin: '0 0 16px', lineHeight: 1.4, fontWeight: 500 }}>
+              {settings?.language === 'kn' 
+                ? 'ವಿದ್ಯುತ್, ಪ್ಲಂಬಿಂಗ್ ಅಥವಾ ಮನೆ ತುರ್ತು ಸೇವೆಗೆ ಕೆಳಗಿನ ಯಾವುದೇ ಸಂಖ್ಯೆಗೆ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ.'
+                : settings?.language === 'hi'
+                ? 'बिजली, प्लंबिंग या घरेलू आपात स्थिति के लिए नीचे दिए गए किसी भी नंबर पर तुरंत कॉल करें।'
+                : 'Direct emergency standby coordinators available 24/7 for urgent home breakdowns.'}
+            </p>
+
+            {/* Numbers List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {HELPLINE_NUMBERS.map((item, idx) => (
+                <div 
+                  key={idx}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 16,
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 2 }}>
+                      {settings?.language === 'kn' ? item.labelKn : settings?.language === 'hi' ? item.labelHi : item.labelEn}
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>
+                      {item.display}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {/* Call Button */}
+                    <a
+                      href={`tel:${item.phone}`}
+                      style={{
+                        textDecoration: 'none',
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: 'white',
+                        padding: '8px 14px',
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation'
+                      }}
+                    >
+                      <PhoneCall size={13} strokeWidth={2.4} />
+                      <span>{helpline.callBtn}</span>
+                    </a>
+
+                    {/* WhatsApp Button */}
+                    <a
+                      href={`https://wa.me/${item.raw}?text=Hi%2C%20I%20need%20emergency%20service%20assistance.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        textDecoration: 'none',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: 'white',
+                        padding: '8px 10px',
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation'
+                      }}
+                    >
+                      <MessageCircle size={15} color="#22C55E" />
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
