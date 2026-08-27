@@ -4,24 +4,29 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Bell, Briefcase, TrendingUp, User } from 'lucide-react';
+import { useWorker } from '../context/WorkerContext';
+import { getNavLabel } from '../lib/i18n';
 
 type Tab = 'dashboard' | 'requests' | 'jobs' | 'earnings' | 'profile';
 
-const NAV_ITEMS: { key: Tab; label: string; icon: any; path: string }[] = [
-  { key: 'dashboard', label: 'Home',     icon: LayoutGrid, path: '/dashboard' },
-  { key: 'requests',  label: 'Requests', icon: Bell,       path: '/requests'  },
-  { key: 'jobs',      label: 'Jobs',     icon: Briefcase,  path: '/jobs'      },
-  { key: 'earnings',  label: 'Earnings', icon: TrendingUp, path: '/earnings'  },
-  { key: 'profile',   label: 'Profile',  icon: User,       path: '/profile'   },
+const NAV_ITEMS: { key: Tab; defaultLabel: string; icon: any; path: string }[] = [
+  { key: 'dashboard', defaultLabel: 'Home',     icon: LayoutGrid, path: '/dashboard' },
+  { key: 'requests',  defaultLabel: 'Requests', icon: Bell,       path: '/requests'  },
+  { key: 'jobs',      defaultLabel: 'Jobs',     icon: Briefcase,  path: '/jobs'      },
+  { key: 'earnings',  defaultLabel: 'Earnings', icon: TrendingUp, path: '/earnings'  },
+  { key: 'profile',   defaultLabel: 'Profile',  icon: User,       path: '/profile'   },
 ];
 
 export function BottomNav({ pendingCount }: { pendingCount: number }) {
   const pathname = usePathname();
+  const { settings } = useWorker();
+  const lang = settings?.language || 'en';
 
   return (
     <nav className="bottom-nav" style={{ gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)` }}>
       {NAV_ITEMS.map(item => {
         const isActive = pathname?.startsWith(item.path) || (pathname === '/' && item.path === '/dashboard');
+        const label = getNavLabel(item.key, lang);
         
         return (
           <Link 
@@ -38,7 +43,7 @@ export function BottomNav({ pendingCount }: { pendingCount: number }) {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: 9, fontWeight: isActive ? 800 : 500 }}>{item.label}</span>
+            <span style={{ fontSize: 9, fontWeight: isActive ? 800 : 500 }}>{label}</span>
             <div className="nav-item-dot" />
           </Link>
         );

@@ -614,19 +614,25 @@ export default function HomeScreen({
           aria-modal="true"
           style={{
             position: 'fixed', inset: 0, background: 'rgba(4,27,48,0.72)',
-            backdropFilter: 'blur(4px)', zIndex: 999,
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 999,
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
           }}
           onClick={e => { if (e.target === e.currentTarget) setShowLangPicker(false); }}
+          onTouchEnd={e => { if (e.target === e.currentTarget) setShowLangPicker(false); }}
         >
-          <div style={{ background: 'white', borderRadius: 24, padding: 22, width: '100%', maxWidth: 360 }}>
+          <div 
+            onClick={e => e.stopPropagation()}
+            onTouchEnd={e => e.stopPropagation()}
+            style={{ background: 'white', borderRadius: 24, padding: 22, width: '100%', maxWidth: 360 }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', margin: 0 }}>
                 🌐 Choose Language / भाषा चुनें
               </h3>
               <button
+                type="button"
                 onClick={() => setShowLangPicker(false)}
-                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
               >
                 <X size={15} color="#64748B" />
               </button>
@@ -635,8 +641,10 @@ export default function HomeScreen({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
               {LANGUAGES.map(lang => (
                 <button
+                  type="button"
                   key={lang.code}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setLanguage(lang.code as any);
                     setShowLangPicker(false);
                     showToast(`Language: ${lang.name} (${lang.native})`, 'success');
@@ -648,6 +656,8 @@ export default function HomeScreen({
                     borderRadius: 14, padding: '10px 12px', textAlign: 'left',
                     fontSize: 13, fontWeight: 800, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.15s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
                   }}
                 >
                   <span style={{ fontSize: 18 }}>{lang.flag}</span>

@@ -113,6 +113,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             } catch {}
           }
 
+          const savedLang = (() => {
+            if (typeof window === 'undefined') return null;
+            try { return JSON.parse(localStorage.getItem('nt_settings') || '{}')?.language; } catch { return null; }
+          })();
+          const effectiveLang = (savedLang || profileData?.preferred_language || profileData?.language || settings.language || 'en') as LanguageCode;
+
           setUser({
             id: authUser.id,
             full_name: name,
@@ -120,7 +126,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             email: userEmail,
             avatar_url: userAvatar || undefined,
             role: 'customer',
-            language: (profileData?.preferred_language || profileData?.language || settings.language || 'en') as LanguageCode,
+            language: effectiveLang,
             consent_given: true,
           });
         } catch (e) {
@@ -248,7 +254,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('nt_settings', JSON.stringify(settings));
+    try { localStorage.setItem('nt_settings', JSON.stringify(settings)); } catch {}
   }, [settings]);
 
   // Fetch initial data
@@ -442,7 +448,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user, refreshBookings, showToast]);
 
-  const setLanguage = useCallback((lang: LanguageCode) => setSettings(s => ({ ...s, language: lang })), []);
+  const setLanguage = useCallback((lang: LanguageCode) => {
+    setSettings(s => ({ ...s, language: lang }));
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('nt_settings', JSON.stringify({ ...settings, language: lang })); } catch {}
+    }
+    if (user?.id) {
+      const client = getClient();
+      if (client) {
+        client.from('profiles').update({ preferred_language: lang }).eq('id', user.id).then(() => {}).catch(() => {});
+      }
+    }
+  }, [user?.id, settings]);
   const toggleSounds = useCallback(() => setSettings(s => ({ ...s, sounds: !s.sounds })), []);
   const toggleVoice = useCallback(() => setSettings(s => ({ ...s, voice: !s.voice })), []);
   const translate = useCallback((key: string) => getTranslation(settings.language, key), [settings.language]);

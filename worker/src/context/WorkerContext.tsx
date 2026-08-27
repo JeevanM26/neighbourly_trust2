@@ -12,6 +12,7 @@ import {
   deleteWorkerAccount, createWorkerProfile, fetchWorkerProfile,
   updateWorkerProfileData, fetchServiceCategories, fetchPendingOffers
 } from '../lib/supabase';
+import { getTranslation } from '../lib/i18n';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { CallOverlay } from '../components/CallOverlay';
 import { CallAudioSynthesizer } from '../lib/callEngine';
@@ -123,6 +124,8 @@ interface WorkerContextType {
   toast: ToastState | null;
   showToast: (msg: string, type?: ToastState['type']) => void;
   dismissToast: () => void;
+  translate: (key: string) => string;
+  t: (key: string) => string;
 
   webrtc: ReturnType<typeof useWebRTC>;
 }
@@ -222,18 +225,24 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const webrtc = useWebRTC(worker?.id || '');
 
-  // Persist worker profile and online status
+  // Persist worker profile, online status, and settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('nt_worker', JSON.stringify(worker));
+      try { localStorage.setItem('nt_worker', JSON.stringify(worker)); } catch {}
     }
   }, [worker]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('nt_worker_online', JSON.stringify(isOnline));
+      try { localStorage.setItem('nt_worker_online', JSON.stringify(isOnline)); } catch {}
     }
   }, [isOnline]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('nt_worker_settings', JSON.stringify(settings)); } catch {}
+    }
+  }, [settings]);
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -674,11 +683,25 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Settings
   const setLanguage = useCallback((lang: WorkerSettings['language']) => {
     setSettings(s => ({ ...s, language: lang }));
-  }, []);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nt_worker_settings', JSON.stringify({ ...settings, language: lang }));
+      } catch {}
+    }
+    // Sync language choice with Supabase profiles table
+    if (worker?.id) {
+      const client = getClient();
+      if (client) {
+        client.from('profiles').update({ preferred_language: lang }).eq('id', worker.id).then(() => {}).catch(() => {});
+      }
+    }
+  }, [worker?.id, settings]);
   
   const toggleSound = useCallback(() => {
     setSettings(s => ({ ...s, sounds: !s.sounds }));
   }, []);
+
+  const translate = useCallback((key: string) => getTranslation(settings.language, key), [settings.language]);
 
   // Derived
   const earnings = calcEarnings(completedBookings, earningsPeriod);
@@ -694,6 +717,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       earnings, earningsPeriod, setEarningsPeriod,
       settings, setLanguage, toggleSound,
       toast, showToast, dismissToast,
+      translate, t: translate,
       webrtc,
     }}>
       <WorkerLocationProvider>

@@ -535,8 +535,16 @@ export default function ProfileScreen() {
 
       {/* Language Picker Modal */}
       {showLangPicker && (
-        <div className="modal-backdrop" onClick={() => setShowLangPicker(false)}>
-          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+        <div 
+          className="modal-backdrop" 
+          onClick={() => setShowLangPicker(false)}
+          onTouchEnd={e => { if (e.target === e.currentTarget) setShowLangPicker(false); }}
+        >
+          <div 
+            className="modal-sheet" 
+            onClick={e => e.stopPropagation()}
+            onTouchEnd={e => e.stopPropagation()}
+          >
             <div className="modal-handle" />
             <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
               Choose Language
@@ -544,13 +552,21 @@ export default function ProfileScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {LANGUAGES.map(lang => (
                 <button
+                  type="button"
                   key={lang.code}
-                  onClick={() => { setLanguage(lang.code); setShowLangPicker(false); showToast(`Language changed to ${lang.label}`); }}
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    setLanguage(lang.code); 
+                    setShowLangPicker(false); 
+                    showToast(`Language changed to ${lang.label}`); 
+                  }}
                   style={{
                     padding: '14px 16px', borderRadius: 14, textAlign: 'left',
                     background: settings.language === lang.code ? '#0B3D66' : '#F8FAFC',
                     border: `2px solid ${settings.language === lang.code ? '#0B3D66' : '#E2E8F0'}`,
                     cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
                   }}
                 >
                   <div style={{ fontSize: 15, fontWeight: 800, color: settings.language === lang.code ? 'white' : '#0F172A' }}>

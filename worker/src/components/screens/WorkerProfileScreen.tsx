@@ -434,8 +434,10 @@ export default function WorkerProfileScreen() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {LANGUAGES.map(lang => (
                 <button 
+                  type="button"
                   key={lang.code} 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setLanguage(lang.code as any);
                     showToast(`Language set to ${lang.native}`);
                   }}
@@ -445,7 +447,9 @@ export default function WorkerProfileScreen() {
                     background: settings.language === lang.code ? '#ECFDF5' : 'white', 
                     fontSize: 12, fontWeight: settings.language === lang.code ? 800 : 600, 
                     color: settings.language === lang.code ? '#059669' : '#64748B', 
-                    cursor: 'pointer', transition: 'all 0.15s ease' 
+                    cursor: 'pointer', transition: 'all 0.15s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
                   }}
                 >
                   {lang.native}

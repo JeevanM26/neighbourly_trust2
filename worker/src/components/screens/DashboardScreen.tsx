@@ -15,7 +15,7 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
   onGoToRequests: () => void;
   onGoToJobs: () => void;
 }) {
-  const { worker, webrtc, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer, isLoading } = useWorker();
+  const { worker, webrtc, isOnline, toggleOnline, offers, activeBookings, earnings, refreshBookings, acceptOffer, declineOffer, isLoading, t } = useWorker();
   const [toggling, setToggling] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -95,10 +95,10 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ color: 'white', fontSize: 16, fontWeight: 900, margin: 0, letterSpacing: '-0.2px' }}>
-                {isOnline ? '🟢 Online' : '⚫ Offline'}
+                {isOnline ? `🟢 ${t('online')}` : `⚫ ${t('offline')}`}
               </p>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '4px 0 0', fontWeight: 500 }}>
-                {isOnline ? 'You\'re visible to customers' : 'Tap to start accepting bookings'}
+                {isOnline ? t('youre_online') : t('youre_offline')}
               </p>
             </div>
             <button
@@ -118,10 +118,10 @@ export default function DashboardScreen({ onGoToRequests, onGoToJobs }: {
       <div style={{ padding: '20px 16px 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {[
-            { label: "Today's Earnings", value: `₹${earnings.net.toLocaleString('en-IN')}`, sub: `${earnings.jobs_count} jobs`, icon: IndianRupee, color: '#059669', bg: '#ECFDF5', iconColor: '#059669' },
-            { label: 'Active Jobs', value: activeBookings.length, sub: 'in progress', icon: Briefcase, color: '#0B3D66', bg: '#EFF6FF', iconColor: '#3B82F6' },
-            { label: 'Your Rating', value: worker?.rating?.toFixed(1) ?? '5.0', sub: 'overall', icon: Star, color: '#92400E', bg: '#FEF3C7', iconColor: '#F59E0B' },
-            { label: 'Total Jobs', value: worker?.total_jobs ?? 0, sub: 'completed', icon: CheckCircle, color: '#065F46', bg: '#ECFDF5', iconColor: '#10B981' },
+            { label: t('todays_earnings'), value: `₹${earnings.net.toLocaleString('en-IN')}`, sub: `${earnings.jobs_count} jobs`, icon: IndianRupee, color: '#059669', bg: '#ECFDF5', iconColor: '#059669' },
+            { label: t('nav_jobs'), value: activeBookings.length, sub: 'in progress', icon: Briefcase, color: '#0B3D66', bg: '#EFF6FF', iconColor: '#3B82F6' },
+            { label: t('rating'), value: worker?.rating?.toFixed(1) ?? '5.0', sub: 'overall', icon: Star, color: '#92400E', bg: '#FEF3C7', iconColor: '#F59E0B' },
+            { label: t('jobs_done'), value: worker?.total_jobs ?? 0, sub: 'completed', icon: CheckCircle, color: '#065F46', bg: '#ECFDF5', iconColor: '#10B981' },
           ].map(({ label, value, sub, icon: Icon, color, bg, iconColor }) => (
             <div key={label} style={{ background: 'white', borderRadius: 16, padding: '16px', border: '1px solid #F1F5F9', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
