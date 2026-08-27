@@ -355,162 +355,164 @@ export default function HomeScreen({
           />
         </div>
 
-        {/* ─── Minimalistic Emergency Helpline with Animated Slide Drawer ─── */}
-        <div style={{ padding: '12px 20px 16px' }}>
-          {/* Minimalist Interactive Trigger Pill */}
-          <button
-            type="button"
-            onClick={() => setShowHelpline(!showHelpline)}
-            style={{
-              width: '100%',
+        {/* ─── Emergency Symbol Square Button (Left-to-Right Horizontal Slide) ─── */}
+        <div style={{ padding: '12px 20px 18px', display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: showHelpline 
+              ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)' 
+              : 'transparent',
+            border: showHelpline ? '1.5px solid rgba(239, 68, 68, 0.45)' : 'none',
+            borderRadius: 16,
+            padding: showHelpline ? '3px 6px 3px 3px' : '0px',
+            width: showHelpline ? '100%' : '44px',
+            height: 48,
+            overflow: 'hidden',
+            transition: 'width 0.38s cubic-bezier(0.34, 1.25, 0.64, 1), background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease',
+            boxShadow: showHelpline ? '0 8px 24px rgba(0, 0, 0, 0.45)' : 'none',
+            backdropFilter: showHelpline ? 'blur(16px)' : 'none',
+            WebkitBackdropFilter: showHelpline ? 'blur(16px)' : 'none',
+            position: 'relative'
+          }}>
+            {/* Square Emergency Symbol Button (Anchored on the Left) */}
+            <button
+              type="button"
+              onClick={() => setShowHelpline(!showHelpline)}
+              title="24/7 Emergency Helpline"
+              aria-label="Emergency Helpline"
+              style={{
+                width: 44,
+                height: 44,
+                minWidth: 44,
+                borderRadius: 13,
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                border: '1.5px solid rgba(255, 255, 255, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.45)',
+                flexShrink: 0,
+                position: 'relative',
+                transition: 'transform 0.18s ease',
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation',
+              }}
+            >
+              <PhoneCall size={20} color="white" strokeWidth={2.4} />
+              {/* Live green pulse beacon */}
+              <span style={{
+                position: 'absolute', top: -2, right: -2, width: 10, height: 10,
+                borderRadius: '50%', background: '#22C55E', border: '2px solid #0B2942',
+                boxShadow: '0 0 8px #22C55E'
+              }} />
+            </button>
+
+            {/* Sliding Content from Left to Right */}
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: showHelpline ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${showHelpline ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.12)'}`,
-              borderRadius: 14,
-              padding: '9px 14px',
-              color: 'white',
-              cursor: 'pointer',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-              WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
-              boxShadow: showHelpline ? '0 4px 16px rgba(0,0,0,0.3)' : 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-              {/* Phone Icon Badge */}
-              <div style={{
-                width: 26, height: 26, borderRadius: 8,
-                background: showHelpline ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: showHelpline ? '#F87171' : '#38BDF8',
-                transition: 'all 0.2s ease'
-              }}>
-                <PhoneCall size={13} strokeWidth={2.4} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: '#22C55E', boxShadow: '0 0 6px #22C55E'
-                }} />
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '-0.1px', color: '#F1F5F9' }}>
-                  {helpline.title}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{
-                fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.4px',
-                color: '#38BDF8', background: 'rgba(56, 189, 248, 0.12)',
-                padding: '2px 8px', borderRadius: 10
-              }}>
-                {helpline.badge}
-              </span>
-              <div style={{
-                transform: showHelpline ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex', alignItems: 'center', color: '#94A3B8'
-              }}>
-                <ChevronDown size={16} />
-              </div>
-            </div>
-          </button>
-
-          {/* ─── Animated Slide-Down Options Drawer ─── */}
-          <div style={{
-            maxHeight: showHelpline ? 240 : 0,
-            opacity: showHelpline ? 1 : 0,
-            transform: showHelpline ? 'translateY(0)' : 'translateY(-8px)',
-            overflow: 'hidden',
-            transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease, transform 0.28s ease',
-            pointerEvents: showHelpline ? 'auto' : 'none'
-          }}>
-            <div style={{
-              marginTop: 8,
-              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              borderRadius: 16,
-              padding: '14px',
-              boxShadow: '0 12px 28px rgba(0, 0, 0, 0.35)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
+              flex: 1,
+              minWidth: 0,
+              paddingLeft: 10,
+              paddingRight: 4,
+              opacity: showHelpline ? 1 : 0,
+              transform: showHelpline ? 'translateX(0)' : 'translateX(-28px)',
+              transition: 'opacity 0.25s ease 0.08s, transform 0.32s cubic-bezier(0.34, 1.25, 0.64, 1) 0.06s',
+              pointerEvents: showHelpline ? 'auto' : 'none',
+              whiteSpace: 'nowrap'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <div style={{ minWidth: 0, paddingRight: 8 }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 800, color: 'white', margin: 0 }}>
-                    {helpline.title}
-                  </h4>
-                  <p style={{ fontSize: 11, color: '#94A3B8', margin: '3px 0 0', fontWeight: 500 }}>
-                    {helpline.subtitle}
-                  </p>
+              {/* Text Info */}
+              <div style={{ minWidth: 0, marginRight: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 1 }}>
+                  <span style={{
+                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px',
+                    color: '#38BDF8'
+                  }}>
+                    {helpline.badge}
+                  </span>
                 </div>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, color: '#22C55E',
-                  background: 'rgba(34, 197, 94, 0.12)', padding: '3px 8px', borderRadius: 8,
-                  border: '1px solid rgba(34, 197, 94, 0.25)', whiteSpace: 'nowrap', flexShrink: 0
+                <h4 style={{
+                  fontSize: 13, fontWeight: 800, color: 'white', margin: 0,
+                  letterSpacing: '-0.2px', overflow: 'hidden', textOverflow: 'ellipsis'
                 }}>
-                  ⚡ ~15m Standby
-                </span>
+                  {helpline.title}
+                </h4>
               </div>
 
-              {/* Action Buttons Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {/* Direct Call Button */}
+              {/* Call Now Action Button & Close */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <a
                   href="tel:+919900011222"
                   style={{
                     textDecoration: 'none',
-                    background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-                    color: 'white',
-                    padding: '10px 12px',
-                    borderRadius: 12,
-                    fontSize: 12,
-                    fontWeight: 800,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)',
-                    WebkitTapHighlightColor: 'transparent',
-                    touchAction: 'manipulation',
-                  }}
-                >
-                  <PhoneCall size={14} strokeWidth={2.5} />
-                  <span>{helpline.callBtn}</span>
-                </a>
-
-                {/* WhatsApp Support Button */}
-                <a
-                  href="https://wa.me/919900011222?text=Hi%2C%20I%20need%20emergency%20service%20assistance."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    textDecoration: 'none',
                     background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                     color: 'white',
-                    padding: '10px 12px',
-                    borderRadius: 12,
+                    padding: '8px 12px',
+                    borderRadius: 11,
                     fontSize: 12,
                     fontWeight: 800,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
+                    gap: 5,
                     boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
                     WebkitTapHighlightColor: 'transparent',
                     touchAction: 'manipulation',
                   }}
                 >
-                  <MessageCircle size={14} strokeWidth={2.5} />
-                  <span>WhatsApp</span>
+                  <PhoneCall size={13} strokeWidth={2.5} />
+                  <span>{helpline.callBtn}</span>
                 </a>
+
+                {/* Close button to slide back */}
+                <button
+                  type="button"
+                  onClick={() => setShowHelpline(false)}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: '#94A3B8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <X size={14} />
+                </button>
               </div>
             </div>
           </div>
+
+          {/* When collapsed: small subtle hint next to the square button */}
+          {!showHelpline && (
+            <span 
+              onClick={() => setShowHelpline(true)}
+              style={{
+                fontSize: 12,
+                color: 'rgba(255, 255, 255, 0.65)',
+                fontWeight: 700,
+                marginLeft: 12,
+                cursor: 'pointer',
+                letterSpacing: '-0.1px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'opacity 0.2s ease',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px #22C55E' }} />
+              {settings?.language === 'kn' ? 'ತುರ್ತು ಸಹಾಯವಾಣಿ' : settings?.language === 'hi' ? 'आपातकालीन सहायता' : 'Emergency 24/7 Helpline'}
+            </span>
+          )}
         </div>
         
         {/* ─── All Services Section (Sleek Horizontal Scroll Row) ─── */}
