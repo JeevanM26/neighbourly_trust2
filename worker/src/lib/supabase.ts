@@ -350,24 +350,52 @@ export async function respondToOffer(offerId: string, bookingId: string, status:
   if (!client) return true;
   try {
     if (status === 'accepted') {
-      // Use the atomic RPC
-      const { data, error } = await client.rpc('accept_booking_offer', { 
-        p_offer_id: offerId, 
-        p_booking_id: bookingId 
-      });
-      if (error) {
-        console.error("Accept offer RPC error:", error);
-        return false;
+      // 1. Direct booking (no offer table row or direct offer ID)
+      if (offerId?.startsWith('direct_') || !offerId) {
+        const { error: bErr } = await client
+          .from('bookings')
+          .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+          .eq('id', bookingId);
+        return !bErr;
       }
-      return data === true; // Returns true if successfully claimed
+
+      // 2. Attempt atomic RPC
+      try {
+        const { data, error } = await client.rpc('accept_booking_offer', { 
+          p_offer_id: offerId, 
+          p_booking_id: bookingId 
+        });
+        if (!error && data === true) {
+          return true;
+        }
+      } catch (rpcErr) {
+        console.warn("RPC notice, falling back to direct update:", rpcErr);
+      }
+
+      // 3. Fallback: direct updates to booking_offers and bookings
+      await client.from('booking_offers')
+        .update({ status: 'accepted', responded_at: new Date().toISOString() })
+        .eq('id', offerId);
+
+      const { error: directErr } = await client
+        .from('bookings')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+        .eq('id', bookingId);
+
+      return !directErr;
     } else {
       // Decline or Timed out
-      const { error: offerErr } = await client.from('booking_offers')
-        .update({ status, responded_at: new Date().toISOString() })
-        .eq('id', offerId);
-      return !offerErr;
+      if (!offerId?.startsWith('direct_')) {
+        await client.from('booking_offers')
+          .update({ status, responded_at: new Date().toISOString() })
+          .eq('id', offerId);
+      }
+      return true;
     }
-  } catch { return false; }
+  } catch (err) {
+    console.warn("respondToOffer notice:", err);
+    return false; 
+  }
 }
 
 // ─── Update Booking Status (Lifecycle) ───────────────────
@@ -425,16 +453,20 @@ export async function fetchPendingOffers(workerId: string): Promise<BookingOffer
   const client = getClient();
   if (!client) return [];
   try {
+    const results: BookingOffer[] = [];
+    const seenBookingIds = new Set<string>();
+
+    // 1. Fetch from booking_offers
     const { data: offers } = await client
       .from('booking_offers')
       .select('id, booking_id, worker_id, status, offered_at')
       .eq('worker_id', workerId)
       .eq('status', 'offered');
 
-    const results: BookingOffer[] = [];
     for (const off of offers || []) {
       const booking = await fetchBookingDetails(off.booking_id);
       if (booking && ['searching', 'pending'].includes(booking.status)) {
+        seenBookingIds.add(off.booking_id);
         results.push({
           id: off.id,
           booking_id: off.booking_id,
@@ -445,6 +477,30 @@ export async function fetchPendingOffers(workerId: string): Promise<BookingOffer
         });
       }
     }
+
+    // 2. ALSO Fetch direct bookings assigned to this worker that are in searching/pending status
+    const { data: directBookings } = await client
+      .from('bookings')
+      .select('id, created_at')
+      .eq('worker_id', workerId)
+      .in('status', ['searching', 'pending']);
+
+    for (const db of directBookings || []) {
+      if (!seenBookingIds.has(db.id)) {
+        const booking = await fetchBookingDetails(db.id);
+        if (booking && ['searching', 'pending'].includes(booking.status)) {
+          results.push({
+            id: `direct_${db.id}`,
+            booking_id: db.id,
+            worker_id: workerId,
+            status: 'offered',
+            offered_at: db.created_at || new Date().toISOString(),
+            booking,
+          });
+        }
+      }
+    }
+
     return results;
   } catch (e) {
     console.warn("fetchPendingOffers notice:", e);

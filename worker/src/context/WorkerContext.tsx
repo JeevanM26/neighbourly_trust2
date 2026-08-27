@@ -488,8 +488,15 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // 3. Show in-app toast
       showToast(`🔔 New ${categoryName} offer from ${customerName}!`, 'info');
     });
-    realtimeRef.current = channel;
+    // 3-second fail-safe polling for pending offers in case WebSocket is throttled or sleeping
+    const pollInterval = setInterval(() => {
+      fetchPendingOffers(worker.id).then(pending => {
+        setOffers(pending || []);
+      }).catch(() => {});
+    }, 3000);
+
     return () => {
+      clearInterval(pollInterval);
       alertSynth.stop();
       channel?.unsubscribe();
     };
