@@ -115,7 +115,7 @@ import { getCategoryLocalizedName } from '../../lib/i18n';
 
 const getVoiceLanguageTag = (lang: string) => {
   const map: Record<string, string> = {
-    kn: 'kn-IN', hi: 'hi-IN', te: 'te-IN', ta: 'ta-IN', mr: 'mr-IN', bn: 'bn-IN', gu: 'gu-IN', en: 'en-IN'
+    kn: 'kn-IN', hi: 'hi-IN', te: 'te-IN', ta: 'ta-IN', mr: 'mr-IN', bn: 'bn-IN', gu: 'gu-IN', ml: 'ml-IN', pa: 'pa-IN', en: 'en-IN'
   };
   return map[lang] || 'en-IN';
 };
@@ -129,6 +129,7 @@ const getPresetChips = (lang: string) => {
       { label: '🔧 ಮೋಟಾರ್ ಪಂಪ್', query: 'Borewell motor pump repair' },
       { label: '🪚 ಬಡಗಿ ಕೆಲಸ', query: 'Door lock repair carpenter' },
       { label: '🎨 ವಾಲ್ ಪೇಂಟಿಂಗ್', query: 'Wall paint color work' },
+      { label: '🐜 ಕೀಟ ನಿಯಂತ್ರಣ', query: 'Cockroach termite pest control' },
     ],
     hi: [
       { label: '⚡ लाइट रिपेयर', query: 'Light is not working' },
@@ -137,6 +138,7 @@ const getPresetChips = (lang: string) => {
       { label: '🔧 मोटर पंप', query: 'Borewell motor pump repair' },
       { label: '🪚 बढ़ई काम', query: 'Door lock repair carpenter' },
       { label: '🎨 वॉल पेंटिंग', query: 'Wall paint color work' },
+      { label: '🐜 कीट नियंत्रण', query: 'Cockroach termite pest control' },
     ],
     te: [
       { label: '⚡ కరెంట్ రిపేర్', query: 'Light is not working' },
@@ -145,6 +147,7 @@ const getPresetChips = (lang: string) => {
       { label: '🔧 మోటార్ పంప్', query: 'Borewell motor pump repair' },
       { label: '🪚 వడ్రంగి పని', query: 'Door lock repair carpenter' },
       { label: '🎨 వాల్ పెయింటింగ్', query: 'Wall paint color work' },
+      { label: '🐜 పెస్ట్ కంట్రోల్', query: 'Cockroach termite pest control' },
     ],
     ta: [
       { label: '⚡ மின்சார பழுது', query: 'Light is not working' },
@@ -153,6 +156,52 @@ const getPresetChips = (lang: string) => {
       { label: '🔧 மோட்டார் பம்ப்', query: 'Borewell motor pump repair' },
       { label: '🪚 தச்சர் வேலை', query: 'Door lock repair carpenter' },
       { label: '🎨 சுவர் ஓவியம்', query: 'Wall paint color work' },
+      { label: '🐜 பூச்சி கட்டுப்பாடு', query: 'Cockroach termite pest control' },
+    ],
+    mr: [
+      { label: '⚡ लाइट रिपेअर', query: 'Light is not working' },
+      { label: '🚰 पाणी गळती', query: 'Water tap leaking' },
+      { label: '🧹 घराची स्वच्छता', query: 'House cleaning helper needed' },
+      { label: '🔧 मोटर पंप', query: 'Borewell motor pump repair' },
+      { label: '🪚 सुतारकाम', query: 'Door lock repair carpenter' },
+      { label: '🎨 भिंत रंगकाम', query: 'Wall paint color work' },
+      { label: '🐜 कीटक नियंत्रण', query: 'Cockroach termite pest control' },
+    ],
+    bn: [
+      { label: '⚡ বিদ্যুৎ মেরামত', query: 'Light is not working' },
+      { label: '🚰 জলের লিকেজ', query: 'Water tap leaking' },
+      { label: '🧹 ঘর পরিষ্কার', query: 'House cleaning helper needed' },
+      { label: '🔧 মোটর পাম্প', query: 'Borewell motor pump repair' },
+      { label: '🪚 ছুতারের কাজ', query: 'Door lock repair carpenter' },
+      { label: '🎨 ওয়াল পেইন্টিং', query: 'Wall paint color work' },
+      { label: '🐜 পেস্ট কন্ট্রোল', query: 'Cockroach termite pest control' },
+    ],
+    gu: [
+      { label: '⚡ લાઈટ રીપેર', query: 'Light is not working' },
+      { label: '🚰 પાણી લીકેજ', query: 'Water tap leaking' },
+      { label: '🧹 ઘરની સફાઈ', query: 'House cleaning helper needed' },
+      { label: '🔧 મોટર પંપ', query: 'Borewell motor pump repair' },
+      { label: '🪚 સુથાર કામ', query: 'Door lock repair carpenter' },
+      { label: '🎨 વોલ પેઇન્ટિંગ', query: 'Wall paint color work' },
+      { label: '🐜 જંતુ નિયંત્રણ', query: 'Cockroach termite pest control' },
+    ],
+    ml: [
+      { label: '⚡ കറന്റ് റിപ്പയർ', query: 'Light is not working' },
+      { label: '🚰 പൈപ്പ് ലീക്ക്', query: 'Water tap leaking' },
+      { label: '🧹 വീട് വൃത്തിയാക്കൽ', query: 'House cleaning helper needed' },
+      { label: '🔧 മോട്ടോർ പമ്പ്', query: 'Borewell motor pump repair' },
+      { label: '🪚 ആശാരി പണി', query: 'Door lock repair carpenter' },
+      { label: '🎨 പെയിന്റിംഗ്', query: 'Wall paint color work' },
+      { label: '🐜 പെസ്റ്റ് കൺട്രോൾ', query: 'Cockroach termite pest control' },
+    ],
+    pa: [
+      { label: '⚡ ਲਾਈਟ ਮੁਰੰਮਤ', query: 'Light is not working' },
+      { label: '🚰 ਪਾਣੀ ਲੀਕੇਜ', query: 'Water tap leaking' },
+      { label: '🧹 ਘਰ ਦੀ ਸਫਾਈ', query: 'House cleaning helper needed' },
+      { label: '🔧 ਮੋਟਰ ਪੰਪ', query: 'Borewell motor pump repair' },
+      { label: '🪚 ਤਰਖਾਣ ਦਾ ਕੰਮ', query: 'Door lock repair carpenter' },
+      { label: '🎨 ਕੰਧ ਪੇਂਟਿੰਗ', query: 'Wall paint color work' },
+      { label: '🐜 ਕੀੜੇ ਨਿਯੰਤਰਣ', query: 'Cockroach termite pest control' },
     ],
   };
   return map[lang] || [
@@ -162,6 +211,7 @@ const getPresetChips = (lang: string) => {
     { label: '🔧 Motor pump',     query: 'Borewell motor pump repair'    },
     { label: '🪚 Carpenter',      query: 'Door lock repair carpenter'    },
     { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
+    { label: '🐜 Pest control',   query: 'Cockroach termite pest control'},
   ];
 };
 
@@ -333,19 +383,32 @@ export default function HomeScreen({
         </div>
 
         {/* Quick Chips */}
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px 24px', scrollbarWidth: 'none' }}>
-          {getPresetChips(settings?.language || 'en').map((chip, idx) => (
-            <button key={idx} 
-              onClick={() => setSearchQuery(chip.query)}
-              style={{
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-              color: 'white', padding: '8px 16px', borderRadius: 20, fontSize: 13,
-              fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
-              cursor: 'pointer'
-            }}>
-              {chip.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px 24px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          {getPresetChips(settings?.language || 'en').map((chip, idx) => {
+            const isChipSelected = searchQuery.toLowerCase() === chip.query.toLowerCase();
+            return (
+              <button 
+                type="button"
+                key={idx} 
+                onClick={() => setSearchQuery(isChipSelected ? '' : chip.query)}
+                style={{
+                  background: isChipSelected ? '#10B981' : 'rgba(255,255,255,0.12)', 
+                  border: `1.5px solid ${isChipSelected ? '#10B981' : 'rgba(255,255,255,0.18)'}`,
+                  color: isChipSelected ? '#041B30' : 'white', 
+                  padding: '8px 16px', borderRadius: 20, fontSize: 13,
+                  fontWeight: isChipSelected ? 800 : 600, 
+                  whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: isChipSelected ? '0 4px 14px rgba(16,185,129,0.35)' : 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation',
+                }}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
         </div>
         
         {/* ─── All Services Section (Sleek Horizontal Scroll Row) ─── */}
