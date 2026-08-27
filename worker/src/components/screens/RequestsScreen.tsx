@@ -57,6 +57,18 @@ function BookingTimer({ expiresAt, onExpire }: { expiresAt?: string; onExpire: (
   );
 }
 
+function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
 // ── Single Incoming Request Card ──
 function RequestCard({ offer, onAccept, onDecline }: {
   offer: BookingOffer;
@@ -72,10 +84,57 @@ function RequestCard({ offer, onAccept, onDecline }: {
   const categoryName = offer.booking?.category_name || 'Service';
   const customerName = offer.booking?.customer_name || 'Customer';
   const customerId = offer.booking?.customer_id || '';
-  const addressText = offer.booking?.address_text;
   const gross = offer.booking?.price_estimate || offer.booking?.final_price || 350;
   const commission = Math.round(gross * COMMISSION_RATE);
   const net = gross - commission;
+
+  // Extract Exact Customer Coordinates
+  const customerLoc = offer.booking?.customer_location || (
+    offer.booking?.customer_lat && offer.booking?.customer_lng 
+      ? { lat: Number(offer.booking.customer_lat), lng: Number(offer.booking.customer_lng) } 
+      : undefined
+  );
+
+  // Address text state with client-side geocoding fallback
+  const [resolvedAddress, setResolvedAddress] = React.useState<string | null>(offer.booking?.address_text || null);
+
+  React.useEffect(() => {
+    if (offer.booking?.address_text && !offer.booking.address_text.match(/^[-\d.,\s]+$/)) {
+      setResolvedAddress(offer.booking.address_text);
+      return;
+    }
+    if (customerLoc?.lat && customerLoc?.lng) {
+      const { lat, lng } = customerLoc;
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            const short = parts.slice(0, 3).join(',').trim();
+            setResolvedAddress(short || data.display_name);
+          } else {
+            setResolvedAddress(`GPS Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+          }
+        })
+        .catch(() => {
+          setResolvedAddress(`GPS Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        });
+    }
+  }, [offer.booking?.address_text, customerLoc]);
+
+  // Calculate distance from worker if worker has coordinates
+  const workerLoc = worker?.location || { lat: 13.9299, lng: 75.5681 };
+  const distKm = customerLoc ? calcDistance(workerLoc.lat, workerLoc.lng, customerLoc.lat, customerLoc.lng) : null;
+  const estMinutes = distKm ? Math.max(5, Math.round(distKm * 4 + 3)) : null;
+
+  const handleDirections = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (customerLoc) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${customerLoc.lat},${customerLoc.lng}`, '_blank');
+    } else if (resolvedAddress || offer.booking?.address_text) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(resolvedAddress || offer.booking?.address_text || '')}`, '_blank');
+    }
+  };
 
   return (
     <div style={{ background: 'white', borderRadius: 22, padding: '18px', border: '2px solid #10B981', boxShadow: '0 8px 24px rgba(16,185,129,0.12)', marginBottom: 16, animation: 'scaleUp 0.3s ease' }}>
@@ -98,8 +157,8 @@ function RequestCard({ offer, onAccept, onDecline }: {
       </div>
 
       {/* Customer Info */}
-      <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '12px 14px', marginBottom: 14, border: '1px solid #E2E8F0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+      <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '12px 14px', marginBottom: 12, border: '1px solid #E2E8F0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #065F46)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 900, color: 'white' }}>
             {customerName[0]?.toUpperCase()}
           </div>
@@ -119,13 +178,56 @@ function RequestCard({ offer, onAccept, onDecline }: {
             </button>
           )}
         </div>
-        {addressText && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, paddingTop: 6, borderTop: '1px solid #E2E8F0' }}>
-            <MapPin size={13} color="#059669" style={{ marginTop: 2, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#475569', fontWeight: 600, lineHeight: 1.4 }}>{addressText}</span>
+
+        {/* Exact Location & Distance Bar */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, paddingTop: 8, borderTop: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, flex: 1 }}>
+            <MapPin size={15} color="#0284C7" style={{ marginTop: 2, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 12, color: '#0F172A', fontWeight: 700, lineHeight: 1.3 }}>
+                {resolvedAddress || offer.booking?.address_text || (customerLoc ? `GPS: ${customerLoc.lat.toFixed(4)}, ${customerLoc.lng.toFixed(4)}` : 'Customer Location')}
+              </div>
+              {distKm !== null && (
+                <div style={{ fontSize: 11, color: '#059669', fontWeight: 800, marginTop: 2 }}>
+                  📍 {distKm} km away · ~{estMinutes} mins travel
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* 1-Tap Google Maps GPS Button */}
+          <button 
+            type="button"
+            onClick={handleDirections}
+            style={{
+              background: 'linear-gradient(135deg, #0284C7, #0369A1)',
+              border: 'none',
+              color: 'white',
+              borderRadius: 10,
+              padding: '6px 10px',
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              flexShrink: 0,
+              boxShadow: '0 2px 6px rgba(2,132,199,0.25)',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <Navigation size={12} />
+            <span>Map 🧭</span>
+          </button>
+        </div>
       </div>
+
+      {/* Mini Customer Map Preview */}
+      {customerLoc && (
+        <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 14, border: '1.5px solid #CBD5E1', height: 120 }}>
+          <CustomerMap customerLoc={customerLoc} />
+        </div>
+      )}
 
       {/* Transparent Earnings Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 8, marginBottom: 14 }}>
