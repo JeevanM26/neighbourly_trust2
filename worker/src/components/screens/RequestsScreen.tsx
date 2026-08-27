@@ -229,22 +229,6 @@ function RequestCard({ offer, onAccept, onDecline }: {
         </div>
       )}
 
-      {/* Transparent Earnings Breakdown */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 8, marginBottom: 14 }}>
-        <div style={{ textAlign: 'center', background: '#F8FAFC', borderRadius: 12, padding: '10px 6px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>₹{gross}</div>
-          <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, marginTop: 2 }}>Gross Rate</div>
-        </div>
-        <div style={{ textAlign: 'center', background: '#F8FAFC', borderRadius: 12, padding: '10px 6px', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#EF4444' }}>-₹{commission}</div>
-          <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, marginTop: 2 }}>Fee (8%)</div>
-        </div>
-        <div style={{ textAlign: 'center', background: '#ECFDF5', borderRadius: 12, padding: '10px 6px', border: '1px solid #A7F3D0' }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: '#059669' }}>₹{net}</div>
-          <div style={{ fontSize: 10, color: '#047857', fontWeight: 800, marginTop: 2 }}>Net Payout 💰</div>
-        </div>
-      </div>
-
       {/* Actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 10 }}>
         <button 
@@ -341,7 +325,7 @@ function ActiveJobCard({
               {booking.customer_name || 'Valued Customer'}
             </div>
             <div style={{ fontSize: 12, color: '#059669', fontWeight: 800, marginTop: 1 }}>
-              {booking.category_name || 'Specialist'} · ₹{net} net payout
+              {booking.category_name || 'Specialist'} · Verified Booking
             </div>
           </div>
         </div>
@@ -562,7 +546,7 @@ export default function RequestsScreen() {
 
     const expectedPin = (pinModalBooking.completion_pin || pinModalBooking.id?.slice(-4) || '1234').toUpperCase();
     if (enteredPin !== expectedPin && enteredPin !== '1234') {
-      setPinError(`Incorrect PIN. Expected: ${expectedPin}`);
+      setPinError('Incorrect PIN. Please ask the customer for the 4-digit completion code on their screen.');
       return;
     }
 
@@ -784,12 +768,6 @@ export default function RequestsScreen() {
                     ₹{amt}
                   </button>
                 ))}
-              </div>
-
-              {/* Calculation Preview */}
-              <div style={{ marginTop: 8, background: '#F8FAFC', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Net to You (92%):</span>
-                <span style={{ fontSize: 13, fontWeight: 900, color: '#059669' }}>₹{netEarning.toLocaleString('en-IN')} <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 500 }}>(Fee: ₹{platformFee})</span></span>
               </div>
             </div>
 
