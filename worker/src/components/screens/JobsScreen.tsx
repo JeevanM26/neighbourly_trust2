@@ -185,7 +185,7 @@ export default function JobsScreen() {
   const [tab, setTab] = useState<'active' | 'completed'>('active');
   const [pinModalBooking, setPinModalBooking] = useState<Booking | null>(null);
   const [enteredPin, setEnteredPin] = useState('');
-  const [enteredAmount, setEnteredAmount] = useState<string>('350');
+  const [enteredAmount, setEnteredAmount] = useState<string>('');
   const [pinError, setPinError] = useState('');
 
   const tabs = [
@@ -201,8 +201,8 @@ export default function JobsScreen() {
 
   const handleConfirmPin = async () => {
     if (!pinModalBooking) return;
-    if (parsedAmount <= 0) {
-      setPinError('Please enter a valid amount collected for this job.');
+    if (!enteredAmount.trim() || parsedAmount <= 0) {
+      setPinError('Please enter the total amount taken from the customer (Compulsory).');
       return;
     }
     const expectedPin = (pinModalBooking.completion_pin || pinModalBooking.id || '0000').slice(-4).toUpperCase();
@@ -210,7 +210,7 @@ export default function JobsScreen() {
       await updateJobStatus(pinModalBooking.id, 'completed', parsedAmount);
       setPinModalBooking(null);
       setEnteredPin('');
-      setEnteredAmount('350');
+      setEnteredAmount('');
       setPinError('');
     } else {
       setPinError('Invalid PIN. Please ask customer for the 4-digit code on their screen.');
@@ -261,7 +261,7 @@ export default function JobsScreen() {
               }}
               onRequestCompletePin={(book) => {
                 setPinModalBooking(book);
-                setEnteredAmount(book.final_price ? String(book.final_price) : (book.price_estimate ? String(book.price_estimate) : '350'));
+                setEnteredAmount('');
                 setEnteredPin('');
                 setPinError('');
               }}
@@ -301,7 +301,7 @@ export default function JobsScreen() {
                     setEnteredAmount(e.target.value);
                     setPinError('');
                   }}
-                  placeholder="e.g. 500"
+                  placeholder="Enter amount taken (e.g. 500)"
                   style={{
                     width: '100%', padding: '12px 14px 12px 34px', fontSize: 18, fontWeight: 900,
                     borderRadius: 14, border: '2px solid #059669', outline: 'none', color: '#0F172A',
@@ -327,12 +327,6 @@ export default function JobsScreen() {
                     ₹{amt}
                   </button>
                 ))}
-              </div>
-
-              {/* Calculation Preview */}
-              <div style={{ marginTop: 8, background: '#F8FAFC', borderRadius: 10, padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Net to You (92%):</span>
-                <span style={{ fontSize: 13, fontWeight: 900, color: '#059669' }}>₹{netEarning.toLocaleString('en-IN')} <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 500 }}>(Fee: ₹{platformFee})</span></span>
               </div>
             </div>
 
@@ -376,7 +370,7 @@ export default function JobsScreen() {
                 onClick={handleConfirmPin} 
                 style={{ padding: '12px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #059669, #065F46)', color: 'white', fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
               >
-                Verify & Finish (₹{parsedAmount})
+                Verify & Finish{parsedAmount > 0 ? ` (₹${parsedAmount})` : ''}
               </button>
             </div>
           </div>

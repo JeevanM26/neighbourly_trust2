@@ -522,7 +522,7 @@ export default function RequestsScreen() {
 
   const [pinModalBooking, setPinModalBooking] = useState<Booking | null>(null);
   const [enteredPin, setEnteredPin] = useState('');
-  const [enteredAmount, setEnteredAmount] = useState<string>('350');
+  const [enteredAmount, setEnteredAmount] = useState<string>('');
   const [pinError, setPinError] = useState('');
 
   const parsedAmount = Math.max(0, parseFloat(enteredAmount) || 0);
@@ -535,8 +535,8 @@ export default function RequestsScreen() {
 
   const handleConfirmPin = async () => {
     if (!pinModalBooking) return;
-    if (parsedAmount <= 0) {
-      setPinError('Please enter a valid amount collected for this job.');
+    if (!enteredAmount.trim() || parsedAmount <= 0) {
+      setPinError('Please enter the total amount taken from the customer (Compulsory).');
       return;
     }
     if (!enteredPin || enteredPin.length !== 4) {
@@ -554,7 +554,7 @@ export default function RequestsScreen() {
     await updateJobStatus(pinModalBooking.id, 'completed', parsedAmount);
     setPinModalBooking(null);
     setEnteredPin('');
-    setEnteredAmount('350');
+    setEnteredAmount('');
     setPinError('');
   };
 
@@ -671,7 +671,7 @@ export default function RequestsScreen() {
                 onCall={() => webrtc.startCall(b.customer_id, b.customer_name || 'Customer', worker?.full_name || 'Worker', worker?.avatar_url)}
                 onRequestCompletePin={(job) => {
                   setPinModalBooking(job);
-                  setEnteredAmount(job.final_price ? String(job.final_price) : (job.price_estimate ? String(job.price_estimate) : '350'));
+                  setEnteredAmount('');
                   setEnteredPin('');
                   setPinError('');
                 }}
@@ -742,7 +742,7 @@ export default function RequestsScreen() {
                     setEnteredAmount(e.target.value);
                     setPinError('');
                   }}
-                  placeholder="e.g. 500"
+                  placeholder="Enter amount taken (e.g. 500)"
                   style={{
                     width: '100%', padding: '12px 14px 12px 34px', fontSize: 18, fontWeight: 900,
                     borderRadius: 14, border: '2px solid #059669', outline: 'none', color: '#0F172A',
@@ -821,7 +821,7 @@ export default function RequestsScreen() {
                   boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
                 }}
               >
-                Verify & Finish (₹{parsedAmount})
+                Verify & Finish{parsedAmount > 0 ? ` (₹${parsedAmount})` : ''}
               </button>
             </div>
           </div>
