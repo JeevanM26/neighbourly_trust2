@@ -541,9 +541,6 @@ export default function HomeScreen({
                         <h3 style={{ fontSize: 16, fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.2px', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
                           {worker.full_name}
                         </h3>
-                        <span style={{ background: '#10B981', color: 'white', fontSize: 9, fontWeight: 900, padding: '1px 5px', borderRadius: 10 }}>
-                          ✓ KYC
-                        </span>
                       </div>
                       <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, marginTop: 2 }}>
                         {catName} Specialist

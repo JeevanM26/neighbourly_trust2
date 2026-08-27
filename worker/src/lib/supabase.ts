@@ -173,6 +173,7 @@ export async function createWorkerProfile(params: {
     await client.from('worker_profiles').upsert({
       profile_id: params.id,
       is_online: false,
+      is_verified: true,
       avg_rating: 5.0,
       total_jobs: 0,
     });
@@ -209,6 +210,7 @@ export async function updateWorkerProfileData(workerId: string, name: string, ca
       const { error: wpErr } = await client.from('worker_profiles').upsert({
         profile_id: workerId,
         is_online: false,
+        is_verified: true,
         avg_rating: 5.0,
         total_jobs: 0,
       });

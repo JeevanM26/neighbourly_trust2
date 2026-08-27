@@ -78,84 +78,121 @@ function calcWorkerDistance(lat1: number, lng1: number, lat2: number, lng2: numb
 export async function findNearbyWorkers(categoryId: string, lat: number, lng: number): Promise<WorkerProfile[]> {
   const client = getClient();
   if (!client) return [];
-  if (!categoryId) return [];
-
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
-  if (!isUUID) return [];
 
   try {
-    const isSpecificCategory = categoryId && categoryId !== 'all' && categoryId.trim() !== '';
+    let targetCatId = categoryId?.trim() || '';
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetCatId);
 
-    if (isSpecificCategory) {
-      const { data, error } = await client.rpc('nearby_workers', {
-        p_category_id: categoryId,
-        p_lat: lat,
-        p_lng: lng,
-        p_max_distance_km: 25
-      });
-      
-      if (!error && data && data.length > 0) {
-        return data.map((w: any, i: number) => {
-          const parsed = parseWorkerCoords(w.location) || {
-            lat: w.lat !== undefined ? Number(w.lat) : (lat + 0.003 + (i * 0.001)),
-            lng: w.lng !== undefined ? Number(w.lng) : (lng + 0.003 + (i * 0.001))
-          };
-          const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
-          return {
-            ...w,
-            category_id: categoryId,
-            is_online: true,
-            distance_km: Math.round(dist * 10) / 10,
-            location: parsed
-          };
-        }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+    // If categoryId is a name or slug rather than a UUID, resolve it to UUID
+    if (targetCatId && targetCatId !== 'all' && !isUUID) {
+      const { data: catRow } = await client
+        .from('service_categories')
+        .select('id')
+        .or(`slug.ilike.${targetCatId},name_en.ilike.${targetCatId}`)
+        .maybeSingle();
+      if (catRow?.id) {
+        targetCatId = catRow.id;
       }
     }
 
-    // Query all online workers
-    const { data: onlineWorkers } = await client
+    const isSpecificCategory = targetCatId && targetCatId !== 'all';
+
+    // 1. Try PostGIS RPC first if specific valid UUID category
+    if (isSpecificCategory && isUUID && lat && lng) {
+      try {
+        const { data, error } = await client.rpc('nearby_workers', {
+          p_category_id: targetCatId,
+          p_lat: lat,
+          p_lng: lng,
+          p_max_distance_km: 25
+        });
+        
+        if (!error && data && data.length > 0) {
+          return data.map((w: any, i: number) => {
+            const parsed = parseWorkerCoords(w.location) || {
+              lat: w.lat !== undefined ? Number(w.lat) : (lat + 0.003 + (i * 0.001)),
+              lng: w.lng !== undefined ? Number(w.lng) : (lng + 0.003 + (i * 0.001))
+            };
+            const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
+            return {
+              ...w,
+              category_id: targetCatId,
+              is_online: true,
+              distance_km: Math.round(dist * 10) / 10,
+              location: parsed
+            };
+          }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+        }
+      } catch {
+        // Fallback to decoupled query below
+      }
+    }
+
+    // 2. Decoupled query: load online worker_profiles + joined profiles
+    const { data: onlineWorkers, error: wpErr } = await client
       .from('worker_profiles')
       .select(`
         profile_id, avg_rating, total_jobs, is_online, is_verified, location,
-        profiles!profile_id ( full_name, avatar_url, phone ),
-        worker_categories ( category_id, service_categories ( id, name_en, slug, icon_url ) )
+        profiles!profile_id ( full_name, avatar_url, phone )
       `)
       .eq('is_online', true);
 
-    if (onlineWorkers && onlineWorkers.length > 0) {
-      let filtered = onlineWorkers;
-      if (isSpecificCategory) {
-        filtered = onlineWorkers.filter((w: any) => 
-          w.worker_categories?.some((wc: any) => wc.category_id === categoryId)
-        );
-      }
-
-      return filtered.map((w: any, i: number) => {
-        const catInfo = w.worker_categories?.[0]?.service_categories;
-        const parsed = parseWorkerCoords(w.location) || {
-          lat: lat + (i === 0 ? 0.002 : i === 1 ? -0.003 : 0.004 * (i % 2 === 0 ? 1 : -1)),
-          lng: lng + (i === 0 ? -0.002 : i === 1 ? 0.003 : 0.004 * (i % 3 === 0 ? 1 : -1))
-        };
-        const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
-
-        return {
-          worker_id: w.profile_id,
-          full_name: w.profiles?.full_name || 'Specialist',
-          avatar_url: w.profiles?.avatar_url,
-          category_id: w.worker_categories?.[0]?.category_id || catInfo?.id || '',
-          category_name: catInfo?.name_en || 'Specialist',
-          category_slug: catInfo?.slug || '',
-          avg_rating: w.avg_rating || 4.9,
-          total_jobs: w.total_jobs || 1,
-          hourly_rate: w.hourly_rate || 350,
-          is_online: true,
-          distance_km: Math.round(dist * 10) / 10,
-          location: parsed
-        };
-      }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+    if (wpErr || !onlineWorkers || onlineWorkers.length === 0) {
+      return [];
     }
 
-    return [];
+    const workerIds = onlineWorkers.map((w: any) => w.profile_id);
+
+    // 3. Fetch skills from worker_categories separately
+    const { data: workerCats } = await client
+      .from('worker_categories')
+      .select(`
+        worker_id, category_id,
+        service_categories ( id, name_en, slug, icon_url )
+      `)
+      .in('worker_id', workerIds);
+
+    const catsByWorker = new Map<string, any[]>();
+    for (const wc of workerCats || []) {
+      const list = catsByWorker.get(wc.worker_id) || [];
+      list.push(wc);
+      catsByWorker.set(wc.worker_id, list);
+    }
+
+    let filtered = onlineWorkers;
+    if (isSpecificCategory) {
+      filtered = onlineWorkers.filter((w: any) => {
+        const cats = catsByWorker.get(w.profile_id) || [];
+        return cats.some((wc: any) => wc.category_id === targetCatId);
+      });
+    }
+
+    return filtered.map((w: any, i: number) => {
+      const cats = catsByWorker.get(w.profile_id) || [];
+      const primaryCat = cats[0]?.service_categories;
+      const parsed = parseWorkerCoords(w.location) || {
+        lat: (lat || 28.6139) + (i === 0 ? 0.002 : i === 1 ? -0.003 : 0.004 * (i % 2 === 0 ? 1 : -1)),
+        lng: (lng || 77.2090) + (i === 0 ? -0.002 : i === 1 ? 0.003 : 0.004 * (i % 3 === 0 ? 1 : -1))
+      };
+      const dist = lat && lng ? calcWorkerDistance(lat, lng, parsed.lat, parsed.lng) : 0.8;
+
+      return {
+        worker_id: w.profile_id,
+        full_name: (w.profiles as any)?.full_name || 'Specialist',
+        avatar_url: (w.profiles as any)?.avatar_url,
+        phone: (w.profiles as any)?.phone,
+        category_id: cats[0]?.category_id || primaryCat?.id || targetCatId || '',
+        category_name: primaryCat?.name_en || 'Specialist',
+        category_slug: primaryCat?.slug || '',
+        avg_rating: w.avg_rating || 4.9,
+        total_jobs: w.total_jobs || 1,
+        hourly_rate: w.hourly_rate || 350,
+        is_online: true,
+        distance_km: Math.round(dist * 10) / 10,
+        location: parsed
+      };
+    }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+
   } catch (e: any) { 
     console.warn("findNearbyWorkers notice:", e?.message || e);
     return []; 
