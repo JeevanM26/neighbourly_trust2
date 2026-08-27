@@ -9,7 +9,7 @@ import { SearchWithVoice } from '../SearchWithVoice';
 import { 
   Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, 
   Volume2, VolumeX, RefreshCw, MapPin, Star, X, 
-  Flame, Bug, Scissors, Car, ChevronRight 
+  Flame, Bug, Scissors, Car, ChevronRight, PhoneCall 
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -120,99 +120,69 @@ const getVoiceLanguageTag = (lang: string) => {
   return map[lang] || 'en-IN';
 };
 
-const getPresetChips = (lang: string) => {
-  const map: Record<string, { label: string; query: string }[]> = {
-    kn: [
-      { label: '⚡ ಕರೆಂಟ್ ರಿಪೇರಿ', query: 'Light is not working' },
-      { label: '🚰 ನೀರಿನ ಸೋರಿಕೆ', query: 'Water tap leaking' },
-      { label: '🧹 ಮನೆ ಸ್ವಚ್ಛತೆ', query: 'House cleaning helper needed' },
-      { label: '🔧 ಮೋಟಾರ್ ಪಂಪ್', query: 'Borewell motor pump repair' },
-      { label: '🪚 ಬಡಗಿ ಕೆಲಸ', query: 'Door lock repair carpenter' },
-      { label: '🎨 ವಾಲ್ ಪೇಂಟಿಂಗ್', query: 'Wall paint color work' },
-      { label: '🐜 ಕೀಟ ನಿಯಂತ್ರಣ', query: 'Cockroach termite pest control' },
-    ],
-    hi: [
-      { label: '⚡ लाइट रिपेयर', query: 'Light is not working' },
-      { label: '🚰 पानी लीकेज', query: 'Water tap leaking' },
-      { label: '🧹 घर की सफाई', query: 'House cleaning helper needed' },
-      { label: '🔧 मोटर पंप', query: 'Borewell motor pump repair' },
-      { label: '🪚 बढ़ई काम', query: 'Door lock repair carpenter' },
-      { label: '🎨 वॉल पेंटिंग', query: 'Wall paint color work' },
-      { label: '🐜 कीट नियंत्रण', query: 'Cockroach termite pest control' },
-    ],
-    te: [
-      { label: '⚡ కరెంట్ రిపేర్', query: 'Light is not working' },
-      { label: '🚰 నీటి లీకేజ్', query: 'Water tap leaking' },
-      { label: '🧹 ఇంటి శుభ్రత', query: 'House cleaning helper needed' },
-      { label: '🔧 మోటార్ పంప్', query: 'Borewell motor pump repair' },
-      { label: '🪚 వడ్రంగి పని', query: 'Door lock repair carpenter' },
-      { label: '🎨 వాల్ పెయింటింగ్', query: 'Wall paint color work' },
-      { label: '🐜 పెస్ట్ కంట్రోల్', query: 'Cockroach termite pest control' },
-    ],
-    ta: [
-      { label: '⚡ மின்சார பழுது', query: 'Light is not working' },
-      { label: '🚰 தண்ணீர் கசிவு', query: 'Water tap leaking' },
-      { label: '🧹 வீட்டு சுத்தம்', query: 'House cleaning helper needed' },
-      { label: '🔧 மோட்டார் பம்ப்', query: 'Borewell motor pump repair' },
-      { label: '🪚 தச்சர் வேலை', query: 'Door lock repair carpenter' },
-      { label: '🎨 சுவர் ஓவியம்', query: 'Wall paint color work' },
-      { label: '🐜 பூச்சி கட்டுப்பாடு', query: 'Cockroach termite pest control' },
-    ],
-    mr: [
-      { label: '⚡ लाइट रिपेअर', query: 'Light is not working' },
-      { label: '🚰 पाणी गळती', query: 'Water tap leaking' },
-      { label: '🧹 घराची स्वच्छता', query: 'House cleaning helper needed' },
-      { label: '🔧 मोटर पंप', query: 'Borewell motor pump repair' },
-      { label: '🪚 सुतारकाम', query: 'Door lock repair carpenter' },
-      { label: '🎨 भिंत रंगकाम', query: 'Wall paint color work' },
-      { label: '🐜 कीटक नियंत्रण', query: 'Cockroach termite pest control' },
-    ],
-    bn: [
-      { label: '⚡ বিদ্যুৎ মেরামত', query: 'Light is not working' },
-      { label: '🚰 জলের লিকেজ', query: 'Water tap leaking' },
-      { label: '🧹 ঘর পরিষ্কার', query: 'House cleaning helper needed' },
-      { label: '🔧 মোটর পাম্প', query: 'Borewell motor pump repair' },
-      { label: '🪚 ছুতারের কাজ', query: 'Door lock repair carpenter' },
-      { label: '🎨 ওয়াল পেইন্টিং', query: 'Wall paint color work' },
-      { label: '🐜 পেস্ট কন্ট্রোল', query: 'Cockroach termite pest control' },
-    ],
-    gu: [
-      { label: '⚡ લાઈટ રીપેર', query: 'Light is not working' },
-      { label: '🚰 પાણી લીકેજ', query: 'Water tap leaking' },
-      { label: '🧹 ઘરની સફાઈ', query: 'House cleaning helper needed' },
-      { label: '🔧 મોટર પંપ', query: 'Borewell motor pump repair' },
-      { label: '🪚 સુથાર કામ', query: 'Door lock repair carpenter' },
-      { label: '🎨 વોલ પેઇન્ટિંગ', query: 'Wall paint color work' },
-      { label: '🐜 જંતુ નિયંત્રણ', query: 'Cockroach termite pest control' },
-    ],
-    ml: [
-      { label: '⚡ കറന്റ് റിപ്പയർ', query: 'Light is not working' },
-      { label: '🚰 പൈപ്പ് ലീക്ക്', query: 'Water tap leaking' },
-      { label: '🧹 വീട് വൃത്തിയാക്കൽ', query: 'House cleaning helper needed' },
-      { label: '🔧 മോട്ടോർ പമ്പ്', query: 'Borewell motor pump repair' },
-      { label: '🪚 ആശാരി പണി', query: 'Door lock repair carpenter' },
-      { label: '🎨 പെയിന്റിംഗ്', query: 'Wall paint color work' },
-      { label: '🐜 പെസ്റ്റ് കൺട്രോൾ', query: 'Cockroach termite pest control' },
-    ],
-    pa: [
-      { label: '⚡ ਲਾਈਟ ਮੁਰੰਮਤ', query: 'Light is not working' },
-      { label: '🚰 ਪਾਣੀ ਲੀਕੇਜ', query: 'Water tap leaking' },
-      { label: '🧹 ਘਰ ਦੀ ਸਫਾਈ', query: 'House cleaning helper needed' },
-      { label: '🔧 ਮੋਟਰ ਪੰਪ', query: 'Borewell motor pump repair' },
-      { label: '🪚 ਤਰਖਾਣ ਦਾ ਕੰਮ', query: 'Door lock repair carpenter' },
-      { label: '🎨 ਕੰਧ ਪੇਂਟਿੰਗ', query: 'Wall paint color work' },
-      { label: '🐜 ਕੀੜੇ ਨਿਯੰਤਰਣ', query: 'Cockroach termite pest control' },
-    ],
+const getHelplineInfo = (lang: string) => {
+  const map: Record<string, { badge: string; title: string; subtitle: string; callBtn: string }> = {
+    kn: {
+      badge: '24/7 ತುರ್ತು ನೆರವು',
+      title: 'ತುರ್ತು ಸೇವಾ ಸಹಾಯವಾಣಿ',
+      subtitle: 'ವಿದ್ಯುತ್, ಪ್ಲಂಬಿಂಗ್ ಅಥವಾ ಮನೆ ತುರ್ತು ಸೇವೆಗೆ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ',
+      callBtn: 'ಕರೆ ಮಾಡಿ',
+    },
+    hi: {
+      badge: '24/7 आपातकालीन सेवा',
+      title: 'आपातकालीन सहायता हेल्पलाइन',
+      subtitle: 'बिजली, पानी व अन्य घरेलू आपात स्थिति के लिए तुरंत कॉल करें',
+      callBtn: 'कॉल करें',
+    },
+    te: {
+      badge: '24/7 అత్యవసర సేవ',
+      title: 'అత్యవసర సహాయ హెల్ప్‌లైన్',
+      subtitle: 'కరెంట్, ప్లంబింగ్ లేదా అత్యవసర పనులకు తక్షణ కాల్ చేయండి',
+      callBtn: 'కాల్ చేయండి',
+    },
+    ta: {
+      badge: '24/7 அவசர உதவி',
+      title: 'அவசர உதவி எண்',
+      subtitle: 'மின்சாரம், பிளம்பிங் & அவசர தேவைகளுக்கு உடனடியாக அழைக்கவும்',
+      callBtn: 'அழைக்கவும்',
+    },
+    mr: {
+      badge: '24/7 आपत्कालीन सेवा',
+      title: 'आपत्कालीन हेल्पलाइन',
+      subtitle: 'वीज, प्लंबिंग किंवा घरगुती कामांसाठी त्वरित कॉल करा',
+      callBtn: 'कॉल करा',
+    },
+    bn: {
+      badge: '24/7 জরুরি সহায়তা',
+      title: 'জরুরি হেল্পলাইন',
+      subtitle: 'বিদ্যুৎ, প্লাম্বিং বা যেকোনো জরুরি প্রয়োজনে কল করুন',
+      callBtn: 'কল করুন',
+    },
+    gu: {
+      badge: '24/7 ઇમરજન્સી સેવા',
+      title: 'ઇમરજન્સી હેલ્પલાઇન',
+      subtitle: 'લાઈટ, પ્લમ્બિંગ અથવા ઘરની કટોકટી માટે તાત્કાલિક કૉલ કરો',
+      callBtn: 'કૉલ કરો',
+    },
+    ml: {
+      badge: '24/7 അടിയന്തര സഹായം',
+      title: 'അടിയന്തര ഹെൽപ്പ്‌ലൈൻ',
+      subtitle: 'വൈദ്യുതി, പ്ലംബിംഗ് അടിയന്തര ആവശ്യങ്ങൾക്ക് ഉടൻ വിളിക്കുക',
+      callBtn: 'വിളിക്കുക',
+    },
+    pa: {
+      badge: '24/7 ਐਮਰਜੈਂਸੀ ਸਹਾਇਤਾ',
+      title: 'ਐਮਰਜੈਂਸੀ ਹੈਲਪਲਾਈਨ',
+      subtitle: 'ਬਿਜਲੀ, ਪਲੰਬਿੰਗ ਜਾਂ ਕਿਸੇ ਵੀ ਐਮਰਜੈਂਸੀ ਲਈ ਤੁਰੰਤ ਕਾਲ ਕਰੋ',
+      callBtn: 'ਕਾਲ ਕਰੋ',
+    },
   };
-  return map[lang] || [
-    { label: '⚡ Light repair',   query: 'Light is not working'          },
-    { label: '🚰 Water leakage',  query: 'Water tap leaking'             },
-    { label: '🧹 Cleaning maid',  query: 'House cleaning helper needed'  },
-    { label: '🔧 Motor pump',     query: 'Borewell motor pump repair'    },
-    { label: '🪚 Carpenter',      query: 'Door lock repair carpenter'    },
-    { label: '🎨 Wall painting',  query: 'Wall paint color work'         },
-    { label: '🐜 Pest control',   query: 'Cockroach termite pest control'},
-  ];
+  return map[lang] || {
+    badge: '24/7 Emergency Support',
+    title: 'Emergency Helpline',
+    subtitle: 'Direct assistance for electrical, plumbing & urgent repairs',
+    callBtn: 'Call Now',
+  };
 };
 
 export default function HomeScreen({ 
@@ -227,6 +197,7 @@ export default function HomeScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === settings?.language) || LANGUAGES[0];
+  const helpline = getHelplineInfo(settings?.language || 'en');
   
   // Specialists state
   const [nearbyWorkers, setNearbyWorkers] = useState<WorkerProfile[]>([]);
@@ -382,33 +353,100 @@ export default function HomeScreen({
           />
         </div>
 
-        {/* Quick Chips */}
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px 24px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-          {getPresetChips(settings?.language || 'en').map((chip, idx) => {
-            const isChipSelected = searchQuery.toLowerCase() === chip.query.toLowerCase();
-            return (
-              <button 
-                type="button"
-                key={idx} 
-                onClick={() => setSearchQuery(isChipSelected ? '' : chip.query)}
-                style={{
-                  background: isChipSelected ? '#10B981' : 'rgba(255,255,255,0.12)', 
-                  border: `1.5px solid ${isChipSelected ? '#10B981' : 'rgba(255,255,255,0.18)'}`,
-                  color: isChipSelected ? '#041B30' : 'white', 
-                  padding: '8px 16px', borderRadius: 20, fontSize: 13,
-                  fontWeight: isChipSelected ? 800 : 600, 
-                  whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
-                  cursor: 'pointer',
-                  transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: isChipSelected ? '0 4px 14px rgba(16,185,129,0.35)' : 'none',
-                  WebkitTapHighlightColor: 'transparent',
-                  touchAction: 'manipulation',
-                }}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
+        {/* ─── Emergency Helpline Banner ─── */}
+        <div style={{ padding: '16px 20px 22px' }}>
+          <a
+            href="tel:+919900011222"
+            style={{
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.22) 0%, rgba(11, 41, 66, 0.85) 100%)',
+              border: '1.5px solid rgba(239, 68, 68, 0.45)',
+              borderRadius: 20,
+              padding: '12px 16px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.18s ease',
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation',
+            }}
+          >
+            {/* Ambient Red Glow */}
+            <div style={{
+              position: 'absolute', top: -20, left: -20, width: 90, height: 90,
+              background: 'radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, transparent 70%)',
+              pointerEvents: 'none'
+            }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, zIndex: 1 }}>
+              {/* Phone Icon with Live Pulse Indicator */}
+              <div style={{
+                width: 44, height: 44, borderRadius: 14,
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 16px rgba(239, 68, 68, 0.5)',
+                flexShrink: 0,
+                position: 'relative'
+              }}>
+                <PhoneCall size={20} color="white" strokeWidth={2.5} />
+                <span style={{
+                  position: 'absolute', top: -2, right: -2, width: 10, height: 10,
+                  borderRadius: '50%', background: '#22C55E', border: '2px solid #0B2942',
+                  boxShadow: '0 0 8px #22C55E',
+                }} />
+              </div>
+
+              {/* Title & Subtitle */}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{
+                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.6px',
+                    color: '#FCA5A5', background: 'rgba(239, 68, 68, 0.22)',
+                    padding: '2px 7px', borderRadius: 6, border: '1px solid rgba(239, 68, 68, 0.3)'
+                  }}>
+                    {helpline.badge}
+                  </span>
+                </div>
+                <h3 style={{
+                  fontSize: 14, fontWeight: 800, color: 'white', margin: 0,
+                  letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                }}>
+                  {helpline.title}
+                </h3>
+                <p style={{
+                  fontSize: 11, color: 'rgba(255, 255, 255, 0.72)', margin: '2px 0 0',
+                  fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                }}>
+                  {helpline.subtitle}
+                </p>
+              </div>
+            </div>
+
+            {/* Direct Call Button Badge */}
+            <div style={{
+              background: 'linear-gradient(135deg, #EF4444, #B91C1C)',
+              color: 'white',
+              padding: '8px 14px',
+              borderRadius: 14,
+              fontSize: 12,
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              boxShadow: '0 4px 14px rgba(239, 68, 68, 0.45)',
+              flexShrink: 0,
+              marginLeft: 10,
+              zIndex: 1
+            }}>
+              <span>{helpline.callBtn}</span>
+              <ChevronRight size={13} strokeWidth={3} />
+            </div>
+          </a>
         </div>
         
         {/* ─── All Services Section (Sleek Horizontal Scroll Row) ─── */}
