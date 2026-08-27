@@ -125,37 +125,37 @@ const getHelplineInfo = (lang: string) => {
     kn: {
       badge: '24/7 ತುರ್ತು ನೆರವು',
       title: 'ತುರ್ತು ಸೇವಾ ಸಹಾಯವಾಣಿ',
-      subtitle: 'ವಿದ್ಯುತ್, ಪ್ಲಂಬಿಂಗ್ ಅಥವಾ ಮನೆ ತುರ್ತು ಸೇವೆಗೆ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ',
-      callBtn: 'ಕರೆ ಮಾಡಿ',
+      subtitle: 'ವಿದ್ಯುತ್, ಪ್ಲಂಬಿಂಗ್ ಮತ್ತು ಅಗತ್ಯ ರಿಪೇರಿಗೆ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ',
+      callBtn: 'ನೇರ ಕರೆ',
     },
     hi: {
-      badge: '24/7 आपातकालीन सेवा',
-      title: 'आपातकालीन सहायता हेल्पलाइन',
-      subtitle: 'बिजली, पानी व अन्य घरेलू आपात स्थिति के लिए तुरंत कॉल करें',
-      callBtn: 'कॉल करें',
+      badge: '24/7 त्वरित सहायता',
+      title: 'आपातकालीन सेवा हेल्पलाइन',
+      subtitle: 'बिजली, पानी व आवश्यक घरेलू सेवाओं के लिए तुरंत कॉल करें',
+      callBtn: 'सीधा कॉल',
     },
     te: {
-      badge: '24/7 అత్యవసర సేవ',
-      title: 'అత్యవసర సహాయ హెల్ప్‌లైన్',
-      subtitle: 'కరెంట్, ప్లంబింగ్ లేదా అత్యవసర పనులకు తక్షణ కాల్ చేయండి',
+      badge: '24/7 లైవ్ సపోర్ట్',
+      title: 'అత్యవసర సేవల హెల్ప్‌లైన్',
+      subtitle: 'కరెంట్, ప్లంబింగ్ మరియు అత్యవసర పనులకు తక్షణ కాల్',
       callBtn: 'కాల్ చేయండి',
     },
     ta: {
-      badge: '24/7 அவசர உதவி',
-      title: 'அவசர உதவி எண்',
-      subtitle: 'மின்சாரம், பிளம்பிங் & அவசர தேவைகளுக்கு உடனடியாக அழைக்கவும்',
+      badge: '24/7 நேரடி உதவி',
+      title: 'அவசர சேவை உதவி எண்',
+      subtitle: 'மின்சாரம், பிளம்பிங் & உடனடி வீட்டு வேலைகளுக்கு அழைக்கவும்',
       callBtn: 'அழைக்கவும்',
     },
     mr: {
-      badge: '24/7 आपत्कालीन सेवा',
-      title: 'आपत्कालीन हेल्पलाइन',
-      subtitle: 'वीज, प्लंबिंग किंवा घरगुती कामांसाठी त्वरित कॉल करा',
+      badge: '24/7 थेट हेल्पलाइन',
+      title: 'आपत्कालीन सेवा हेल्पलाइन',
+      subtitle: 'वीज, पाणी आणि तातडीच्या घरगुती कामांसाठी त्वरित संपर्क',
       callBtn: 'कॉल करा',
     },
     bn: {
-      badge: '24/7 জরুরি সহায়তা',
-      title: 'জরুরি হেল্পলাইন',
-      subtitle: 'বিদ্যুৎ, প্লাম্বিং বা যেকোনো জরুরি প্রয়োজনে কল করুন',
+      badge: '24/7 লাইভ সাপোর্ট',
+      title: 'জরুরি সেবা হেল্পলাইন',
+      subtitle: 'বিদ্যুৎ, জল ও দ্রুত মেরামতের জন্য অবিলম্বে যোগাযোগ করুন',
       callBtn: 'কল করুন',
     },
     gu: {
@@ -353,8 +353,8 @@ export default function HomeScreen({
           />
         </div>
 
-        {/* ─── Emergency Helpline Banner ─── */}
-        <div style={{ padding: '16px 20px 22px' }}>
+        {/* ─── Executive Emergency Helpline Banner ─── */}
+        <div style={{ padding: '14px 20px 20px' }}>
           <a
             href="tel:+919900011222"
             style={{
@@ -362,64 +362,63 @@ export default function HomeScreen({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.22) 0%, rgba(11, 41, 66, 0.85) 100%)',
-              border: '1.5px solid rgba(239, 68, 68, 0.45)',
-              borderRadius: 20,
-              padding: '12px 16px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: 18,
+              padding: '12px 14px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               position: 'relative',
               overflow: 'hidden',
-              transition: 'all 0.18s ease',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               WebkitTapHighlightColor: 'transparent',
               touchAction: 'manipulation',
             }}
           >
-            {/* Ambient Red Glow */}
+            {/* Subtle Top-Left Ambient Accent Glow */}
             <div style={{
-              position: 'absolute', top: -20, left: -20, width: 90, height: 90,
-              background: 'radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, transparent 70%)',
+              position: 'absolute', top: -15, left: -15, width: 70, height: 70,
+              background: 'radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, transparent 70%)',
               pointerEvents: 'none'
             }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, zIndex: 1 }}>
-              {/* Phone Icon with Live Pulse Indicator */}
+              {/* Premium Icon Badge */}
               <div style={{
-                width: 44, height: 44, borderRadius: 14,
-                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                width: 42, height: 42, borderRadius: 12,
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.08) 100%)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(239, 68, 68, 0.5)',
                 flexShrink: 0,
                 position: 'relative'
               }}>
-                <PhoneCall size={20} color="white" strokeWidth={2.5} />
-                <span style={{
-                  position: 'absolute', top: -2, right: -2, width: 10, height: 10,
-                  borderRadius: '50%', background: '#22C55E', border: '2px solid #0B2942',
-                  boxShadow: '0 0 8px #22C55E',
-                }} />
+                <PhoneCall size={19} color="#F87171" strokeWidth={2.2} />
               </div>
 
-              {/* Title & Subtitle */}
+              {/* Text Information */}
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                   <span style={{
-                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.6px',
-                    color: '#FCA5A5', background: 'rgba(239, 68, 68, 0.22)',
-                    padding: '2px 7px', borderRadius: 6, border: '1px solid rgba(239, 68, 68, 0.3)'
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px',
+                    color: '#38BDF8'
                   }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: '#22C55E', boxShadow: '0 0 6px #22C55E'
+                    }} />
                     {helpline.badge}
                   </span>
                 </div>
                 <h3 style={{
-                  fontSize: 14, fontWeight: 800, color: 'white', margin: 0,
+                  fontSize: 14, fontWeight: 800, color: '#F8FAFC', margin: 0,
                   letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                 }}>
                   {helpline.title}
                 </h3>
                 <p style={{
-                  fontSize: 11, color: 'rgba(255, 255, 255, 0.72)', margin: '2px 0 0',
+                  fontSize: 11, color: '#94A3B8', margin: '2px 0 0',
                   fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                 }}>
                   {helpline.subtitle}
@@ -427,24 +426,24 @@ export default function HomeScreen({
               </div>
             </div>
 
-            {/* Direct Call Button Badge */}
+            {/* Premium CTA Button */}
             <div style={{
-              background: 'linear-gradient(135deg, #EF4444, #B91C1C)',
+              background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
               color: 'white',
               padding: '8px 14px',
-              borderRadius: 14,
+              borderRadius: 12,
               fontSize: 12,
-              fontWeight: 800,
+              fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              boxShadow: '0 4px 14px rgba(239, 68, 68, 0.45)',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)',
               flexShrink: 0,
               marginLeft: 10,
               zIndex: 1
             }}>
               <span>{helpline.callBtn}</span>
-              <ChevronRight size={13} strokeWidth={3} />
+              <ChevronRight size={13} strokeWidth={2.5} />
             </div>
           </a>
         </div>
