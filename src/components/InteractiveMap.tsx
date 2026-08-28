@@ -72,7 +72,6 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
           <div style="font-family: system-ui; text-align: center; padding: 2px;">
             <b style="color: #0B3D66; font-size: 13px;">${w.full_name}</b><br/>
             <span style="font-size: 11px; color: #475569;">${workerAny.role || 'Pro'}</span><br/>
-            <span style="font-size: 11px; color: #16A34A; font-weight: bold;">₹${workerAny.hourly_rate || 500}/hr</span><br/>
             <button id="book-btn-${w.worker_id}" style="margin-top: 6px; background: #072A4A; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
               View & Book
             </button>

@@ -788,17 +788,14 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
                         </div>
                       </div>
 
-                      {/* Distance & Price Row */}
+                      {/* Distance Row */}
                       <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        display: 'flex', alignItems: 'center',
                         background: '#F8FAFC', padding: '8px 10px', borderRadius: 12
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: '#059669' }}>
                           <Clock size={12} />
                           <span>~{estMins} mins ({dist.toFixed(1)} km)</span>
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 900, color: '#0F172A' }}>
-                          ₹{worker.hourly_rate || 350}<span style={{ fontSize: 10, fontWeight: 600, color: '#64748B' }}>/hr</span>
                         </div>
                       </div>
 
