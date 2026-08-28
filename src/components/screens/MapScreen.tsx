@@ -238,14 +238,28 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     }
   }, [leafletLoaded, userLocation]);
 
-  // ── Center Map on User ──
-  const centerOnUser = () => {
-    if (!mapRef.current || !leafletLoaded || !userLocation) {
-      requestLocation();
+  // ── Center Map on User & Reset to Live GPS ──
+  const centerOnUser = async () => {
+    let loc = userLocation;
+    if (!loc) {
+      loc = await requestLocation();
+    }
+    if (!loc) {
+      showToast('Could not fetch live GPS. Please enable location permissions.', 'error');
       return;
     }
-    mapRef.current.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 1.2 });
-    showToast('Centered on your live GPS 📍', 'info');
+
+    // Reset manual changed area / search location back to real device GPS
+    setSearchLocation(null);
+    setMapCenter({ lat: loc.lat, lng: loc.lng });
+    setIsEditMode(false);
+    setSearchQuery('');
+    setSearchResults([]);
+
+    if (mapRef.current && leafletLoaded) {
+      mapRef.current.flyTo([loc.lat, loc.lng], 15, { duration: 1.0 });
+    }
+    showToast('Reset to your live GPS location 📍', 'info');
   };
 
   // ── Fetch Workers ──
@@ -255,8 +269,8 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
 
     async function fetchWorkers() {
       setIsLoadingWorkers(true);
-      const searchLat = mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
-      const searchLng = mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
+      const searchLat = isEditMode && mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
+      const searchLng = isEditMode && mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
       if (!searchLat || !searchLng) return;
       
       let results: any[] = [];
