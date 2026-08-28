@@ -47,6 +47,7 @@ export interface WorkerProfile {
   total_jobs: number;
   years_experience: number;
   distance_km: number;
+  service_radius_km?: number;
   
   // From old schema / dummy data
   hourly_rate?: number;

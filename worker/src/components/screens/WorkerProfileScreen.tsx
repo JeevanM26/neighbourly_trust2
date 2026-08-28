@@ -46,7 +46,7 @@ const LANGUAGES = [
 
 export default function WorkerProfileScreen() {
   const { 
-    worker, logoutWorker, deleteAccount, updateProfileData, 
+    worker, logoutWorker, deleteAccount, updateProfileData, updateServiceRadius,
     settings, setLanguage, toggleSound, completedBookings, 
     showToast, isOnline 
   } = useWorker();
@@ -378,19 +378,27 @@ export default function WorkerProfileScreen() {
           <input 
             type="range" 
             min="2" 
-            max="15" 
+            max="25" 
             step="1" 
             value={draftRadius} 
             onChange={(e) => {
-              setDraftRadius(Number(e.target.value));
-              showToast(`Radius set to ${e.target.value} km`);
+              const val = Number(e.target.value);
+              setDraftRadius(val);
             }} 
+            onMouseUp={(e) => {
+              const val = Number((e.target as HTMLInputElement).value);
+              updateServiceRadius(val);
+            }}
+            onTouchEnd={(e) => {
+              const val = Number((e.target as HTMLInputElement).value);
+              updateServiceRadius(val);
+            }}
             style={{ width: '100%', accentColor: '#059669', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94A3B8', fontWeight: 600, marginTop: 2 }}>
             <span>2 km (Local)</span>
-            <span>8 km</span>
-            <span>15 km (City-wide)</span>
+            <span>10 km</span>
+            <span>25 km (City-wide)</span>
           </div>
         </div>
 

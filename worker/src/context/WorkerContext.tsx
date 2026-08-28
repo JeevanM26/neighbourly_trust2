@@ -10,7 +10,7 @@ import {
   subscribeToBookingOffers, isConfigured, getClient,
   fetchActiveBookings, fetchBookingHistory,
   deleteWorkerAccount, createWorkerProfile, fetchWorkerProfile,
-  updateWorkerProfileData, fetchServiceCategories, fetchPendingOffers
+  updateWorkerProfileData, updateWorkerServiceRadius, fetchServiceCategories, fetchPendingOffers
 } from '../lib/supabase';
 import { getTranslation } from '../lib/i18n';
 import { useWebRTC } from '../hooks/useWebRTC';
@@ -98,6 +98,7 @@ interface WorkerContextType {
   logoutWorker: () => void;
   deleteAccount: () => Promise<void>;
   updateProfileData: (name: string, categoryIds: string[]) => Promise<boolean>;
+  updateServiceRadius: (radiusKm: number) => Promise<boolean>;
 
   isOnline: boolean;
   toggleOnline: () => Promise<void>;
@@ -559,6 +560,19 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [worker, showToast]);
 
+  const updateServiceRadius = useCallback(async (radiusKm: number) => {
+    if (!worker?.id) return false;
+    const success = await updateWorkerServiceRadius(worker.id, radiusKm);
+    if (success) {
+      setWorker(prev => prev ? { ...prev, service_radius_km: radiusKm } : null);
+      showToast(`Service radius set to ${radiusKm} km 📍`);
+      return true;
+    } else {
+      showToast('Failed to update service radius.', 'error');
+      return false;
+    }
+  }, [worker?.id, showToast]);
+
   const logoutWorker = useCallback(() => {
     realtimeRef.current?.unsubscribe();
     
@@ -716,7 +730,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <WorkerContext.Provider value={{
       worker, isLoggedIn: !!worker && !isNewWorker, isNewWorker, isAuthLoading, categories,
-      loginWorker, completeOnboarding, logoutWorker, deleteAccount, updateProfileData,
+      loginWorker, completeOnboarding, logoutWorker, deleteAccount, updateProfileData, updateServiceRadius,
       isOnline, toggleOnline,
       offers, activeBookings, completedBookings,
       isLoading, refreshBookings,

@@ -239,6 +239,26 @@ export async function updateWorkerProfileData(workerId: string, name: string, ca
   }
 }
 
+// ─── Update worker service radius ──────────────────────────
+export async function updateWorkerServiceRadius(workerId: string, radiusKm: number): Promise<boolean> {
+  const client = getClient();
+  if (!client || !workerId) return false;
+  try {
+    const { error } = await client
+      .from('worker_profiles')
+      .update({ service_radius_km: radiusKm })
+      .eq('profile_id', workerId);
+    if (error) {
+      console.error('Update worker service radius error:', error);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.error('Update worker service radius error:', err?.message || err);
+    return false;
+  }
+}
+
 // ─── Toggle online status ─────────────────────────────────
 export async function setWorkerOnline(workerId: string, online: boolean, lat?: number | null, lng?: number | null): Promise<void> {
   const client = getClient();

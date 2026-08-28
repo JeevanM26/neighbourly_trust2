@@ -145,20 +145,25 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
         });
         
         if (!error && data && data.length > 0) {
-          return data.map((w: any, i: number) => {
-            const parsed = parseWorkerCoords(w.location) || {
-              lat: w.lat !== undefined ? Number(w.lat) : (lat + 0.003 + (i * 0.001)),
-              lng: w.lng !== undefined ? Number(w.lng) : (lng + 0.003 + (i * 0.001))
-            };
-            const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
-            return {
-              ...w,
-              category_id: targetCatId,
-              is_online: true,
-              distance_km: Math.round(dist * 10) / 10,
-              location: parsed
-            };
-          }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+          return data
+            .map((w: any, i: number) => {
+              const parsed = parseWorkerCoords(w.location) || {
+                lat: w.lat !== undefined ? Number(w.lat) : (lat + 0.003 + (i * 0.001)),
+                lng: w.lng !== undefined ? Number(w.lng) : (lng + 0.003 + (i * 0.001))
+              };
+              const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
+              const radius = Number(w.service_radius_km) || 15;
+              return {
+                ...w,
+                category_id: targetCatId,
+                is_online: true,
+                service_radius_km: radius,
+                distance_km: Math.round(dist * 10) / 10,
+                location: parsed
+              };
+            })
+            .filter((w: any) => (w.distance_km || 0) <= (w.service_radius_km || 15))
+            .sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
         }
       } catch {
         // Fallback to decoupled query below
@@ -169,7 +174,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
     const { data: onlineWorkers, error: wpErr } = await client
       .from('worker_profiles')
       .select(`
-        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience,
+        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience, service_radius_km,
         profiles!profile_id ( full_name, avatar_url, phone )
       `)
       .eq('is_online', true);
@@ -204,7 +209,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
       });
     }
 
-    return filtered.map((w: any, i: number) => {
+    const candidates = filtered.map((w: any, i: number) => {
       const cats = catsByWorker.get(w.profile_id) || [];
       const primaryCat = cats[0]?.service_categories;
       const parsed = parseWorkerCoords(w.location) || {
@@ -212,6 +217,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
         lng: (lng || 77.2090) + (i === 0 ? -0.002 : i === 1 ? 0.003 : 0.004 * (i % 3 === 0 ? 1 : -1))
       };
       const dist = lat && lng ? calcWorkerDistance(lat, lng, parsed.lat, parsed.lng) : 0.8;
+      const radius = Number(w.service_radius_km) || 15;
 
       return {
         worker_id: w.profile_id,
@@ -225,11 +231,19 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
         total_jobs: w.total_jobs || 1,
         hourly_rate: w.hourly_rate || 350,
         years_experience: Number(w.years_experience) || 0,
+        service_radius_km: radius,
         is_online: true,
         distance_km: Math.round(dist * 10) / 10,
         location: parsed
       };
-    }).sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+    });
+
+    // Strictly filter workers to those within their configured visibility/service radius
+    const withinRadius = (lat && lng)
+      ? candidates.filter((w: any) => (w.distance_km || 0) <= (w.service_radius_km || 15))
+      : candidates;
+
+    return withinRadius.sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
 
   } catch (e: any) { 
     console.warn("findNearbyWorkers notice:", e?.message || e);
@@ -246,7 +260,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
     const { data: w, error } = await client
       .from('worker_profiles')
       .select(`
-        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience,
+        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience, service_radius_km,
         profiles!profile_id ( full_name, avatar_url, phone )
       `)
       .eq('profile_id', workerId)
@@ -273,6 +287,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
         total_jobs: 1,
         hourly_rate: 350,
         years_experience: 0,
+        service_radius_km: 15,
         is_online: true,
         distance_km: 0.8,
         location: { lat: 13.9299, lng: 75.5681 }
@@ -303,6 +318,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
       total_jobs: w.total_jobs || 1,
       hourly_rate: (w as any).hourly_rate || 350,
       years_experience: Number(w.years_experience) || 0,
+      service_radius_km: Number(w.service_radius_km) || 15,
       is_online: Boolean(w.is_online),
       distance_km: 0.8,
       location: parsedLoc
