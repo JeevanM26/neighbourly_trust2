@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { getClient } from '../../lib/supabase';
-import { useApp } from '../../context/AppContext';
+import { useApp, calcDistance } from '../../context/AppContext';
 import { WorkerProfile, DEFAULT_LOCATION } from '../../lib/types';
 import { getWorkerProfile } from '../../lib/supabase';
 import { ChevronLeft, Star, Phone, Briefcase, Award, MapPin, Loader2, CheckCircle2, User, ShieldCheck, Shield, X, Zap, Clock } from 'lucide-react';
@@ -227,18 +227,26 @@ export default function WorkerProfileSheet({
         </div>
 
         {/* 2 Square Cards Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
-          <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MapPin size={24} color="#EF4444" /></div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.distance_km.toFixed(1)} km</div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Distance</div>
-          </div>
-          <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Star size={24} color="#F59E0B" fill="#F59E0B" /></div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.total_jobs || 0}+</div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Reviews</div>
-          </div>
-        </div>
+        {(() => {
+          const effectiveLoc = searchLocation || userLocation;
+          const displayDist = (worker.location && effectiveLoc)
+            ? calcDistance(effectiveLoc.lat, effectiveLoc.lng, worker.location.lat, worker.location.lng)
+            : (worker.distance_km || 0.8);
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
+              <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MapPin size={24} color="#EF4444" /></div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{displayDist.toFixed(1)} km</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Distance</div>
+              </div>
+              <div style={{ background: 'white', borderRadius: 20, padding: 16, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Star size={24} color="#F59E0B" fill="#F59E0B" /></div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>{worker.total_jobs || 0}+</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Reviews</div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Special Instructions / Notes */}
         <div style={{ background: 'white', borderRadius: 24, margin: '0 16px 16px', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>

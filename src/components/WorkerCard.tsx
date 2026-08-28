@@ -116,7 +116,7 @@ export const WorkerCard: React.FC<{ worker: WorkerProfile }> = ({ worker }) => {
             <div className="mt-4 space-y-3">
               <div className="bg-blue-50/70 p-3 rounded-xl text-xs text-slate-700 leading-relaxed border border-blue-100">
                 <p className="font-medium text-blue-900 mb-1">About Specialist:</p>
-                {worker.description || `Independent community professional with ${worker.years_experience || 'several'} years of experience.`}
+                {worker.description || (worker.years_experience && worker.years_experience > 0 ? `Independent community professional with ${worker.years_experience} years of experience.` : 'Verified independent community specialist ready to assist.')}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">

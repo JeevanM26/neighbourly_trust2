@@ -512,6 +512,25 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     }
   };
 
+  const handleUpdateExperience = async (workerId: string, newExp: number) => {
+    try {
+      const client = getClient();
+      if (!client) return;
+      const expNum = Math.max(0, Math.min(60, Number(newExp) || 0));
+
+      const { error } = await client
+        .from('worker_profiles')
+        .update({ years_experience: expNum })
+        .eq('profile_id', workerId);
+
+      if (!error) {
+        setWorkers(prev => prev.map(w => w.id === workerId ? { ...w, years_experience: expNum } : w));
+      }
+    } catch (e) {
+      console.error('Experience update error:', e);
+    }
+  };
+
   // Financial & Stats Calculations
   const stats = useMemo(() => {
     const totalJobs = bookings.length;
@@ -1388,6 +1407,109 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.email}</span>
                         </div>
                       )}
+                    </div>
+
+                    {/* Admin Experience Modifier */}
+                    <div style={{
+                      background: '#F0FDF4',
+                      border: '1px solid #BBF7D0',
+                      borderRadius: 10,
+                      padding: '8px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#166534' }}>Experience:</span>
+                        <span style={{
+                          fontSize: 12,
+                          fontWeight: 900,
+                          color: '#15803D',
+                          background: 'white',
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          border: '1px solid #86EFAC'
+                        }}>
+                          {w.years_experience || 0} yrs
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <button
+                          onClick={() => handleUpdateExperience(w.id, Math.max(0, (w.years_experience || 0) - 1))}
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 6,
+                            border: '1px solid #CBD5E1',
+                            background: 'white',
+                            fontWeight: 800,
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#334155'
+                          }}
+                          title="Decrease experience"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          defaultValue={w.years_experience || 0}
+                          key={`${w.id}-${w.years_experience}`}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val) && val !== w.years_experience) {
+                              handleUpdateExperience(w.id, val);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const val = parseInt((e.target as HTMLInputElement).value, 10);
+                              if (!isNaN(val)) {
+                                handleUpdateExperience(w.id, val);
+                                (e.target as HTMLInputElement).blur();
+                              }
+                            }
+                          }}
+                          style={{
+                            width: 44,
+                            textAlign: 'center',
+                            padding: '3px 4px',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            borderRadius: 6,
+                            border: '1px solid #86EFAC',
+                            background: 'white',
+                            outline: 'none'
+                          }}
+                        />
+                        <button
+                          onClick={() => handleUpdateExperience(w.id, (w.years_experience || 0) + 1)}
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 6,
+                            border: '1px solid #CBD5E1',
+                            background: 'white',
+                            fontWeight: 800,
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#334155'
+                          }}
+                          title="Increase experience"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 8, borderTop: '1px solid #F1F5F9' }}>

@@ -169,7 +169,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
     const { data: onlineWorkers, error: wpErr } = await client
       .from('worker_profiles')
       .select(`
-        profile_id, avg_rating, total_jobs, is_online, is_verified, location,
+        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience,
         profiles!profile_id ( full_name, avatar_url, phone )
       `)
       .eq('is_online', true);
@@ -224,6 +224,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
         avg_rating: w.avg_rating || 4.9,
         total_jobs: w.total_jobs || 1,
         hourly_rate: w.hourly_rate || 350,
+        years_experience: Number(w.years_experience) || 0,
         is_online: true,
         distance_km: Math.round(dist * 10) / 10,
         location: parsed
@@ -245,7 +246,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
     const { data: w, error } = await client
       .from('worker_profiles')
       .select(`
-        profile_id, avg_rating, total_jobs, is_online, is_verified, location,
+        profile_id, avg_rating, total_jobs, is_online, is_verified, location, years_experience,
         profiles!profile_id ( full_name, avatar_url, phone )
       `)
       .eq('profile_id', workerId)
@@ -271,6 +272,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
         avg_rating: 4.9,
         total_jobs: 1,
         hourly_rate: 350,
+        years_experience: 0,
         is_online: true,
         distance_km: 0.8,
         location: { lat: 13.9299, lng: 75.5681 }
@@ -300,10 +302,12 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
       avg_rating: w.avg_rating || 4.9,
       total_jobs: w.total_jobs || 1,
       hourly_rate: (w as any).hourly_rate || 350,
+      years_experience: Number(w.years_experience) || 0,
       is_online: Boolean(w.is_online),
       distance_km: 0.8,
       location: parsedLoc
     };
+
   } catch (err) {
     console.warn("getWorkerProfile notice:", err);
     return null;

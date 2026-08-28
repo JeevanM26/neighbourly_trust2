@@ -731,11 +731,11 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
                   const cat = categories.find(c => c.id === catId);
                   const catInfo = getCategoryInfo(cat?.slug);
 
-                  const userCoords = userLocation || { lat: 28.6139, lng: 77.2090 };
-                  const dist = worker.location 
-                    ? calcDistance(userCoords.lat, userCoords.lng, worker.location.lat, worker.location.lng)
-                    : 1.2;
-                  const estMins = Math.max(8, Math.round(dist * 5 + 4));
+                  const targetCoords = searchLocation || (mapCenter && !isEditMode ? mapCenter : (userLocation || { lat: 28.6139, lng: 77.2090 }));
+                  const dist = (worker.location && targetCoords)
+                    ? calcDistance(targetCoords.lat, targetCoords.lng, worker.location.lat, worker.location.lng)
+                    : (worker.distance_km ?? 1.2);
+                  const estMins = Math.max(8, Math.round(dist * 4 + 4));
 
                   return (
                     <div

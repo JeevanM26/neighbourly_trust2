@@ -762,9 +762,11 @@ export default function HomeScreen({
                           ({worker.total_jobs || 2} jobs)
                         </span>
                       </div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: 8 }}>
-                        {worker.years_experience ? `${worker.years_experience}y exp` : '8y exp'}
-                      </div>
+                      {Boolean(worker.years_experience && worker.years_experience > 0) && (
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: 8 }}>
+                          {worker.years_experience}y exp
+                        </div>
+                      )}
                     </div>
                     
                     {/* Distance Bar */}
