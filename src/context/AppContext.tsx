@@ -257,10 +257,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try { localStorage.setItem('nt_settings', JSON.stringify(settings)); } catch {}
   }, [settings]);
 
-  // Fetch initial data
+  // Fetch initial categories and subscribe to live updates
   useEffect(() => {
     fetchServiceCategories().then(setCategories);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    const client = getClient();
+    if (!client) return;
+
+    const channel = client
+      .channel('public:service_categories_customer')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_categories' }, () => {
+        fetchServiceCategories().then(setCategories);
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   const refreshBookings = useCallback(async () => {

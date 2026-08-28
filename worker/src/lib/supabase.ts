@@ -34,6 +34,57 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
   } catch { return []; }
 }
 
+// ─── Add New Service Category ──────────────────────────────
+export async function addNewServiceCategory(name: string, iconUrl?: string): Promise<ServiceCategory | null> {
+  const client = getClient();
+  if (!client || !name?.trim()) return null;
+  try {
+    const cleanName = name.trim();
+    let slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    if (!slug) slug = `service-${Date.now()}`;
+
+    // Check if category already exists with same name or slug
+    const { data: existing } = await client
+      .from('service_categories')
+      .select('*')
+      .or(`slug.eq.${slug},name_en.ilike.${cleanName}`)
+      .maybeSingle();
+
+    if (existing) {
+      if (!existing.is_active) {
+        await client.from('service_categories').update({ is_active: true }).eq('id', existing.id);
+        return { ...existing, is_active: true };
+      }
+      return existing;
+    }
+
+    const newRow = {
+      slug,
+      name_en: cleanName,
+      is_active: true,
+      icon_url: iconUrl || null
+    };
+
+    const { data, error } = await client
+      .from('service_categories')
+      .insert(newRow)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Insert service_category error:', error);
+      return null;
+    }
+    return data;
+  } catch (err: any) {
+    console.error('addNewServiceCategory error:', err?.message || err);
+    return null;
+  }
+}
+
 // ─── Fetch worker profile from Supabase ───────────────────
 export async function fetchWorkerProfile(authUserId: string, phoneFallback?: string): Promise<WorkerProfile | null> {
   const client = getClient();

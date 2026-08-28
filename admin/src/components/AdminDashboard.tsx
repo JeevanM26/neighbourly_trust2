@@ -7,12 +7,39 @@ import {
   ArrowUpRight, IndianRupee, MapPin, Mail, Sparkles, Filter, 
   ChevronRight, ExternalLink, Award, AlertCircle, TrendingUp,
   Flame, Droplet, Hammer, Paintbrush, Scissors, Car, Bug, Wrench, Zap,
-  Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert, Calendar
+  Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert, Calendar,
+  Plus, X, Tag, Layers
 } from 'lucide-react';
 
 const SUPER_ADMIN_PHONE = '7975182162';
 
-type AdminTab = 'overview' | 'today' | 'bookings' | 'workers' | 'customers' | 'reviews' | 'admins';
+type AdminTab = 'overview' | 'today' | 'bookings' | 'workers' | 'services' | 'customers' | 'reviews' | 'admins';
+
+interface AdminCategoryRecord {
+  id: string;
+  slug: string;
+  name_en: string;
+  name_hi?: string;
+  name_kn?: string;
+  icon_url?: string;
+  is_active: boolean;
+  created_at?: string;
+  worker_count?: number;
+}
+
+const getCategoryIcon = (slug?: string, name?: string, size = 20) => {
+  const s = `${slug || ''} ${name || ''}`.toLowerCase();
+  if (s.includes('elec')) return <Zap size={size} color="#F59E0B" />;
+  if (s.includes('plumb')) return <Droplet size={size} color="#0284C7" />;
+  if (s.includes('carp')) return <Hammer size={size} color="#D97706" />;
+  if (s.includes('paint')) return <Paintbrush size={size} color="#8B5CF6" />;
+  if (s.includes('clean')) return <Sparkles size={size} color="#10B981" />;
+  if (s.includes('salon') || s.includes('barber')) return <Scissors size={size} color="#F43F5E" />;
+  if (s.includes('ac') || s.includes('appliance') || s.includes('cool')) return <Flame size={size} color="#06B6D4" />;
+  if (s.includes('pest')) return <Bug size={size} color="#EC4899" />;
+  if (s.includes('auto') || s.includes('mechanic') || s.includes('car')) return <Car size={size} color="#6366F1" />;
+  return <Wrench size={size} color="#059669" />;
+};
 
 interface AdminUserRecord {
   id: string;
@@ -158,6 +185,14 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   const [workerSearch, setWorkerSearch] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState<string>('');
 
+  // Service Categories Management State
+  const [categoriesList, setCategoriesList] = useState<AdminCategoryRecord[]>([]);
+  const [serviceSearch, setServiceSearch] = useState<string>('');
+  const [showAddCatModal, setShowAddCatModal] = useState<boolean>(false);
+  const [newCatName, setNewCatName] = useState<string>('');
+  const [catActionLoading, setCatActionLoading] = useState<boolean>(false);
+  const [catActionMsg, setCatActionMsg] = useState<string>('');
+
   const loadAllData = async () => {
     try {
       const client = getClient();
@@ -229,6 +264,16 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
           setWorkers(parsedWorkers);
           setCategoryCounts(catCounts);
 
+          const parsedCats: AdminCategoryRecord[] = (rpcData.categories || []).map((c: any) => ({
+            id: c.id,
+            slug: c.slug,
+            name_en: c.name_en,
+            is_active: c.is_active !== false,
+            created_at: c.created_at || new Date().toISOString(),
+            worker_count: catCounts[c.name_en] || 0,
+          }));
+          setCategoriesList(parsedCats);
+
           const parsedCustomers: AdminCustomer[] = (rpcData.customers || []).map((c: any) => ({
             id: c.id,
             full_name: c.full_name,
@@ -262,7 +307,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
       }
 
       // 1. Fetch Categories
-      const { data: catData } = await client.from('service_categories').select('id, slug, name_en');
+      const { data: catData } = await client.from('service_categories').select('*').order('name_en', { ascending: true });
       const catMap: Record<string, { name: string; slug: string }> = {};
       (catData || []).forEach((c: any) => {
         catMap[c.id] = { name: c.name_en, slug: c.slug };
@@ -348,6 +393,16 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         });
       });
       setCategoryCounts(catCounts);
+
+      const parsedCats: AdminCategoryRecord[] = (catData || []).map((c: any) => ({
+        id: c.id,
+        slug: c.slug,
+        name_en: c.name_en,
+        is_active: c.is_active !== false,
+        created_at: c.created_at || new Date().toISOString(),
+        worker_count: catCounts[c.name_en] || 0,
+      }));
+      setCategoriesList(parsedCats);
 
       // 4. Fetch Customers
       const { data: rawProfiles } = await client
@@ -610,6 +665,59 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     });
   }, [customers, customerSearch]);
 
+  // Filtered Services
+  const filteredServices = useMemo(() => {
+    const q = serviceSearch.toLowerCase().trim();
+    return categoriesList.filter(c => {
+      return !q || c.name_en.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
+    });
+  }, [categoriesList, serviceSearch]);
+
+  // Category Toggle Active/Inactive
+  const handleToggleCategory = async (catId: string, currentStatus: boolean) => {
+    const client = getClient();
+    if (!client) return;
+    const newStatus = !currentStatus;
+    setCategoriesList(prev => prev.map(c => c.id === catId ? { ...c, is_active: newStatus } : c));
+    const { error } = await client.from('service_categories').update({ is_active: newStatus }).eq('id', catId);
+    if (error) {
+      setCategoriesList(prev => prev.map(c => c.id === catId ? { ...c, is_active: currentStatus } : c));
+      setCatActionMsg('Failed to update category status.');
+    } else {
+      setCatActionMsg(`Service category ${newStatus ? 'activated' : 'deactivated'} successfully.`);
+      setTimeout(() => setCatActionMsg(''), 4000);
+    }
+  };
+
+  // Add Category from Admin
+  const handleAdminAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    const client = getClient();
+    if (!client) return;
+    setCatActionLoading(true);
+    const cleanName = newCatName.trim();
+    let slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!slug) slug = `service-${Date.now()}`;
+
+    const { data, error } = await client.from('service_categories').insert({
+      name_en: cleanName,
+      slug,
+      is_active: true,
+    }).select().single();
+
+    if (error) {
+      setCatActionMsg(`Error: ${error.message}`);
+    } else if (data) {
+      setCategoriesList(prev => [...prev, { ...data, worker_count: 0 }]);
+      setNewCatName('');
+      setShowAddCatModal(false);
+      setCatActionMsg(`✓ Service "${cleanName}" added successfully.`);
+      setTimeout(() => setCatActionMsg(''), 4000);
+    }
+    setCatActionLoading(false);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -680,7 +788,8 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
             { key: 'today', label: "Today's Work Done", icon: CheckCircle2, badge: stats.todayDoneCount > 0 ? `${stats.todayDoneCount} Done Today` : null, highlight: true },
             { key: 'overview', label: 'Overview & Finances', icon: BarChart3, badge: null },
             { key: 'bookings', label: 'All Tasks & Calling', icon: Briefcase, badge: stats.totalJobs },
-            { key: 'workers', label: 'Workers by Category', icon: Wrench, badge: stats.totalWorkers },
+            { key: 'workers', label: 'Workers Directory', icon: Wrench, badge: stats.totalWorkers },
+            { key: 'services', label: 'Services & Skills', icon: Sparkles, badge: categoriesList.length },
             { key: 'customers', label: 'Customers Directory', icon: Users, badge: stats.totalCustomers },
             { key: 'reviews', label: 'Ratings & Reviews', icon: Star, badge: reviews.length },
             { key: 'admins', label: 'Admin Access & Passwords', icon: Key, badge: adminsList.length },
@@ -1555,6 +1664,288 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            TAB: SERVICES & SKILLS MANAGEMENT
+        ══════════════════════════════════════════════════════════════ */}
+        {tab === 'services' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            
+            {/* Top Summary Banner */}
+            <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: 'white', borderRadius: 20, padding: '24px 28px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.15)', width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={20} color="#38BDF8" />
+                  </div>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
+                    Service Catalog & Skill Categories ({categoriesList.length})
+                  </h2>
+                </div>
+                <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+                  Services available for booking across customer and worker apps. Services added by workers or admins appear here live.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ background: 'rgba(255,255,255,0.08)', padding: '8px 14px', borderRadius: 12, textAlign: 'center', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#38BDF8' }}>
+                    {categoriesList.filter(c => c.is_active).length}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Active on App</div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddCatModal(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #059669, #047857)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 12,
+                    padding: '12px 18px',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: '0 4px 14px rgba(5,150,105,0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Plus size={16} /> + Add New Service Category
+                </button>
+              </div>
+            </div>
+
+            {catActionMsg && (
+              <div style={{ background: catActionMsg.startsWith('✓') ? '#DCFCE7' : '#FEE2E2', color: catActionMsg.startsWith('✓') ? '#166534' : '#991B1B', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700 }}>
+                {catActionMsg}
+              </div>
+            )}
+
+            {/* Filter / Search Bar */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+                <Search size={16} color="#64748B" />
+                <input
+                  type="text"
+                  value={serviceSearch}
+                  onChange={e => setServiceSearch(e.target.value)}
+                  placeholder="Search service name, slug..."
+                  style={{ width: '100%', border: 'none', fontSize: 13, outline: 'none', color: '#0F172A', fontWeight: 500 }}
+                />
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700 }}>
+                Showing {filteredServices.length} of {categoriesList.length} services
+              </div>
+            </div>
+
+            {/* Categories Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+              {filteredServices.map(cat => {
+                const workerCount = categoryCounts[cat.name_en] || cat.worker_count || 0;
+                return (
+                  <div
+                    key={cat.id}
+                    style={{
+                      background: 'white',
+                      borderRadius: 18,
+                      border: `1.5px solid ${cat.is_active ? '#E2E8F0' : '#F1F5F9'}`,
+                      padding: '18px 20px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 14,
+                      opacity: cat.is_active ? 1 : 0.65,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 14, background: cat.is_active ? '#F0FDF4' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0' }}>
+                          {getCategoryIcon(cat.slug, cat.name_en, 22)}
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                            {cat.name_en}
+                          </h3>
+                          <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace', marginTop: 2 }}>
+                            slug: {cat.slug}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span style={{
+                        background: cat.is_active ? '#DCFCE7' : '#F1F5F9',
+                        color: cat.is_active ? '#166534' : '#64748B',
+                        padding: '4px 10px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 800
+                      }}>
+                        {cat.is_active ? '● Active' : '○ Hidden'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderRadius: 12 }}>
+                      <div style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
+                        Specialists Providing:
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: '#0B3D66' }}>
+                        {workerCount} Worker{workerCount === 1 ? '' : 's'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
+                      <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                        {cat.created_at ? `Added ${new Date(cat.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Standard Category'}
+                      </span>
+
+                      <button
+                        onClick={() => handleToggleCategory(cat.id, cat.is_active)}
+                        style={{
+                          background: cat.is_active ? '#FEF2F2' : '#F0FDF4',
+                          border: `1px solid ${cat.is_active ? '#FECACA' : '#BBF7D0'}`,
+                          color: cat.is_active ? '#DC2626' : '#16A34A',
+                          borderRadius: 8,
+                          padding: '6px 12px',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {cat.is_active ? 'Deactivate' : 'Activate Service'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {filteredServices.length === 0 && (
+              <div style={{ background: 'white', borderRadius: 16, padding: '40px 20px', textAlign: 'center', border: '1px solid #E2E8F0' }}>
+                <Sparkles size={32} color="#94A3B8" style={{ marginBottom: 8 }} />
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>No matching service categories</div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>Try a different search or add a new category</div>
+              </div>
+            )}
+
+            {/* ── Admin Add Category Modal ── */}
+            {showAddCatModal && (
+              <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(4, 27, 48, 0.75)',
+                backdropFilter: 'blur(5px)',
+                zIndex: 1000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 20
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  width: '100%',
+                  maxWidth: 420,
+                  padding: '24px 22px',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 12, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Sparkles size={20} color="#059669" />
+                      </div>
+                      <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                        Add New Service Category
+                      </h3>
+                    </div>
+                    <button 
+                      onClick={() => { setShowAddCatModal(false); setNewCatName(''); }}
+                      style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <X size={16} color="#64748B" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAdminAddCategory} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                        Service Name (English)
+                      </label>
+                      <input
+                        type="text"
+                        value={newCatName}
+                        onChange={e => setNewCatName(e.target.value)}
+                        placeholder="e.g. CCTV Camera Installation & Repair"
+                        autoFocus
+                        required
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '12px 14px',
+                          borderRadius: 12,
+                          border: '1.5px solid #059669',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+
+                    {newCatName.trim() && (
+                      <div style={{ background: '#F8FAFC', padding: '10px 14px', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12, color: '#64748B' }}>
+                        Generated Slug: <strong style={{ color: '#0F172A', fontFamily: 'monospace' }}>
+                          {newCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}
+                        </strong>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddCatModal(false); setNewCatName(''); }}
+                        style={{
+                          flex: 1,
+                          padding: '12px',
+                          borderRadius: 12,
+                          border: '1.5px solid #E2E8F0',
+                          background: 'white',
+                          color: '#64748B',
+                          fontWeight: 700,
+                          fontSize: 14,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!newCatName.trim() || catActionLoading}
+                        style={{
+                          flex: 2,
+                          padding: '12px',
+                          borderRadius: 12,
+                          border: 'none',
+                          background: !newCatName.trim() || catActionLoading ? '#CBD5E1' : 'linear-gradient(135deg, #059669, #047857)',
+                          color: 'white',
+                          fontWeight: 800,
+                          fontSize: 14,
+                          cursor: !newCatName.trim() || catActionLoading ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {catActionLoading ? 'Saving…' : 'Create & Publish'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

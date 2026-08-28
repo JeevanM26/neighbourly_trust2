@@ -4,7 +4,7 @@ import { useWorker } from '../../context/WorkerContext';
 import { ServiceCategory, getAssetPath } from '../../lib/types';
 import { getClient, fetchServiceCategories } from '../../lib/supabase';
 import { 
-  ShieldCheck, Check, ChevronRight, Bell, MapPin, Mic, Lock,
+  ShieldCheck, Check, ChevronRight, Bell, MapPin, Mic, Lock, Plus, X,
   Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench, Bug, Flame, Scissors, Car, User
 } from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
@@ -26,7 +26,7 @@ const CategoryIcon = ({ slug, size = 24 }: { slug: string, size?: number }) => {
 type Step = 'login' | 'profile_phone' | 'skills';
 
 export default function WorkerLoginScreen() {
-  const { worker, completeOnboarding, isNewWorker, showToast } = useWorker();
+  const { worker, completeOnboarding, isNewWorker, showToast, addServiceCategory } = useWorker();
   const [step, setStep] = useState<Step>('login');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,6 +37,30 @@ export default function WorkerLoginScreen() {
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
+  // New Service Addition State
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [newServiceName, setNewServiceName] = useState('');
+  const [addingService, setAddingService] = useState(false);
+
+  const handleAddNewService = async () => {
+    if (!newServiceName.trim()) {
+      showToast('Please enter a service name.', 'error');
+      return;
+    }
+    setAddingService(true);
+    const newCat = await addServiceCategory(newServiceName.trim());
+    if (newCat) {
+      setCategories(prev => {
+        if (prev.some(c => c.id === newCat.id)) return prev;
+        return [...prev, newCat];
+      });
+      setSelectedCategories(prev => new Set(prev).add(newCat.id));
+      setNewServiceName('');
+      setShowAddServiceModal(false);
+    }
+    setAddingService(false);
+  };
 
   useEffect(() => {
     fetchServiceCategories().then(data => setCategories(data));
@@ -564,8 +588,158 @@ export default function WorkerLoginScreen() {
               </button>
             );
           })}
+
+          {/* ── Add New / Custom Service Button ── */}
+          <button
+            type="button"
+            onClick={() => setShowAddServiceModal(true)}
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              background: '#ECFDF5',
+              border: '2px dashed #059669',
+              borderRadius: 18,
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              cursor: 'pointer',
+              marginTop: 4,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Plus size={24} color="#059669" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 900, color: '#065F46' }}>
+                + Add Other Service / Skill
+              </div>
+              <div style={{ fontSize: 12, color: '#047857', fontWeight: 500, marginTop: 2 }}>
+                Don't see your profession? Add it here.
+              </div>
+            </div>
+          </button>
         </div>
       </div>
+
+      {/* ── Add Service Modal ── */}
+      {showAddServiceModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(4, 27, 48, 0.75)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 24,
+            width: '100%',
+            maxWidth: 380,
+            padding: '24px 20px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            animation: 'scaleIn 0.2s ease-out'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Wrench size={18} color="#059669" />
+                </div>
+                <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                  Add New Service
+                </h3>
+              </div>
+              <button 
+                onClick={() => { setShowAddServiceModal(false); setNewServiceName(''); }}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={16} color="#64748B" />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: '0 0 16px' }}>
+              Enter the name of your service or profession. It will be added instantly, notified to admin, and made available for customers to book.
+            </p>
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Service Name
+              </label>
+              <input
+                type="text"
+                value={newServiceName}
+                onChange={(e) => setNewServiceName(e.target.value)}
+                placeholder="e.g. CCTV Installation, Gardening, Solar Repair"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNewService();
+                }}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px 14px',
+                  borderRadius: 14,
+                  border: '1.5px solid #059669',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  outline: 'none',
+                  color: '#0F172A',
+                  background: '#F8FAFC'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => { setShowAddServiceModal(false); setNewServiceName(''); }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: 14,
+                  border: '1.5px solid #E2E8F0',
+                  background: 'white',
+                  color: '#64748B',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNewService}
+                disabled={!newServiceName.trim() || addingService}
+                style={{
+                  flex: 2,
+                  padding: '12px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: !newServiceName.trim() || addingService ? '#CBD5E1' : 'linear-gradient(135deg, #059669, #065F46)',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: 14,
+                  cursor: !newServiceName.trim() || addingService ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: newServiceName.trim() && !addingService ? '0 4px 12px rgba(5,150,105,0.3)' : 'none'
+                }}
+              >
+                {addingService ? 'Adding…' : <>Add & Select Skill <Check size={16} /></>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bottom Action Bar */}
       <div style={{

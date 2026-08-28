@@ -10,7 +10,8 @@ import {
   subscribeToBookingOffers, isConfigured, getClient,
   fetchActiveBookings, fetchBookingHistory,
   deleteWorkerAccount, createWorkerProfile, fetchWorkerProfile,
-  updateWorkerProfileData, updateWorkerServiceRadius, fetchServiceCategories, fetchPendingOffers
+  updateWorkerProfileData, updateWorkerServiceRadius, fetchServiceCategories, fetchPendingOffers,
+  addNewServiceCategory
 } from '../lib/supabase';
 import { getTranslation } from '../lib/i18n';
 import { useWebRTC } from '../hooks/useWebRTC';
@@ -99,6 +100,7 @@ interface WorkerContextType {
   deleteAccount: () => Promise<void>;
   updateProfileData: (name: string, categoryIds: string[]) => Promise<boolean>;
   updateServiceRadius: (radiusKm: number) => Promise<boolean>;
+  addServiceCategory: (name: string, iconUrl?: string) => Promise<ServiceCategory | null>;
 
   isOnline: boolean;
   toggleOnline: () => Promise<void>;
@@ -251,6 +253,20 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCategories(cats);
     };
     fetchCats();
+
+    const client = getClient();
+    if (!client) return;
+
+    const channel = client
+      .channel('public:service_categories_worker')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_categories' }, () => {
+        fetchCats();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -573,6 +589,22 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [worker?.id, showToast]);
 
+  const addServiceCategory = useCallback(async (name: string, iconUrl?: string): Promise<ServiceCategory | null> => {
+    if (!name?.trim()) return null;
+    const newCat = await addNewServiceCategory(name.trim(), iconUrl);
+    if (newCat) {
+      setCategories(prev => {
+        if (prev.some(c => c.id === newCat.id)) return prev;
+        return [...prev, newCat];
+      });
+      showToast(`Added new service: ${newCat.name_en}! 🎉`);
+      return newCat;
+    } else {
+      showToast('Failed to add new service.', 'error');
+      return null;
+    }
+  }, [showToast]);
+
   const logoutWorker = useCallback(() => {
     realtimeRef.current?.unsubscribe();
     
@@ -730,7 +762,7 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <WorkerContext.Provider value={{
       worker, isLoggedIn: !!worker && !isNewWorker, isNewWorker, isAuthLoading, categories,
-      loginWorker, completeOnboarding, logoutWorker, deleteAccount, updateProfileData, updateServiceRadius,
+      loginWorker, completeOnboarding, logoutWorker, deleteAccount, updateProfileData, updateServiceRadius, addServiceCategory,
       isOnline, toggleOnline,
       offers, activeBookings, completedBookings,
       isLoading, refreshBookings,
