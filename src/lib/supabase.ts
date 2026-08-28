@@ -48,6 +48,11 @@ function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
       const lng = Number(rawLoc.lng);
       if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
     }
+    if (rawLoc.latitude != null && rawLoc.longitude != null) {
+      const lat = Number(rawLoc.latitude);
+      const lng = Number(rawLoc.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+    }
     if (Array.isArray(rawLoc.coordinates) && rawLoc.coordinates.length >= 2) {
       const lng = Number(rawLoc.coordinates[0]);
       const lat = Number(rawLoc.coordinates[1]);
@@ -55,7 +60,39 @@ function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
     }
   }
   if (typeof rawLoc === 'string') {
-    const match = rawLoc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    const trimmed = rawLoc.trim();
+    // 1. Check EWKB / WKB Hex string (standard PostGIS binary format returned by PostgREST)
+    if (/^[0-9a-fA-F]{42,}$/.test(trimmed)) {
+      try {
+        const isLittleEndian = trimmed.substring(0, 2).toLowerCase() === '01';
+        let offset = 2;
+        const hasSrid = isLittleEndian ? (trimmed.substring(8, 10) === '20') : (trimmed.substring(2, 4) === '20');
+        offset += 8;
+        if (hasSrid) {
+          offset += 8;
+        }
+        const xHex = trimmed.substring(offset, offset + 16);
+        const yHex = trimmed.substring(offset + 16, offset + 32);
+        if (xHex.length === 16 && yHex.length === 16) {
+          const xBytes = new Uint8Array(8);
+          const yBytes = new Uint8Array(8);
+          for (let i = 0; i < 8; i++) {
+            xBytes[i] = parseInt(xHex.substring(i * 2, i * 2 + 2), 16);
+            yBytes[i] = parseInt(yHex.substring(i * 2, i * 2 + 2), 16);
+          }
+          const viewX = new DataView(xBytes.buffer, xBytes.byteOffset, xBytes.byteLength);
+          const viewY = new DataView(yBytes.buffer, yBytes.byteOffset, yBytes.byteLength);
+          const lng = viewX.getFloat64(0, isLittleEndian);
+          const lat = viewY.getFloat64(0, isLittleEndian);
+          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            return { lat, lng };
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Check EWKT / WKT: POINT(lng lat) or SRID=4326;POINT(lng lat)
+    const match = trimmed.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
     if (match) {
       const lng = parseFloat(match[1]);
       const lat = parseFloat(match[2]);

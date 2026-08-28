@@ -54,12 +54,13 @@ export default function InteractiveMap({ userLoc, workers, onSelectWorker }: Int
       // Add provider markers
       workers.forEach((w) => {
         // We use any assertions here to allow compilation for fields not in WorkerProfile yet (Phase 2 constraint)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const workerAny = w as any;
-        if (!workerAny.lat || !workerAny.lng) return; // Skip if no coords
+        const workerLat = w.location?.lat ?? workerAny.lat;
+        const workerLng = w.location?.lng ?? workerAny.lng;
+        if (!workerLat || !workerLng) return; // Skip if no coords
         
         const markerColor = workerAny.featured ? '#F5A623' : '#0B3D66';
-        const providerMarker = L.circleMarker([workerAny.lat, workerAny.lng], {
+        const providerMarker = L.circleMarker([workerLat, workerLng], {
           radius: 8,
           fillColor: markerColor,
           color: '#FFFFFF',

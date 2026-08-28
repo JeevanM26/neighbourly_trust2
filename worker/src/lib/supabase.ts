@@ -312,12 +312,45 @@ function parseLocation(loc: any): { lat: number; lng: number } | undefined {
     if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
       return { lat: loc.lat, lng: loc.lng };
     }
+    if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+      return { lat: loc.latitude, lng: loc.longitude };
+    }
     if (Array.isArray(loc.coordinates) && loc.coordinates.length >= 2) {
       return { lat: Number(loc.coordinates[1]), lng: Number(loc.coordinates[0]) };
     }
   }
   if (typeof loc === 'string') {
-    const match = loc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    const trimmed = loc.trim();
+    // 1. Check EWKB / WKB Hex string
+    if (/^[0-9a-fA-F]{42,}$/.test(trimmed)) {
+      try {
+        const isLittleEndian = trimmed.substring(0, 2).toLowerCase() === '01';
+        let offset = 2;
+        const hasSrid = isLittleEndian ? (trimmed.substring(8, 10) === '20') : (trimmed.substring(2, 4) === '20');
+        offset += 8;
+        if (hasSrid) offset += 8;
+        const xHex = trimmed.substring(offset, offset + 16);
+        const yHex = trimmed.substring(offset + 16, offset + 32);
+        if (xHex.length === 16 && yHex.length === 16) {
+          const xBytes = new Uint8Array(8);
+          const yBytes = new Uint8Array(8);
+          for (let i = 0; i < 8; i++) {
+            xBytes[i] = parseInt(xHex.substring(i * 2, i * 2 + 2), 16);
+            yBytes[i] = parseInt(yHex.substring(i * 2, i * 2 + 2), 16);
+          }
+          const viewX = new DataView(xBytes.buffer, xBytes.byteOffset, xBytes.byteLength);
+          const viewY = new DataView(yBytes.buffer, yBytes.byteOffset, yBytes.byteLength);
+          const lng = viewX.getFloat64(0, isLittleEndian);
+          const lat = viewY.getFloat64(0, isLittleEndian);
+          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            return { lat, lng };
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Check EWKT: POINT(lng lat)
+    const match = trimmed.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
     if (match) {
       const lng = parseFloat(match[1]);
       const lat = parseFloat(match[2]);
