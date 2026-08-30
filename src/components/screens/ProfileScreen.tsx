@@ -4,10 +4,13 @@ import { useLocation } from '../../context/LocationContext';
 import { LanguageCode } from '../../lib/types';
 import { 
   User, Globe, Volume2, VolumeX, LogOut, ChevronRight, Shield, HelpCircle, 
-  Bell, ShieldCheck, MapPin, Home, Briefcase, Heart, Plus, Edit3, 
-  Check, RefreshCw, Navigation, Building2, Trash2, Crosshair
+  Bell, BellRing, ShieldCheck, MapPin, Home, Briefcase, Heart, Plus, Edit3, 
+  Check, RefreshCw, Navigation, Building2, Trash2, Crosshair, Sparkles
 } from 'lucide-react';
 import PrivacyPolicyModal from '../PrivacyPolicyModal';
+import { PermissionModal } from '../PermissionModal';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { registerFcmToken } from '../../lib/firebase';
 
 export interface SavedAddress {
   id: string;
@@ -64,6 +67,50 @@ export default function ProfileScreen() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showNotifPermissionModal, setShowNotifPermissionModal] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<string>('default');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const handleToggleNotification = () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      showToast('Notifications are not supported on this browser.', 'error');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      showToast('Push notifications are already active!', 'info');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      showToast('Notifications are blocked in Chrome. Please allow notifications from site settings.', 'info');
+      return;
+    }
+    setShowNotifPermissionModal(true);
+  };
+
+  const handleAllowNotifications = async () => {
+    setShowNotifPermissionModal(false);
+    try {
+      const res = await requestNotificationPermission();
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
+      if (res === 'granted') {
+        showToast('✅ Push notifications enabled!', 'success');
+        if (user?.id) {
+          registerFcmToken(user.id).catch(() => {});
+        }
+      } else {
+        showToast('Notification permission was not granted.', 'info');
+      }
+    } catch {
+      showToast('Unable to enable notifications.', 'error');
+    }
+  };
 
   // Address state
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(DEFAULT_PRESETS);
@@ -459,8 +506,31 @@ export default function ProfileScreen() {
           />
         </div>
 
+        <div style={{ borderBottom: '1px solid #F1F5F9' }}>
+          <SettingRow
+            icon={notificationPermission === 'granted' ? <BellRing size={18} color="#0B3D66" /> : <Bell size={18} color="#94A3B8" />}
+            label="Push Notifications"
+            right={
+              <div
+                style={{
+                  width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
+                  background: notificationPermission === 'granted' ? '#0B3D66' : '#E2E8F0',
+                  position: 'relative', transition: 'background 0.2s ease',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 2, left: notificationPermission === 'granted' ? 22 : 2,
+                  width: 20, height: 20, borderRadius: '50%', background: 'white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s ease',
+                }} />
+              </div>
+            }
+            onClick={handleToggleNotification}
+          />
+        </div>
+
         <SettingRow
-          icon={<Bell size={18} color={settings.voice ? '#0B3D66' : '#94A3B8'} />}
+          icon={<Volume2 size={18} color={settings.voice ? '#0B3D66' : '#94A3B8'} />}
           label="Voice Guidance"
           right={
             <div
@@ -852,7 +922,17 @@ export default function ProfileScreen() {
             </div>
           </div>
         </div>
-      )}
+      {/* Notification Permission Explanation Modal */}
+      <PermissionModal
+        isOpen={showNotifPermissionModal}
+        title="Enable Order & Call Alerts"
+        description="Stay notified when a specialist accepts your job, arrives at your location, or calls you."
+        icon={<BellRing size={32} />}
+        allowLabel="Allow Notifications"
+        denyLabel="Not Now"
+        onAllow={handleAllowNotifications}
+        onDeny={() => setShowNotifPermissionModal(false)}
+      />
     </div>
   );
 }
