@@ -242,7 +242,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         window.removeEventListener('app-error', errorHandler);
       };
     }
-  }, []);
+// ─── FCM helpers (Customer App) ──────────────────────────────────
+async function registerCustomerFcmToken(customerId: string): Promise<void> {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      const perm = await PushNotifications.requestPermissions();
+      if (perm.receive !== 'granted') return;
+
+      await PushNotifications.register();
+      PushNotifications.addListener('registration', async (token) => {
+        try {
+          const client = getClient();
+          if (client && token.value) {
+            await client.from('push_tokens').upsert({
+              profile_id: customerId,
+              token: token.value,
+              platform: 'android',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'profile_id,token' });
+            await client.from('profiles').update({
+              fcm_token: token.value
+            }).eq('id', customerId);
+          }
+        } catch (e) {
+          console.error('[FCM Customer] Failed to save token:', e);
+        }
+      });
+    } else {
+      const { registerFcmToken } = await import('../lib/firebase');
+      await registerFcmToken(customerId);
+    }
+  } catch (e) {
+    console.warn('[FCM Customer] Registration notice:', e);
+  }
+}
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -253,7 +288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (typeof window === 'undefined') return;
     if (user) {
       localStorage.setItem('nt_user', JSON.stringify(user));
-      registerFcmToken(user.id).catch(() => {});
+      registerCustomerFcmToken(user.id).catch(() => {});
     }
   }, [user]);
 

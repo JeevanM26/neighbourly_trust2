@@ -43,6 +43,9 @@ async function registerFcmToken(workerId: string): Promise<void> {
               platform: 'android',
               updated_at: new Date().toISOString()
             }, { onConflict: 'profile_id,token' });
+            await client.from('worker_profiles').update({
+              fcm_token: token.value
+            }).eq('profile_id', workerId);
           }
         } catch (e) {
           console.error('[FCM] Failed to save token:', e);

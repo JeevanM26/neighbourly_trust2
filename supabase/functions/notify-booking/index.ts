@@ -154,28 +154,47 @@ async function sendFcmNotification({ token, channelId, title, body, sound, data 
   }
 }
 
-// ─── Notify Customer (looks in `profiles` table) ──────────────────────────────
+// ─── Notify Customer (looks in `push_tokens` and `profiles` table) ────────────
 async function notifyCustomer(
   supabase: ReturnType<typeof createClient>,
   customerId: string,
   { title, body, data }: { title: string; body: string; data: Record<string, string> },
 ) {
+  const tokens = new Set<string>();
+
+  // 1. Query push_tokens table
+  const { data: pushRows } = await supabase
+    .from('push_tokens')
+    .select('token')
+    .eq('profile_id', customerId);
+
+  if (pushRows && pushRows.length > 0) {
+    for (const row of pushRows) {
+      if (row.token) tokens.add(row.token);
+    }
+  }
+
+  // 2. Fallback to profiles.fcm_token
   const { data: profile } = await supabase
-    .from('profiles').select('fcm_token').eq('id', customerId).single()
+    .from('profiles').select('fcm_token').eq('id', customerId).maybeSingle();
 
   if (profile?.fcm_token) {
+    tokens.add(profile.fcm_token);
+  }
+
+  for (const token of tokens) {
     await sendFcmNotification({
-      token:     profile.fcm_token,
+      token,
       channelId: 'booking_alert',
       title,
       body,
       sound:     'booking_ringtone',
       data,
-    })
+    });
   }
 }
 
-// ─── Notify Worker (looks in `worker_profiles` table) ────────────────────────
+// ─── Notify Worker (looks in `push_tokens` and `worker_profiles` table) ────────
 async function notifyWorker(
   supabase: ReturnType<typeof createClient>,
   workerId: string,
@@ -185,11 +204,30 @@ async function notifyWorker(
     data: Record<string, string>
   },
 ) {
+  const tokens = new Set<string>();
+
+  // 1. Query push_tokens table
+  const { data: pushRows } = await supabase
+    .from('push_tokens')
+    .select('token')
+    .eq('profile_id', workerId);
+
+  if (pushRows && pushRows.length > 0) {
+    for (const row of pushRows) {
+      if (row.token) tokens.add(row.token);
+    }
+  }
+
+  // 2. Fallback to worker_profiles.fcm_token
   const { data: profile } = await supabase
-    .from('worker_profiles').select('fcm_token').eq('profile_id', workerId).single()
+    .from('worker_profiles').select('fcm_token').eq('profile_id', workerId).maybeSingle();
 
   if (profile?.fcm_token) {
-    await sendFcmNotification({ token: profile.fcm_token, channelId, title, body, sound, data })
+    tokens.add(profile.fcm_token);
+  }
+
+  for (const token of tokens) {
+    await sendFcmNotification({ token, channelId, title, body, sound, data });
   }
 }
 
@@ -204,13 +242,10 @@ serve(async (req) => {
     if (table === 'booking_offers' && type === 'INSERT') {
       const { worker_id, booking_id } = record
 
-      const [{ data: profile }, { data: booking }] = await Promise.all([
-        supabase.from('worker_profiles').select('fcm_token, full_name').eq('profile_id', worker_id).single(),
-        supabase.from('bookings').select('category_name, customer_name, address').eq('id', booking_id).maybeSingle(),
-      ])
+      const { data: booking } = await supabase
+        .from('bookings').select('category_name, customer_name, address').eq('id', booking_id).maybeSingle()
 
-      await sendFcmNotification({
-        token:     profile?.fcm_token,
+      await notifyWorker(supabase, worker_id, {
         channelId: 'booking_alert',
         title:     `🔔 New ${booking?.category_name || 'Service'} Booking!`,
         body:      `${booking?.customer_name || 'A customer'} needs help — tap to view and accept`,
