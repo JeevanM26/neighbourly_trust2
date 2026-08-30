@@ -40,7 +40,7 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
   }
 }
 
-function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
+export function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
   if (!rawLoc) return null;
   if (typeof rawLoc === 'object') {
     if (rawLoc.lat != null && rawLoc.lng != null) {
@@ -102,7 +102,7 @@ function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
   return null;
 }
 
-function calcWorkerDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+export function calcWorkerDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dL = ((lat2 - lat1) * Math.PI) / 180;
   const dG = ((lng2 - lng1) * Math.PI) / 180;
@@ -331,7 +331,7 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
 }
 
 // ─── Realtime Worker Status Subscription ───────────────────
-export function subscribeToLiveWorkers(onUpdate: () => void): RealtimeChannel | null {
+export function subscribeToLiveWorkers(onUpdate: (payload?: any) => void): RealtimeChannel | null {
   const client = getClient();
   if (!client) return null;
   const channel = client.channel('public:worker_profiles:live');
@@ -339,8 +339,30 @@ export function subscribeToLiveWorkers(onUpdate: () => void): RealtimeChannel | 
     event: '*',
     schema: 'public',
     table: 'worker_profiles'
-  }, () => {
-    onUpdate();
+  }, (payload) => {
+    onUpdate(payload);
+  }).subscribe();
+  return channel;
+}
+
+// ─── Realtime Assigned Worker Location Tracking ──────────────
+export function subscribeToAssignedWorkerLocation(
+  workerId: string, 
+  onLocationChange: (loc: { lat: number; lng: number }) => void
+): RealtimeChannel | null {
+  const client = getClient();
+  if (!client || !workerId) return null;
+  const channel = client.channel(`assigned_worker:${workerId}`);
+  channel.on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'worker_profiles',
+    filter: `profile_id=eq.${workerId}`
+  }, (payload: any) => {
+    const newLoc = parseWorkerCoords(payload?.new?.location);
+    if (newLoc) {
+      onLocationChange(newLoc);
+    }
   }).subscribe();
   return channel;
 }

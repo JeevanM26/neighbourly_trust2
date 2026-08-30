@@ -166,6 +166,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   // New Admin Form State
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminPhone, setNewAdminPhone] = useState('');
+  const [newAdminPin, setNewAdminPin] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'admin' | 'finance' | 'support'>('admin');
   const [adminActionMsg, setAdminActionMsg] = useState('');
 

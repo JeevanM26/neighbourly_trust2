@@ -1,18 +1,19 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useLocation } from '../../context/LocationContext';
 import { Booking } from '../../lib/types';
-import { Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarDays, Phone, Star, ShieldCheck, MapPin, Sparkles, MessageSquare, ChevronRight, X } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarDays, Phone, Star, ShieldCheck, MapPin, Sparkles, MessageSquare, ChevronRight, X, Navigation } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
-import { getClient } from '../../lib/supabase';
+import { getClient, subscribeToAssignedWorkerLocation, calcWorkerDistance, parseWorkerCoords } from '../../lib/supabase';
 import { getStatusLabel } from '../../lib/i18n';
 
 const getStepLabels = (lang: string) => {
   const map: Record<string, string[]> = {
     kn: ['ವಿನಂತಿ', 'ನಿಯೋಜನೆ', 'ದಾರಿಯಲ್ಲಿ', 'ಕೆಲಸ', 'ಪೂರ್ಣ'],
     hi: ['अनुरोध', 'आवंटित', 'रास्ते में', 'कार्यरत', 'पूर्ण'],
-    te: ['అభ్యర్థన', 'కేటాయింపు', 'దారిలో', 'పని', 'పూర్తి'],
+    te: ['అభ్యర్థన', 'కేటాయింపు', 'దారిలో', 'పನಿ', 'పూర్తి'],
     ta: ['கோரிக்கை', 'ஒதுக்கீடு', 'வழியில்', 'வேலை', 'முடிவு'],
     mr: ['विनंती', 'नियुक्त', 'मार्गावर', 'काम', 'पूर्ण'],
     bn: ['অনুরোধ', 'নির্ধারিত', 'পথে', 'কাজ', 'সম্পন্ন'],
@@ -44,6 +45,8 @@ function BookingCard({
   onQuickMessage: (b: Booking, msg: string) => void;
 }) {
   const { user, webrtc, settings } = useApp();
+  const { userLocation } = useLocation();
+  const [liveWorkerLoc, setLiveWorkerLoc] = useState<{ lat: number; lng: number } | null>(null);
   const lang = settings?.language || 'en';
   const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
   const statusLabel = getStatusLabel(booking.status, lang);
@@ -66,6 +69,39 @@ function BookingCard({
   const isActive = ['searching', 'pending', 'accepted', 'on_the_way', 'in_progress'].includes(booking.status);
   const canCall = ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && !!booking.worker_id;
   const completionPin = (booking.id || '0000').slice(-4).toUpperCase();
+
+  // ── Live Worker Real-Time Location Subscription ──
+  useEffect(() => {
+    if (!booking.worker_id || !isActive) return;
+
+    // Fetch initial worker location
+    const client = getClient();
+    if (client) {
+      client.from('worker_profiles').select('location').eq('profile_id', booking.worker_id).maybeSingle().then(({ data }) => {
+        if (data?.location) {
+          const coords = parseWorkerCoords(data.location);
+          if (coords) setLiveWorkerLoc(coords);
+        }
+      });
+    }
+
+    const channel = subscribeToAssignedWorkerLocation(booking.worker_id, (newLoc) => {
+      setLiveWorkerLoc(newLoc);
+    });
+
+    return () => {
+      if (channel) channel.unsubscribe();
+    };
+  }, [booking.worker_id, isActive]);
+
+  const targetCustomerLat = booking.customer_lat || userLocation?.lat;
+  const targetCustomerLng = booking.customer_lng || userLocation?.lng;
+
+  const liveDistanceKm = (liveWorkerLoc && targetCustomerLat && targetCustomerLng)
+    ? Math.round(calcWorkerDistance(targetCustomerLat, targetCustomerLng, liveWorkerLoc.lat, liveWorkerLoc.lng) * 10) / 10
+    : null;
+
+  const approxEtaMins = liveDistanceKm != null ? Math.max(1, Math.round(liveDistanceKm * 3.5)) : null;
 
   return (
     <div style={{
@@ -110,6 +146,36 @@ function BookingCard({
             </span>
           </div>
         </div>
+
+        {/* ── Real-Time Specialist Tracking Banner ── */}
+        {isActive && ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && (
+          <div style={{
+            background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)',
+            borderRadius: 14, padding: '10px 14px', marginBottom: 14,
+            border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A' }} />
+                <div style={{ position: 'absolute', width: 18, height: 18, borderRadius: '50%', background: 'rgba(22, 163, 74, 0.3)', animation: 'pulse-ring 2s infinite' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#14532D' }}>
+                  {liveDistanceKm !== null 
+                    ? `Specialist is ~${liveDistanceKm} km away (${approxEtaMins} min ETA)`
+                    : 'Live GPS connected · Tracking specialist'}
+                </div>
+                <div style={{ fontSize: 10, color: '#166534', fontWeight: 600 }}>
+                  {booking.status === 'on_the_way' ? 'On the way to your location 🛵' : booking.status === 'in_progress' ? 'Service in progress ⚡' : 'Specialist preparing to depart'}
+                </div>
+              </div>
+            </div>
+            <div style={{ background: 'white', padding: '4px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, color: '#15803D', border: '1px solid #86EFAC', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Navigation size={11} color="#16A34A" />
+              <span>LIVE GPS</span>
+            </div>
+          </div>
+        )}
 
         {/* ── 5-Stage Live Progress Stepper (Active orders only) ── */}
         {isActive && status.step > 0 && (

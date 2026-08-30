@@ -26,13 +26,26 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
         }, { timeout: 10000 });
 
         let lastUpdate = 0;
+        let lastLat = 0;
+        let lastLng = 0;
+
         geoWatchRef.current = navigator.geolocation.watchPosition(async (pos) => {
           const now = Date.now();
-          if (now - lastUpdate > 20000) {
+          const isActivelyAssigned = activeBookingsRef.current.some(b => b.status === 'accepted' || b.status === 'on_the_way' || b.status === 'in_progress');
+          const intervalMs = isActivelyAssigned ? 10000 : 18000;
+          
+          let lat = pos.coords.latitude;
+          let lng = pos.coords.longitude;
+          
+          // Check if moved significantly (> 0.0002 deg ~= 20 meters)
+          const distMoved = Math.abs(lat - lastLat) + Math.abs(lng - lastLng);
+          const shouldUpdate = (now - lastUpdate > intervalMs) || (distMoved > 0.0003 && now - lastUpdate > 5000);
+
+          if (shouldUpdate) {
             lastUpdate = now;
-            let lat = pos.coords.latitude;
-            let lng = pos.coords.longitude;
-            const isActivelyAssigned = activeBookingsRef.current.some(b => b.status === 'accepted' || b.status === 'on_the_way' || b.status === 'in_progress');
+            lastLat = lat;
+            lastLng = lng;
+
             if (!isActivelyAssigned) {
               lat = Math.round(lat * 1000) / 1000;
               lng = Math.round(lng * 1000) / 1000;
@@ -43,7 +56,7 @@ export const WorkerLocationProvider: React.FC<{ children: React.ReactNode }> = (
           console.warn("Location watch error", err);
         }, {
           enableHighAccuracy: true,
-          maximumAge: 10000,
+          maximumAge: 8000,
         });
       }
     } else {

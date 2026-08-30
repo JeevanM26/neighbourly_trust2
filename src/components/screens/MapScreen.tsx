@@ -8,7 +8,7 @@ import {
   Flame, Scissors, Car, Check, RefreshCw, Layers
 } from 'lucide-react';
 import { useLocation } from '../../context/LocationContext';
-import { findNearbyWorkers } from '../../lib/supabase';
+import { findNearbyWorkers, subscribeToLiveWorkers, parseWorkerCoords, calcWorkerDistance } from '../../lib/supabase';
 
 // Category metadata helper
 function getCategoryInfo(slug: string = '') {
@@ -262,16 +262,20 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     showToast('Reset to your live GPS location 📍', 'info');
   };
 
-  // ── Fetch Workers ──
+  // ── Fetch Workers with Continuous Real-Time Updates & Polling ──
   useEffect(() => {
     let isMounted = true;
-    let timer: NodeJS.Timeout;
+    let pollTimer: NodeJS.Timeout | null = null;
+    let initialTimer: NodeJS.Timeout | null = null;
 
-    async function fetchWorkers() {
-      setIsLoadingWorkers(true);
+    async function loadWorkers(showLoading = false) {
+      if (showLoading) setIsLoadingWorkers(true);
       const searchLat = isEditMode && mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
       const searchLng = isEditMode && mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
-      if (!searchLat || !searchLng) return;
+      if (!searchLat || !searchLng) {
+        if (showLoading) setIsLoadingWorkers(false);
+        return;
+      }
       
       let results: any[] = [];
       if (activeFilter === 'All') {
@@ -286,17 +290,76 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       if (isMounted) {
         const unique = Array.from(new Map(results.map(w => [w.worker_id, w])).values());
         setVisibleProviders(unique);
-        setIsLoadingWorkers(false);
+        if (showLoading) setIsLoadingWorkers(false);
       }
     }
 
     if (categories.length > 0) {
-      timer = setTimeout(() => { fetchWorkers(); }, 400);
+      initialTimer = setTimeout(() => { loadWorkers(true); }, 300);
     }
+
+    // 1. Instant Realtime WebSocket Subscription on worker_profiles
+    const channel = subscribeToLiveWorkers((payload) => {
+      if (!isMounted) return;
+      const newRecord = payload?.new;
+      const eventType = payload?.eventType;
+
+      // Worker went offline or profile deleted
+      if (eventType === 'DELETE' || (newRecord && newRecord.is_online === false)) {
+        const workerId = payload?.old?.profile_id || newRecord?.profile_id;
+        if (workerId) {
+          setVisibleProviders(prev => prev.filter(w => w.worker_id !== workerId));
+        }
+        return;
+      }
+
+      // Worker updated location or came online
+      if (newRecord && newRecord.is_online === true) {
+        const parsedLoc = parseWorkerCoords(newRecord.location);
+        const searchLat = isEditMode && mapCenter ? mapCenter.lat : (searchLocation?.lat || userLocation?.lat);
+        const searchLng = isEditMode && mapCenter ? mapCenter.lng : (searchLocation?.lng || userLocation?.lng);
+
+        if (parsedLoc && searchLat && searchLng) {
+          const dist = calcWorkerDistance(searchLat, searchLng, parsedLoc.lat, parsedLoc.lng);
+          const radius = Number(newRecord.service_radius_km) || 15;
+
+          if (dist <= radius) {
+            setVisibleProviders(prev => {
+              const existingIdx = prev.findIndex(w => w.worker_id === newRecord.profile_id);
+              if (existingIdx >= 0) {
+                const updated = [...prev];
+                updated[existingIdx] = {
+                  ...updated[existingIdx],
+                  location: parsedLoc,
+                  distance_km: Math.round(dist * 10) / 10,
+                  is_online: true,
+                };
+                return updated;
+              } else {
+                // New nearby worker entered range / went online
+                loadWorkers(false);
+                return prev;
+              }
+            });
+            return;
+          }
+        }
+      }
+
+      // Default refresh for other events
+      loadWorkers(false);
+    });
+
+    // 2. Resilient polling fallback (every 15 seconds)
+    pollTimer = setInterval(() => {
+      loadWorkers(false);
+    }, 15000);
     
     return () => { 
       isMounted = false; 
-      if (timer) clearTimeout(timer);
+      if (initialTimer) clearTimeout(initialTimer);
+      if (pollTimer) clearInterval(pollTimer);
+      if (channel) channel.unsubscribe();
     };
   }, [activeFilter, mapCenter, userLocation?.lat, userLocation?.lng, categories, isEditMode, searchLocation?.lat, searchLocation?.lng]);
 
