@@ -20,6 +20,7 @@ export class CallManager {
   public remoteStream: MediaStream | null = null;
   public isMuted = false;
   public isSpeakerOn = false;
+  public targetUserId: string | null = null;
 
   private peerConnection: RTCPeerConnection | null = null;
   private signaling: SignalingManager;
@@ -27,6 +28,7 @@ export class CallManager {
   private onStateChange: () => void;
   private autoDeclineTimeout: any = null;
   private personalSubCleanup: (() => void) | null = null;
+  private ringingChannel: any = null;
   private beforeUnloadHandler = () => {
     // Immediately terminate call state if user reloads or closes tab
     if (this.status !== 'idle') {
@@ -42,37 +44,68 @@ export class CallManager {
 
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
 
-    this.personalSubCleanup = this.signaling.subscribeToPersonalChannel(userId, (payload) => {
-      if (this.status === 'idle') {
-        this.incomingCall = {
-          callerId: payload.callerId,
-          callerName: payload.callerName,
-          callerAvatar: payload.callerAvatar,
-          roomId: payload.roomId
-        };
-        this.setStatus('ringing');
+    this.personalSubCleanup = this.signaling.subscribeToPersonalChannel(
+      userId,
+      (payload) => {
+        if (this.status === 'idle') {
+          this.incomingCall = {
+            callerId: payload.callerId,
+            callerName: payload.callerName,
+            callerAvatar: payload.callerAvatar,
+            roomId: payload.roomId
+          };
+          this.setStatus('ringing');
+          this.subscribeToRingingRoom(payload.roomId);
 
-        // Trigger rich browser/system notification
-        sendLocalNotification(`📞 Incoming Call from ${payload.callerName || 'Specialist'}`, {
-          body: 'Tap to answer your Hero Hand voice call',
-          tag: 'call_alert'
-        });
-        
-        // 30-second auto-decline
-        this.autoDeclineTimeout = setTimeout(() => {
-          if (this.status === 'ringing') {
-            this.declineCall();
-          }
-        }, 30000);
-      } else {
-        // Send busy signal back to the specific room
-        const tempSignaling = new SignalingManager(client);
-        tempSignaling.joinRoom(payload.roomId, () => {}).then(() => {
-          tempSignaling.sendSignal('call_busy', {});
-          setTimeout(() => tempSignaling.leaveRoom(), 1000);
-        }).catch(e => console.error('Error joining busy room:', e));
+          // Trigger rich browser/system notification
+          sendLocalNotification(`📞 Incoming Call from ${payload.callerName || 'Specialist'}`, {
+            body: 'Tap to answer your Hero Hand voice call',
+            tag: 'call_alert'
+          });
+          
+          // 30-second auto-decline
+          this.autoDeclineTimeout = setTimeout(() => {
+            if (this.status === 'ringing') {
+              this.declineCall();
+            }
+          }, 30000);
+        } else {
+          // Send busy signal back to the specific room
+          const tempSignaling = new SignalingManager(client);
+          tempSignaling.joinRoom(payload.roomId, () => {}).then(() => {
+            tempSignaling.sendSignal('call_busy', {});
+            setTimeout(() => tempSignaling.leaveRoom(), 1000);
+          }).catch(e => console.error('Error joining busy room:', e));
+        }
+      },
+      (cancelPayload) => {
+        // If incoming call was cancelled by caller before pick-up, immediately dismiss overlay
+        if (this.status === 'ringing' && (!cancelPayload?.roomId || this.incomingCall?.roomId === cancelPayload.roomId)) {
+          this.cleanup();
+        }
       }
-    });
+    );
+  }
+
+  private subscribeToRingingRoom(roomId: string) {
+    if (this.ringingChannel) {
+      try { this.ringingChannel.unsubscribe(); } catch {}
+      this.ringingChannel = null;
+    }
+    const channel = this.signaling['client'].channel(`ringing_${roomId}`);
+    this.ringingChannel = channel;
+    channel
+      .on('broadcast', { event: 'call_ended' }, () => {
+        if (this.status === 'ringing') {
+          this.cleanup();
+        }
+      })
+      .on('broadcast', { event: 'call_declined' }, () => {
+        if (this.status === 'ringing') {
+          this.cleanup();
+        }
+      })
+      .subscribe();
   }
 
   private setStatus(newStatus: CallStatus) {
@@ -212,6 +245,7 @@ export class CallManager {
     if (!stream) return;
     this.localStream = stream;
 
+    this.targetUserId = targetUserId;
     this.activeRoomId = `call_${this.userId}_${targetUserId}_${Date.now()}`;
     this.setStatus('calling');
     await this.setupSignalingHandlers();
@@ -229,6 +263,11 @@ export class CallManager {
   async answerCall() {
     if (!this.incomingCall) return;
     if (this.autoDeclineTimeout) clearTimeout(this.autoDeclineTimeout);
+
+    if (this.ringingChannel) {
+      try { this.ringingChannel.unsubscribe(); } catch {}
+      this.ringingChannel = null;
+    }
 
     const stream = await this.getMediaStream();
     if (!stream) {
@@ -263,6 +302,19 @@ export class CallManager {
   endCall() {
     if (this.status === 'calling' || this.status === 'connected') {
       this.signaling.sendSignal('call_ended', {});
+      if (this.targetUserId && this.activeRoomId) {
+        // Send instant cancellation ping to the callee's personal channel & ringing channel
+        this.signaling.cancelCallPing(this.targetUserId, this.activeRoomId).catch(() => {});
+        try {
+          const ringingCancelChannel = this.signaling['client'].channel(`ringing_${this.activeRoomId}`);
+          ringingCancelChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              ringingCancelChannel.send({ type: 'broadcast', event: 'call_ended', payload: {} });
+              setTimeout(() => { try { ringingCancelChannel.unsubscribe(); } catch {} }, 1000);
+            }
+          });
+        } catch {}
+      }
     }
     this.cleanup();
   }
@@ -288,6 +340,11 @@ export class CallManager {
   cleanup() {
     if (this.autoDeclineTimeout) clearTimeout(this.autoDeclineTimeout);
     
+    if (this.ringingChannel) {
+      try { this.ringingChannel.unsubscribe(); } catch {}
+      this.ringingChannel = null;
+    }
+    
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => track.stop());
       this.localStream = null;
@@ -299,6 +356,7 @@ export class CallManager {
     this.signaling.leaveRoom();
     
     this.activeRoomId = null;
+    this.targetUserId = null;
     this.remoteStream = null;
     this.incomingCall = null;
     this.isMuted = false;

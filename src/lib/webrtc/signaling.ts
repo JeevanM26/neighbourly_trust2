@@ -2,6 +2,7 @@ import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 
 export type SignalingEvent =
   | { type: 'incoming_call'; callerId: string; callerName: string; callerAvatar?: string; roomId: string }
+  | { type: 'call_cancelled'; roomId: string }
   | { type: 'offer'; offer: RTCSessionDescriptionInit; senderId: string }
   | { type: 'answer'; answer: RTCSessionDescriptionInit; senderId: string }
   | { type: 'ice_candidate'; candidate: RTCIceCandidateInit; senderId: string }
@@ -20,18 +21,72 @@ export class SignalingManager {
   }
 
   /**
-   * Listen to a personal channel to receive incoming calls
+   * Listen to a personal channel to receive incoming calls or cancellations
    */
-  subscribeToPersonalChannel(userId: string, onIncomingCall: (payload: Extract<SignalingEvent, { type: 'incoming_call' }>) => void) {
+  subscribeToPersonalChannel(
+    userId: string,
+    onIncomingCall: (payload: Extract<SignalingEvent, { type: 'incoming_call' }>) => void,
+    onCallCancelled?: (payload: { roomId: string }) => void
+  ) {
     const channelHash = typeof btoa !== 'undefined' ? btoa(userId + '_WEBRTC_SALT').replace(/=/g, '') : userId;
     const personalChannel = this.client.channel(`user_${channelHash}`);
-    personalChannel.on('broadcast', { event: 'incoming_call' }, (payload) => {
-      onIncomingCall(payload.payload as any);
-    }).subscribe();
+    personalChannel
+      .on('broadcast', { event: 'incoming_call' }, (payload) => {
+        onIncomingCall(payload.payload as any);
+      })
+      .on('broadcast', { event: 'call_cancelled' }, (payload) => {
+        onCallCancelled?.(payload.payload as any);
+      })
+      .subscribe();
 
     return () => {
       personalChannel.unsubscribe();
     };
+  }
+
+  /**
+   * Cancel / Hang up a call before the receiver answers
+   */
+  async cancelCallPing(targetUserId: string, roomId: string) {
+    const channelHash = typeof btoa !== 'undefined' ? btoa(targetUserId + '_WEBRTC_SALT').replace(/=/g, '') : targetUserId;
+    const cancelChannel = this.client.channel(`user_${channelHash}`);
+    
+    await new Promise<void>((resolve) => {
+      let isDone = false;
+      const timeoutId = setTimeout(() => {
+        if (!isDone) {
+          isDone = true;
+          cancelChannel.unsubscribe();
+          resolve();
+        }
+      }, 3000);
+
+      cancelChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && !isDone) {
+          try {
+            await cancelChannel.send({
+              type: 'broadcast',
+              event: 'call_cancelled',
+              payload: { roomId }
+            });
+          } catch (err) {
+            console.warn('Signaling cancel send error:', err);
+          } finally {
+            if (!isDone) {
+              isDone = true;
+              clearTimeout(timeoutId);
+              cancelChannel.unsubscribe();
+              resolve();
+            }
+          }
+        } else if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && !isDone) {
+          isDone = true;
+          clearTimeout(timeoutId);
+          cancelChannel.unsubscribe();
+          resolve();
+        }
+      });
+    });
   }
 
   /**
