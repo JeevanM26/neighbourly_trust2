@@ -279,9 +279,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       
       let results: any[] = [];
       if (activeFilter === 'All') {
-        const catPromises = categories.map(cat => findNearbyWorkers(cat.id, searchLat, searchLng));
-        const allRes = await Promise.all(catPromises);
-        results = allRes.flat();
+        results = await findNearbyWorkers('all', searchLat, searchLng);
       } else {
         const res = await findNearbyWorkers(activeFilter, searchLat, searchLng);
         results = res.map(w => ({ ...w, __categoryId: activeFilter }));

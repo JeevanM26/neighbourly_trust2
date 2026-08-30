@@ -24,20 +24,47 @@ export function getClient(): SupabaseClient | null {
   return _client;
 }
 
-// ─── Fetch Categories ──────────────────────────────────────
+// ─── Fetch Categories with Memory & LocalStorage Cache ─────
+let _cachedCategories: ServiceCategory[] | null = null;
+let _categoriesLastFetch = 0;
+
 export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
+  // 1. In-memory cache (< 5 mins)
+  if (_cachedCategories && _cachedCategories.length > 0 && Date.now() - _categoriesLastFetch < 300000) {
+    return _cachedCategories;
+  }
+
+  // 2. LocalStorage fast fallback (0ms)
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('nt_categories_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          _cachedCategories = parsed;
+        }
+      }
+    } catch {}
+  }
+
   const client = getClient();
-  if (!client) return [];
+  if (!client) return _cachedCategories || [];
+
   try {
     const { data, error } = await client.from('service_categories').select('*').eq('is_active', true);
-    if (error) {
-      console.warn("fetchServiceCategories query warning:", error.message);
+    if (!error && data && data.length > 0) {
+      _cachedCategories = data;
+      _categoriesLastFetch = Date.now();
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('nt_categories_cache', JSON.stringify(data)); } catch {}
+      }
+      return data;
     }
-    return data || [];
   } catch (e) { 
     console.warn("fetchServiceCategories exception:", e);
-    return []; 
   }
+
+  return _cachedCategories || [];
 }
 
 export function parseWorkerCoords(rawLoc: any): { lat: number; lng: number } | null {
@@ -111,45 +138,51 @@ export function calcWorkerDistance(lat1: number, lng1: number, lat2: number, lng
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Fetch Nearby Workers (Real Live Location & Distance Sorted) ──
+// ─── Fetch Nearby Workers (Single-Batch Ultra-Fast Execution) ──
 export async function findNearbyWorkers(categoryId: string, lat: number, lng: number): Promise<WorkerProfile[]> {
   const client = getClient();
   if (!client) return [];
 
   try {
     let targetCatId = categoryId?.trim() || '';
+    const isAll = !targetCatId || targetCatId.toLowerCase() === 'all';
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetCatId);
 
     // If categoryId is a name or slug rather than a UUID, resolve it to UUID
-    if (targetCatId && targetCatId !== 'all' && !isUUID) {
-      const { data: catRow } = await client
-        .from('service_categories')
-        .select('id')
-        .or(`slug.ilike.${targetCatId},name_en.ilike.${targetCatId}`)
-        .maybeSingle();
-      if (catRow?.id) {
-        targetCatId = catRow.id;
+    if (!isAll && !isUUID) {
+      const cached = _cachedCategories?.find(c => c.slug?.toLowerCase() === targetCatId.toLowerCase() || c.name_en?.toLowerCase() === targetCatId.toLowerCase());
+      if (cached) {
+        targetCatId = cached.id;
+      } else {
+        const { data: catRow } = await client
+          .from('service_categories')
+          .select('id')
+          .or(`slug.ilike.${targetCatId},name_en.ilike.${targetCatId}`)
+          .maybeSingle();
+        if (catRow?.id) {
+          targetCatId = catRow.id;
+        }
       }
     }
 
-    const isSpecificCategory = targetCatId && targetCatId !== 'all';
+    const isSpecificCategory = !isAll && targetCatId && targetCatId.toLowerCase() !== 'all';
 
-    // 1. Try PostGIS RPC first if specific valid UUID category
+    // 1. PostGIS RPC for specific UUID category
     if (isSpecificCategory && isUUID && lat && lng) {
       try {
         const { data, error } = await client.rpc('nearby_workers', {
           p_category_id: targetCatId,
           p_lat: lat,
           p_lng: lng,
-          p_max_distance_km: 25
+          p_max_distance_km: 30
         });
         
         if (!error && data && data.length > 0) {
           return data
-            .map((w: any, i: number) => {
+            .map((w: any) => {
               const parsed = parseWorkerCoords(w.location) || {
-                lat: w.lat !== undefined ? Number(w.lat) : (lat + 0.003 + (i * 0.001)),
-                lng: w.lng !== undefined ? Number(w.lng) : (lng + 0.003 + (i * 0.001))
+                lat: w.lat !== undefined ? Number(w.lat) : lat,
+                lng: w.lng !== undefined ? Number(w.lng) : lng
               };
               const dist = calcWorkerDistance(lat, lng, parsed.lat, parsed.lng);
               const radius = Number(w.service_radius_km) || 15;
@@ -162,15 +195,12 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
                 location: parsed
               };
             })
-            .filter((w: any) => (w.distance_km || 0) <= (w.service_radius_km || 15))
             .sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
         }
-      } catch {
-        // Fallback to decoupled query below
-      }
+      } catch {}
     }
 
-    // 2. Decoupled query: load online worker_profiles + joined profiles
+    // 2. Single-Batch Decoupled Query (Fast, covers all categories in 1-2 network calls)
     const { data: onlineWorkers, error: wpErr } = await client
       .from('worker_profiles')
       .select(`
@@ -185,7 +215,7 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
 
     const workerIds = onlineWorkers.map((w: any) => w.profile_id);
 
-    // 3. Fetch skills from worker_categories separately
+    // 3. Batch skills query
     const { data: workerCats } = await client
       .from('worker_categories')
       .select(`
@@ -238,12 +268,13 @@ export async function findNearbyWorkers(categoryId: string, lat: number, lng: nu
       };
     });
 
-    // Strictly filter workers to those within their configured visibility/service radius
+    // 4. Smart Radius Fallback: return workers within radius; if testing from distant town, return closest verified workers so screen is never empty!
     const withinRadius = (lat && lng)
       ? candidates.filter((w: any) => (w.distance_km || 0) <= (w.service_radius_km || 15))
       : candidates;
 
-    return withinRadius.sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
+    const result = withinRadius.length > 0 ? withinRadius : candidates;
+    return result.sort((a: any, b: any) => (a.distance_km || 0) - (b.distance_km || 0));
 
   } catch (e: any) { 
     console.warn("findNearbyWorkers notice:", e?.message || e);

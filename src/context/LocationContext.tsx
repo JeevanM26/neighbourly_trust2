@@ -20,24 +20,59 @@ interface LocationContextType {
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  // 1. Instant 0ms cached location on startup
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(() => {
+    if (typeof window === 'undefined') return DEFAULT_LOCATION;
+    try {
+      const cached = localStorage.getItem('nt_last_location');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
+          return parsed;
+        }
+      }
+    } catch {}
+    return DEFAULT_LOCATION;
+  });
+
   const [searchLocation, setSearchLocation] = useState<{lat: number, lng: number} | null>(null);
   const [locationStatus, setLocationStatus] = useState<'loading' | 'granted' | 'denied' | 'idle'>('idle');
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const locationPromiseRef = useRef<{resolve: (val: any) => void, reject: () => void} | null>(null);
 
+  const saveLocationCache = (coords: { lat: number; lng: number }) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nt_last_location', JSON.stringify(coords));
+      }
+    } catch {}
+  };
+
   const _executeLocationRequest = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
     setLocationStatus('loading');
     
-    // Native Capacitor Geolocation for Android/iOS - triggers system permission popup
+    // Native Capacitor Geolocation for Android/iOS
     if (Capacitor.isNativePlatform()) {
       try {
         const perm = await Geolocation.requestPermissions();
         if (perm.location === 'granted' || perm.location === 'prompt-with-rationale' || (perm as any).coarseLocation === 'granted') {
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+          // Fast coarse position first (returns in < 1s)
+          try {
+            const fastPos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 3000, maximumAge: 30000 });
+            if (fastPos?.coords) {
+              const coords = { lat: fastPos.coords.latitude, lng: fastPos.coords.longitude };
+              setUserLocation(coords);
+              saveLocationCache(coords);
+              setLocationStatus('granted');
+            }
+          } catch {}
+
+          // Precise background GPS fix
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 8000 });
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(coords);
+          saveLocationCache(coords);
           setLocationStatus('granted');
           return coords;
         }
@@ -46,52 +81,48 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     }
 
-    // Web Geolocation Fallback
+    // Web Geolocation: Two-stage fast resolution
     if (typeof window !== 'undefined' && navigator.geolocation) {
+      // 1. Fast coarse position first (< 200ms)
+      navigator.geolocation.getCurrentPosition(
+        (fastPos) => {
+          const coords = { lat: fastPos.coords.latitude, lng: fastPos.coords.longitude };
+          setUserLocation(coords);
+          saveLocationCache(coords);
+          setLocationStatus('granted');
+        },
+        () => {},
+        { enableHighAccuracy: false, timeout: 2500, maximumAge: 60000 }
+      );
+
+      // 2. High-accuracy GPS refinement
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
             setUserLocation(coords);
+            saveLocationCache(coords);
             setLocationStatus('granted');
             resolve(coords);
           },
           (err) => {
             console.warn("Web Geolocation error:", err);
+            // Keep existing cached location instead of reverting to null
             setLocationStatus('denied');
-            resolve(null);
+            resolve(userLocation || DEFAULT_LOCATION);
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
         );
       });
     }
 
     setLocationStatus('denied');
-    return null;
-  }, []);
+    return userLocation || DEFAULT_LOCATION;
+  }, [userLocation]);
 
   const requestLocation = useCallback(async (): Promise<{lat: number, lng: number} | null> => {
-    // If native platform, directly invoke native system permission dialog
-    if (Capacitor.isNativePlatform()) {
-      return _executeLocationRequest();
-    }
-
-    if (hasLocationPermission || locationStatus === 'granted') {
-      return _executeLocationRequest();
-    }
-    
-    if (typeof window !== 'undefined' && navigator.permissions && navigator.permissions.query) {
-      try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        if (result.state === 'granted') {
-          setHasLocationPermission(true);
-          return _executeLocationRequest();
-        }
-      } catch (e) {}
-    }
-
     return _executeLocationRequest();
-  }, [hasLocationPermission, locationStatus, _executeLocationRequest]);
+  }, [_executeLocationRequest]);
 
   const handleLocationAllow = () => {
     setShowLocationModal(false);

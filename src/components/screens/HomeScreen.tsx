@@ -237,21 +237,14 @@ export default function HomeScreen({
   const activeLoc = searchLocation || userLocation || { lat: 28.6139, lng: 77.2090 };
   const roundedLat = activeLoc.lat;
   const roundedLng = activeLoc.lng;
-  const hasFetchedRef = React.useRef(false);
+  const lastFetchedCoordsRef = React.useRef<{ lat: number; lng: number; cat: string } | null>(null);
 
   const handleRefresh = async () => {
-    if (categories.length === 0) return;
     setIsLoadingWorkers(true);
-    let results: any[] = [];
-    if (activeCategory) {
-      results = await findNearbyWorkers(activeCategory, roundedLat, roundedLng);
-    } else {
-      const catPromises = categories.map(cat => findNearbyWorkers(cat.id, roundedLat, roundedLng));
-      const allRes = await Promise.all(catPromises);
-      results = Array.from(new Map(allRes.flat().map(w => [w.worker_id, w])).values());
-    }
+    const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
     setNearbyWorkers(results);
     setIsLoadingWorkers(false);
+    lastFetchedCoordsRef.current = { lat: roundedLat, lng: roundedLng, cat: activeCategory };
   };
 
   useEffect(() => {
@@ -268,27 +261,32 @@ export default function HomeScreen({
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Check if we already fetched for these approximate coordinates & category
+    const last = lastFetchedCoordsRef.current;
+    if (last && last.cat === activeCategory) {
+      const distDiff = Math.abs(last.lat - roundedLat) + Math.abs(last.lng - roundedLng);
+      if (distDiff < 0.004 && nearbyWorkers.length > 0) {
+        return; // Skip redundant re-fetch on minor GPS jitter
+      }
+    }
+
     async function fetchWorkers() {
       if (!hasFetchedRef.current) {
         setIsLoadingWorkers(true);
       }
 
-      let results: any[] = [];
-      if (activeCategory) {
-        results = await findNearbyWorkers(activeCategory, roundedLat, roundedLng);
-      } else {
-        const catPromises = categories.map(cat => findNearbyWorkers(cat.id, roundedLat, roundedLng));
-        const allRes = await Promise.all(catPromises);
-        results = Array.from(new Map(allRes.flat().map(w => [w.worker_id, w])).values());
-      }
+      const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
       
       if (isMounted) {
         setNearbyWorkers(results);
         setIsLoadingWorkers(false);
         hasFetchedRef.current = true;
+        lastFetchedCoordsRef.current = { lat: roundedLat, lng: roundedLng, cat: activeCategory };
       }
     }
-    if (categories.length > 0) fetchWorkers();
+
+    fetchWorkers();
     return () => { isMounted = false; };
   }, [categories, roundedLat, roundedLng, activeCategory]);
 
