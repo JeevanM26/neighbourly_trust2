@@ -24,8 +24,11 @@ export async function registerFcmToken(workerId: string, vapidKey?: string): Pro
     const supported = await isSupported();
     if (!supported) return null;
 
-    // 1. Request notification permission
-    const permission = await Notification.requestPermission();
+    // 1. Check/request notification permission
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
     if (permission !== 'granted') {
       console.warn('[FCM Worker] Notification permission not granted:', permission);
       return null;
