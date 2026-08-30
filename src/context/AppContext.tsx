@@ -13,6 +13,7 @@ import { MapPin } from 'lucide-react';
 
 import { getTranslation } from '../lib/i18n';
 import { sendLocalNotification, requestNotificationPermission } from '../lib/notifications';
+import { registerFcmToken } from '../lib/firebase';
 
 export function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -250,7 +251,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (user) localStorage.setItem('nt_user', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('nt_user', JSON.stringify(user));
+      registerFcmToken(user.id).catch(() => {});
+    }
   }, [user]);
 
   useEffect(() => {

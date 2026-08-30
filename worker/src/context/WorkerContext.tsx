@@ -26,41 +26,33 @@ import { sendLocalNotification, requestNotificationPermission } from '../lib/not
 // Lazily imported so Next.js SSR / web builds don't choke on Capacitor imports
 async function registerFcmToken(workerId: string): Promise<void> {
   try {
-    const { PushNotifications } = await import('@capacitor/push-notifications');
     const { Capacitor } = await import('@capacitor/core');
-    if (!Capacitor.isNativePlatform()) return;
+    if (Capacitor.isNativePlatform()) {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      const perm = await PushNotifications.requestPermissions();
+      if (perm.receive !== 'granted') return;
 
-    // Request permission
-    const perm = await PushNotifications.requestPermissions();
-    if (perm.receive !== 'granted') {
-      console.warn('[FCM] Push permission denied');
-      return;
-    }
-
-    // Register for FCM
-    await PushNotifications.register();
-
-    // Listen for token once
-    PushNotifications.addListener('registration', async (token) => {
-      console.log('[FCM] Token received:', token.value);
-      try {
-        const client = getClient();
-        if (client && token.value) {
-          await client
-            .from('worker_profiles')
-            .update({ fcm_token: token.value })
-            .eq('profile_id', workerId);
-          console.log('[FCM] Token saved to Supabase');
+      await PushNotifications.register();
+      PushNotifications.addListener('registration', async (token) => {
+        try {
+          const client = getClient();
+          if (client && token.value) {
+            await client.from('push_tokens').upsert({
+              profile_id: workerId,
+              token: token.value,
+              platform: 'android',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'profile_id,token' });
+          }
+        } catch (e) {
+          console.error('[FCM] Failed to save token:', e);
         }
-      } catch (e) {
-        console.error('[FCM] Failed to save token:', e);
-      }
-    });
-
-    PushNotifications.addListener('registrationError', (err) => {
-      console.error('[FCM] Registration error:', err);
-    });
-
+      });
+    } else {
+      // Web browser registration
+      const { registerFcmToken: registerWebFcmToken } = await import('../lib/firebase');
+      await registerWebFcmToken(workerId);
+    }
   } catch (e) {
     console.warn('[FCM] Not available on this platform:', e);
   }
