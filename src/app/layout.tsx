@@ -75,6 +75,9 @@ export const metadata: Metadata = {
     icon: '/favicon.png',
     apple: '/icon-192.png',
   },
+  verification: {
+    google: 'googleb967122bc276897b.html',
+  },
 };
 
 const jsonLd = {
