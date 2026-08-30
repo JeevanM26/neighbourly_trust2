@@ -141,8 +141,8 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     const L = (window as any).L;
     if (!L) return;
 
-    const initialLat = searchLocation ? searchLocation.lat : (userLocation?.lat || 28.6139);
-    const initialLng = searchLocation ? searchLocation.lng : (userLocation?.lng || 77.2090);
+    const initialLat = searchLocation ? searchLocation.lat : (userLocation?.lat || 13.9299);
+    const initialLng = searchLocation ? searchLocation.lng : (userLocation?.lng || 75.5681);
 
     mapRef.current = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
@@ -195,7 +195,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     };
   }, [leafletLoaded]);
 
-  // ── Sync User Location Marker ──
+  // ── Sync User Location Marker & Auto-Center ──
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
@@ -222,21 +222,16 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
     }
 
-    if (!hasCenteredRef.current) {
-      if (searchLocation) {
-        mapRef.current.setView([searchLocation.lat, searchLocation.lng], 15);
-        setMapCenter({ lat: searchLocation.lat, lng: searchLocation.lng });
-        hasCenteredRef.current = true;
-      } else {
-        const isDefault = userLocation.lat === DEFAULT_LOCATION.lat && userLocation.lng === DEFAULT_LOCATION.lng;
-        if (!isDefault) {
-          mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
-          setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
-          hasCenteredRef.current = true;
-        }
-      }
+    if (!isEditMode && !searchLocation) {
+      mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
+      setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
+      hasCenteredRef.current = true;
+    } else if (searchLocation && !hasCenteredRef.current) {
+      mapRef.current.setView([searchLocation.lat, searchLocation.lng], 15);
+      setMapCenter({ lat: searchLocation.lat, lng: searchLocation.lng });
+      hasCenteredRef.current = true;
     }
-  }, [leafletLoaded, userLocation]);
+  }, [leafletLoaded, userLocation, searchLocation, isEditMode]);
 
   // ── Center Map on User & Reset to Live GPS ──
   const centerOnUser = async () => {

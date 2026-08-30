@@ -234,17 +234,21 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
-  const activeLoc = searchLocation || userLocation || { lat: 28.6139, lng: 77.2090 };
+  const activeLoc = searchLocation || userLocation || { lat: 13.9299, lng: 75.5681 };
   const roundedLat = activeLoc.lat;
   const roundedLng = activeLoc.lng;
-  const lastFetchedCoordsRef = React.useRef<{ lat: number; lng: number; cat: string } | null>(null);
+  const hasFetchedRef = React.useRef(false);
 
   const handleRefresh = async () => {
     setIsLoadingWorkers(true);
-    const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
-    setNearbyWorkers(results);
-    setIsLoadingWorkers(false);
-    lastFetchedCoordsRef.current = { lat: roundedLat, lng: roundedLng, cat: activeCategory };
+    try {
+      const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
+      setNearbyWorkers(results);
+    } catch (e) {
+      console.warn("handleRefresh error:", e);
+    } finally {
+      setIsLoadingWorkers(false);
+    }
   };
 
   useEffect(() => {
@@ -261,28 +265,24 @@ export default function HomeScreen({
 
   useEffect(() => {
     let isMounted = true;
-    
-    // Check if we already fetched for these approximate coordinates & category
-    const last = lastFetchedCoordsRef.current;
-    if (last && last.cat === activeCategory) {
-      const distDiff = Math.abs(last.lat - roundedLat) + Math.abs(last.lng - roundedLng);
-      if (distDiff < 0.004 && nearbyWorkers.length > 0) {
-        return; // Skip redundant re-fetch on minor GPS jitter
-      }
-    }
 
     async function fetchWorkers() {
       if (!hasFetchedRef.current) {
         setIsLoadingWorkers(true);
       }
 
-      const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
-      
-      if (isMounted) {
-        setNearbyWorkers(results);
-        setIsLoadingWorkers(false);
-        hasFetchedRef.current = true;
-        lastFetchedCoordsRef.current = { lat: roundedLat, lng: roundedLng, cat: activeCategory };
+      try {
+        const results = await findNearbyWorkers(activeCategory || 'all', roundedLat, roundedLng);
+        if (isMounted) {
+          setNearbyWorkers(results);
+          hasFetchedRef.current = true;
+        }
+      } catch (e) {
+        console.warn("fetchWorkers error:", e);
+      } finally {
+        if (isMounted) {
+          setIsLoadingWorkers(false);
+        }
       }
     }
 
