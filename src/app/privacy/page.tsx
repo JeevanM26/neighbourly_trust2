@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#0B3D66', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ShieldCheck size={20} color="#F59E0B" />
             </div>
-            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px' }}>Neighborly Trust</span>
+            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px' }}>Hero Hand</span>
           </div>
           <Link href="/" style={{ color: '#93C5FD', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
             <ArrowLeft size={16} /> Back to App
@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
               Official Policy
             </span>
             <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-              Last Updated: August 14, 2026
+              Last Updated: August 30, 2026
             </span>
           </div>
 
@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy & Data Protection Notice
           </h1>
           <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, marginBottom: 24 }}>
-            Neighborly Trust Technologies ("Neighborly Trust", "we", "us", or "our") is dedicated to protecting the privacy and personal data of our customers and service specialists. This policy discloses how we collect, handle, protect, and process your data in accordance with India’s <b>Digital Personal Data Protection (DPDP) Act 2023</b> and <b>Google Play Developer Policies</b>.
+            Hero Hand ("Hero Hand", "we", "us", or "our", hosted at <a href="https://herohand.me" target="_blank" rel="noreferrer" style={{ color: '#0284C7' }}>HeroHand.me</a>) is dedicated to protecting the privacy and personal data of our customers and service specialists. This policy discloses how we collect, handle, protect, and process your data in accordance with India’s <b>Digital Personal Data Protection (DPDP) Act 2023</b> and <b>Google Play Developer Policies</b>.
           </p>
 
           <hr style={{ border: 'none', borderTop: '1px solid #F1F5F9', margin: '24px 0' }} />
@@ -47,8 +47,8 @@ export default function PrivacyPolicyPage() {
               1. Data Controller & Contact
             </h2>
             <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: 0 }}>
-              <b>Entity:</b> Neighborly Trust Technologies<br />
-              <b>Headquarters:</b> Shivamogga, Karnataka, India<br />
+              <b>Entity:</b> Hero Hand Technologies<br />
+              <b>Platform URLs:</b> <a href="https://herohand.me" target="_blank" rel="noreferrer" style={{ color: '#0284C7' }}>HeroHand.me</a> & <a href="https://partner.herohand.me" target="_blank" rel="noreferrer" style={{ color: '#0284C7' }}>partner.herohand.me</a><br />
               <b>Data Grievance Officer:</b> Jeevan M (<a href="mailto:privacy@neighborlytrust.in" style={{ color: '#0284C7' }}>privacy@neighborlytrust.in</a>)
             </p>
           </section>
@@ -78,6 +78,13 @@ export default function PrivacyPolicyPage() {
                   Used strictly for in-app peer-to-peer WebRTC voice calling between customer and specialist. <b>Audio is NEVER recorded, stored, or processed on any server.</b>
                 </p>
               </div>
+
+              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 14, border: '1px solid #E2E8F0' }}>
+                <b style={{ color: '#0F172A', fontSize: 14 }}>🔔 Push Notifications & Background Service Worker</b>
+                <p style={{ fontSize: 13, color: '#475569', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  Used to deliver real-time booking updates, specialist arrival notices, and incoming audio call alerts even when the screen is locked or in pocket.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -99,6 +106,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, paddingLeft: 20 }}>
               <li><b>Supabase Inc.</b> (Database and authentication infrastructure protected with TLS 1.3 & Row Level Security).</li>
+              <li><b>Google Firebase (FCM)</b> (High-priority cloud messaging and background push notifications).</li>
               <li><b>Metered.ca</b> (TURN relay servers for direct WebRTC NAT traversal).</li>
             </ul>
           </section>
@@ -117,7 +125,7 @@ export default function PrivacyPolicyPage() {
               6. Children's Privacy
             </h2>
             <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6 }}>
-              Neighborly Trust is intended exclusively for adults aged 18 and older. We do not knowingly solicit or collect data from children under 18 years of age.
+              Hero Hand is intended exclusively for adults aged 18 and older. We do not knowingly solicit or collect data from children under 18 years of age.
             </p>
           </section>
 

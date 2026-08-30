@@ -45,7 +45,7 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
             </div>
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
-                Partner Privacy Policy
+                Hero Hand Partner Privacy Policy
               </h2>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '2px 0 0', fontWeight: 500 }}>
                 DPDP Act 2023 & Google Play Compliant
@@ -71,8 +71,8 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           fontSize: 13, color: '#334155', lineHeight: 1.6
         }}>
           <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 12, padding: '12px 14px', marginBottom: 18, fontSize: 12, color: '#047857', fontWeight: 600 }}>
-            📌 <b>Effective Date:</b> August 14, 2026<br />
-            <b>Entity:</b> Neighborly Trust Partner Portal, Shivamogga, Karnataka, India.
+            📌 <b>Effective Date:</b> August 30, 2026<br />
+            <b>Entity:</b> Hero Hand Partner Portal, Shivamogga, Karnataka, India (<a href="https://partner.herohand.me" target="_blank" rel="noreferrer" style={{ color: '#047857', textDecoration: 'underline' }}>partner.herohand.me</a>).
           </div>
 
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginTop: 12, marginBottom: 6 }}>
@@ -83,6 +83,7 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
             <li><b>Service Category & Hourly Rates:</b> To match you with appropriate customer leads in your trade.</li>
             <li><b>Location (GPS):</b> Used while online to receive job requests within your configured service radius (2–15 km).</li>
             <li><b>Microphone / Audio:</b> Used for direct WebRTC voice calls with customers. <b>Calls are never recorded or stored.</b></li>
+            <li><b>Push Notifications & Background Services:</b> Used to deliver job requests with vibration and ringtones even when your device is locked.</li>
             <li><b>UPI ID (Optional):</b> Provided by you for direct job payment settlements.</li>
           </ul>
 
@@ -136,11 +137,6 @@ export default function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyMod
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-      `}</style>
     </div>
   );
 }

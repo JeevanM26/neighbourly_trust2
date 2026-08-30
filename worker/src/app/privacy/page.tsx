@@ -13,7 +13,7 @@ export default function WorkerPrivacyPolicyPage() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ShieldCheck size={20} color="#FDE68A" />
             </div>
-            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px' }}>Neighborly Trust Partner</span>
+            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px' }}>Hero Hand Partner</span>
           </div>
           <Link href="/" style={{ color: '#A7F3D0', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
             <ArrowLeft size={16} /> Back to Portal
@@ -29,7 +29,7 @@ export default function WorkerPrivacyPolicyPage() {
               Partner Privacy Policy
             </span>
             <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-              Effective: August 14, 2026
+              Effective: August 30, 2026
             </span>
           </div>
 
@@ -37,7 +37,7 @@ export default function WorkerPrivacyPolicyPage() {
             Service Partner Data Protection Notice
           </h1>
           <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, marginBottom: 24 }}>
-            This policy outlines how Neighborly Trust Technologies collects, processes, and protects personal data belonging to registered service specialists, technicians, and contractors in accordance with the <b>Digital Personal Data Protection (DPDP) Act 2023</b> and <b>Google Play Store Developer Policies</b>.
+            This policy outlines how Hero Hand Technologies (operating at <a href="https://partner.herohand.me" target="_blank" rel="noreferrer" style={{ color: '#059669' }}>partner.herohand.me</a>) collects, processes, and protects personal data belonging to registered service specialists, technicians, and contractors in accordance with the <b>Digital Personal Data Protection (DPDP) Act 2023</b> and <b>Google Play Store Developer Policies</b>.
           </p>
 
           <hr style={{ border: 'none', borderTop: '1px solid #F1F5F9', margin: '24px 0' }} />
@@ -51,6 +51,7 @@ export default function WorkerPrivacyPolicyPage() {
               <li><b>Professional Skills:</b> Selected trade categories (electrical, plumbing, carpentry, AC repair, etc.) and hourly pricing rates.</li>
               <li><b>Live Geolocation:</b> Device location while online to calculate travel distances and dispatch local customer requests within your selected radius.</li>
               <li><b>Microphone / Audio:</b> Used solely during direct WebRTC customer calls. Audio is streamed peer-to-peer and <b>never recorded or archived</b>.</li>
+              <li><b>Push Notifications & Service Workers:</b> Used to wake up the device and trigger loud, attention-grabbing job alerts and customer voice calls.</li>
               <li><b>Settlement Information:</b> Optional UPI ID provided by you for direct payout tracking.</li>
             </ul>
           </section>
