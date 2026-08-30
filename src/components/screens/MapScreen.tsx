@@ -149,6 +149,10 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       zoom: 15,
       zoomControl: false,
       attributionControl: false,
+      dragging: true,
+      touchZoom: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
     });
 
     // Google Maps Roadmap tile layer
@@ -165,14 +169,11 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
 
     // Track map dragging
     mapRef.current.on('movestart', () => setIsDragging(true));
-    mapRef.current.on('move', () => setIsDragging(true));
     mapRef.current.on('moveend', () => {
       setIsDragging(false);
       if (mapRef.current) {
-        const size = mapRef.current.getSize();
-        const targetPoint = L.point(size.x / 2, size.y / 2 - 40);
-        const targetLatLng = mapRef.current.containerPointToLatLng(targetPoint);
-        setMapCenter({ lat: targetLatLng.lat, lng: targetLatLng.lng });
+        const center = mapRef.current.getCenter();
+        setMapCenter({ lat: center.lat, lng: center.lng });
       }
     });
 
@@ -195,7 +196,7 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
     };
   }, [leafletLoaded]);
 
-  // ── Sync User Location Marker & Auto-Center ──
+  // ── Sync User Location Marker & Initial Auto-Center ──
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
@@ -222,16 +223,16 @@ export default function MapScreen({ categoryId, onBack, onSelectWorker, onClearC
       userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
     }
 
-    if (!isEditMode && !searchLocation) {
-      mapRef.current.setView([userLocation.lat, userLocation.lng], 15);
-      setMapCenter({ lat: userLocation.lat, lng: userLocation.lng });
-      hasCenteredRef.current = true;
-    } else if (searchLocation && !hasCenteredRef.current) {
-      mapRef.current.setView([searchLocation.lat, searchLocation.lng], 15);
-      setMapCenter({ lat: searchLocation.lat, lng: searchLocation.lng });
-      hasCenteredRef.current = true;
+    // Only auto-center ONCE on initial load so the user can freely pan and drag the map
+    if (!hasCenteredRef.current) {
+      const target = searchLocation || userLocation;
+      if (target) {
+        mapRef.current.setView([target.lat, target.lng], 15);
+        setMapCenter({ lat: target.lat, lng: target.lng });
+        hasCenteredRef.current = true;
+      }
     }
-  }, [leafletLoaded, userLocation, searchLocation, isEditMode]);
+  }, [leafletLoaded, userLocation, searchLocation]);
 
   // ── Center Map on User & Reset to Live GPS ──
   const centerOnUser = async () => {
