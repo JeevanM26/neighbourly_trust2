@@ -12,6 +12,7 @@ import { PermissionModal } from '../components/PermissionModal';
 import { MapPin } from 'lucide-react';
 
 import { getTranslation } from '../lib/i18n';
+import { sendLocalNotification, requestNotificationPermission } from '../lib/notifications';
 
 export function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -305,9 +306,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const status = updatedBooking.status;
         if (status === 'accepted') {
           showToast('✅ Your worker is on the way!', 'success');
+          sendLocalNotification('✅ Specialist On The Way!', { body: 'Your specialist has accepted and is on the way.' });
           try { confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#10B981', '#0B3D66'] }); } catch {}
         } else if (status === 'completed') {
           showToast('🎉 Job completed! Please rate your experience.', 'success');
+          sendLocalNotification('🎉 Job Completed!', { body: 'Your service is complete. Please rate your experience.' });
           try { confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } }); } catch {}
         } else if (status === 'cancelled') {
           showToast('Booking cancelled.', 'error');

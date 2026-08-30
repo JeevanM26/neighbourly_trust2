@@ -1,6 +1,7 @@
 import { getIceServers, TurnCredential } from './turn';
 import { SignalingManager } from './signaling';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { sendLocalNotification } from '../notifications';
 
 export type CallStatus = 'idle' | 'ringing' | 'calling' | 'connected';
 
@@ -50,6 +51,12 @@ export class CallManager {
           roomId: payload.roomId
         };
         this.setStatus('ringing');
+
+        // Trigger rich browser/system notification
+        sendLocalNotification(`📞 Incoming Call from ${payload.callerName || 'Specialist'}`, {
+          body: 'Tap to answer your Hero Hand voice call',
+          tag: 'call_alert'
+        });
         
         // 30-second auto-decline
         this.autoDeclineTimeout = setTimeout(() => {

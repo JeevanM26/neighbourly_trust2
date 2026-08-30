@@ -20,6 +20,7 @@ import { CallAudioSynthesizer } from '../lib/callEngine';
 import { MapPin } from 'lucide-react';
 import { WorkerLocationProvider } from './WorkerLocationContext';
 import { WorkerOnlinePlugin } from '../lib/workerOnlinePlugin';
+import { sendLocalNotification, requestNotificationPermission } from '../lib/notifications';
 
 // ─── FCM helpers ────────────────────────────────────────────────
 // Lazily imported so Next.js SSR / web builds don't choke on Capacitor imports
@@ -502,7 +503,13 @@ export const WorkerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.warn('[Alert] Native alert fallback:', err);
       });
 
-      // 3. Show in-app toast
+      // 3. Trigger browser Web Notification
+      sendLocalNotification(`🚨 New ${categoryName} Booking Request!`, {
+        body: `${customerName} wants to book you (${addressText}). Tap to view and accept!`,
+        tag: 'booking_offer'
+      });
+
+      // 4. Show in-app toast
       showToast(`🔔 New ${categoryName} offer from ${customerName}!`, 'info');
     });
     // 3-second fail-safe polling for pending offers in case WebSocket is throttled or sleeping
