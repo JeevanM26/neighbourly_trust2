@@ -28,14 +28,14 @@ export function getClient(): SupabaseClient | null {
 let _cachedCategories: ServiceCategory[] | null = null;
 let _categoriesLastFetch = 0;
 
-export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
-  // 1. In-memory cache (< 5 mins)
-  if (_cachedCategories && _cachedCategories.length > 0 && Date.now() - _categoriesLastFetch < 300000) {
+export async function fetchServiceCategories(forceRefresh = false): Promise<ServiceCategory[]> {
+  // 1. In-memory cache (< 5 mins) if not forceRefresh
+  if (!forceRefresh && _cachedCategories && _cachedCategories.length > 0 && Date.now() - _categoriesLastFetch < 300000) {
     return _cachedCategories;
   }
 
-  // 2. LocalStorage fast fallback (0ms)
-  if (typeof window !== 'undefined') {
+  // 2. LocalStorage fast fallback (0ms) if not forceRefresh
+  if (!forceRefresh && typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem('nt_categories_cache');
       if (stored) {
@@ -51,8 +51,8 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
   if (!client) return _cachedCategories || [];
 
   try {
-    const { data, error } = await client.from('service_categories').select('*').eq('is_active', true);
-    if (!error && data && data.length > 0) {
+    const { data, error } = await client.from('service_categories').select('*').eq('is_active', true).order('name_en', { ascending: true });
+    if (!error && data) {
       _cachedCategories = data;
       _categoriesLastFetch = Date.now();
       if (typeof window !== 'undefined') {

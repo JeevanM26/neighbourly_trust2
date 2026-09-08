@@ -674,7 +674,12 @@ export function getTranslation(lang: LanguageCode, key: string): string {
   return key;
 }
 
-export function getCategoryLocalizedName(cat: { slug?: string; name_en?: string }, lang: LanguageCode): string {
+export function getCategoryLocalizedName(cat: { slug?: string; name_en?: string; name_hi?: string; name_kn?: string; translations?: Record<string, string> }, lang: LanguageCode): string {
+  if (cat.translations && (cat.translations as any)[lang]) {
+    return (cat.translations as any)[lang];
+  }
+  if (lang === 'hi' && cat.name_hi) return cat.name_hi;
+  if (lang === 'kn' && cat.name_kn) return cat.name_kn;
   const s = (cat.slug || cat.name_en || '').toLowerCase();
   if (s.includes('elec')) return getTranslation(lang, 'electrician');
   if (s.includes('plumb')) return getTranslation(lang, 'plumber');

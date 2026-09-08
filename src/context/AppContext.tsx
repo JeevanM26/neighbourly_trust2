@@ -62,6 +62,43 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// ─── FCM helpers (Customer App) ──────────────────────────────────
+async function registerCustomerFcmToken(customerId: string): Promise<void> {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      const perm = await PushNotifications.requestPermissions();
+      if (perm.receive !== 'granted') return;
+
+      await PushNotifications.register();
+      PushNotifications.addListener('registration', async (token) => {
+        try {
+          const client = getClient();
+          if (client && token.value) {
+            await client.from('push_tokens').upsert({
+              profile_id: customerId,
+              token: token.value,
+              platform: 'android',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'profile_id,token' });
+            await client.from('profiles').update({
+              fcm_token: token.value
+            }).eq('id', customerId);
+          }
+        } catch (e) {
+          console.error('[FCM Customer] Failed to save token:', e);
+        }
+      });
+    } else {
+      const { registerFcmToken } = await import('../lib/firebase');
+      await registerFcmToken(customerId);
+    }
+  } catch (e) {
+    console.warn('[FCM Customer] Registration notice:', e);
+  }
+}
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -242,42 +279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         window.removeEventListener('app-error', errorHandler);
       };
     }
-// ─── FCM helpers (Customer App) ──────────────────────────────────
-async function registerCustomerFcmToken(customerId: string): Promise<void> {
-  try {
-    const { Capacitor } = await import('@capacitor/core');
-    if (Capacitor.isNativePlatform()) {
-      const { PushNotifications } = await import('@capacitor/push-notifications');
-      const perm = await PushNotifications.requestPermissions();
-      if (perm.receive !== 'granted') return;
-
-      await PushNotifications.register();
-      PushNotifications.addListener('registration', async (token) => {
-        try {
-          const client = getClient();
-          if (client && token.value) {
-            await client.from('push_tokens').upsert({
-              profile_id: customerId,
-              token: token.value,
-              platform: 'android',
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'profile_id,token' });
-            await client.from('profiles').update({
-              fcm_token: token.value
-            }).eq('id', customerId);
-          }
-        } catch (e) {
-          console.error('[FCM Customer] Failed to save token:', e);
-        }
-      });
-    } else {
-      const { registerFcmToken } = await import('../lib/firebase');
-      await registerFcmToken(customerId);
-    }
-  } catch (e) {
-    console.warn('[FCM Customer] Registration notice:', e);
-  }
-}
+  }, []);
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -307,7 +309,7 @@ async function registerCustomerFcmToken(customerId: string): Promise<void> {
     const channel = client
       .channel('public:service_categories_customer')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'service_categories' }, () => {
-        fetchServiceCategories().then(setCategories);
+        fetchServiceCategories(true).then(setCategories);
       })
       .subscribe();
 

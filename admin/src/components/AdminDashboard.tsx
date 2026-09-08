@@ -469,6 +469,38 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
 
   useEffect(() => {
     loadAllData();
+
+    const client = getClient();
+    if (!client) return;
+
+    // Realtime category synchronization
+    const catChannel = client
+      .channel('admin_service_categories_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_categories' }, async () => {
+        const { data: freshCats } = await client.from('service_categories').select('*').order('name_en', { ascending: true });
+        if (freshCats) {
+          setCategoriesList(prev => {
+            const countMap: Record<string, number> = {};
+            prev.forEach(p => { countMap[p.id] = p.worker_count || 0; });
+            return freshCats.map((c: any) => ({
+              id: c.id,
+              slug: c.slug,
+              name_en: c.name_en,
+              name_hi: c.name_hi,
+              name_kn: c.name_kn,
+              icon_url: c.icon_url,
+              is_active: c.is_active !== false,
+              created_at: c.created_at,
+              worker_count: countMap[c.id] || 0,
+            }));
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      catChannel.unsubscribe();
+    };
   }, []);
 
   // Admin Management Handlers
@@ -680,10 +712,27 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     if (!client) return;
     const newStatus = !currentStatus;
     setCategoriesList(prev => prev.map(c => c.id === catId ? { ...c, is_active: newStatus } : c));
-    const { error } = await client.from('service_categories').update({ is_active: newStatus }).eq('id', catId);
-    if (error) {
+
+    // Try secure RPC first
+    try {
+      const { data: rpcData, error: rpcError } = await client.rpc('admin_toggle_service_category', {
+        p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
+        p_pin: credentials?.pin || '7975',
+        p_category_id: catId,
+        p_is_active: newStatus,
+      });
+      if (!rpcError && rpcData && rpcData.success) {
+        setCatActionMsg(rpcData.message || `Service category ${newStatus ? 'activated' : 'deactivated'} successfully.`);
+        setTimeout(() => setCatActionMsg(''), 4000);
+        return;
+      }
+    } catch {}
+
+    // Fallback to direct update
+    const { data, error } = await client.from('service_categories').update({ is_active: newStatus }).eq('id', catId).select();
+    if (error || !data || data.length === 0) {
       setCategoriesList(prev => prev.map(c => c.id === catId ? { ...c, is_active: currentStatus } : c));
-      setCatActionMsg('Failed to update category status.');
+      setCatActionMsg('Database RLS blocked status update. Please run fix_service_categories_rls.sql in Supabase Dashboard.');
     } else {
       setCatActionMsg(`Service category ${newStatus ? 'activated' : 'deactivated'} successfully.`);
       setTimeout(() => setCatActionMsg(''), 4000);
@@ -701,6 +750,56 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     let slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (!slug) slug = `service-${Date.now()}`;
 
+    // 1. Check local list for existing category with same name or slug
+    const existingCat = categoriesList.find(c => 
+      c.slug.toLowerCase() === slug.toLowerCase() || 
+      c.name_en.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (existingCat) {
+      if (!existingCat.is_active) {
+        // Automatically reactivate it!
+        await handleToggleCategory(existingCat.id, false);
+        setNewCatName('');
+        setShowAddCatModal(false);
+        setCatActionMsg(`✓ Existing category "${existingCat.name_en}" reactivated successfully.`);
+        setTimeout(() => setCatActionMsg(''), 4000);
+        setCatActionLoading(false);
+        return;
+      } else {
+        setCatActionMsg(`A category named "${existingCat.name_en}" already exists and is active.`);
+        setCatActionLoading(false);
+        return;
+      }
+    }
+
+    // 2. Try secure admin RPC first
+    try {
+      const { data: rpcData, error: rpcError } = await client.rpc('admin_add_service_category', {
+        p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
+        p_pin: credentials?.pin || '7975',
+        p_name_en: cleanName,
+        p_slug: slug,
+      });
+
+      if (!rpcError && rpcData && rpcData.success) {
+        const newRecord = rpcData.category;
+        if (newRecord) {
+          setCategoriesList(prev => {
+            const filtered = prev.filter(c => c.id !== newRecord.id);
+            return [...filtered, { ...newRecord, worker_count: 0 }];
+          });
+        }
+        setNewCatName('');
+        setShowAddCatModal(false);
+        setCatActionMsg(rpcData.message || `✓ Service "${cleanName}" added successfully.`);
+        setTimeout(() => setCatActionMsg(''), 4000);
+        setCatActionLoading(false);
+        return;
+      }
+    } catch {}
+
+    // 3. Fallback to direct insert
     const { data, error } = await client.from('service_categories').insert({
       name_en: cleanName,
       slug,
@@ -708,7 +807,13 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     }).select().single();
 
     if (error) {
-      setCatActionMsg(`Error: ${error.message}`);
+      if (error.code === '42501') {
+        setCatActionMsg('RLS Error: Please execute fix_service_categories_rls.sql in Supabase Dashboard → SQL Editor.');
+      } else if (error.code === '23505') {
+        setCatActionMsg(`Category with slug "${slug}" already exists in the database.`);
+      } else {
+        setCatActionMsg(`Error: ${error.message}`);
+      }
     } else if (data) {
       setCategoriesList(prev => [...prev, { ...data, worker_count: 0 }]);
       setNewCatName('');

@@ -43,55 +43,56 @@ export const getAssetPath = (path: string): string => {
   return cleanPath;
 };
 
-const getCategory3DImage = (slug: string = ''): string => {
+const getCategory3DImage = (slug: string = ''): string | null => {
   const s = slug.toLowerCase();
-  let img = '/categories/electrician.png';
-  if (s.includes('elec')) img = '/categories/electrician.png';
-  else if (s.includes('plumb')) img = '/categories/plumber.png';
-  else if (s.includes('carp')) img = '/categories/carpenter.png';
-  else if (s.includes('paint')) img = '/categories/painter.png';
-  else if (s.includes('clean')) img = '/categories/cleaning.png';
-  else if (s.includes('pest')) img = '/categories/pestcontrol.png';
-  else if (s.includes('ac') || s.includes('appliance')) img = '/categories/acrepair.png';
-  else if (s.includes('salon') || s.includes('barber')) img = '/categories/salon.png';
-  else if (s.includes('mason')) img = '/categories/mason.png';
-  else if (s.includes('mechanic') || s.includes('auto')) img = '/categories/mechanic.png';
-  return getAssetPath(img);
+  if (s.includes('elec')) return getAssetPath('/categories/electrician.png');
+  if (s.includes('plumb')) return getAssetPath('/categories/plumber.png');
+  if (s.includes('carp')) return getAssetPath('/categories/carpenter.png');
+  if (s.includes('paint')) return getAssetPath('/categories/painter.png');
+  if (s.includes('clean')) return getAssetPath('/categories/cleaning.png');
+  if (s.includes('pest')) return getAssetPath('/categories/pestcontrol.png');
+  if (s.includes('ac') || s.includes('appliance')) return getAssetPath('/categories/acrepair.png');
+  if (s.includes('salon') || s.includes('barber')) return getAssetPath('/categories/salon.png');
+  if (s.includes('mason')) return getAssetPath('/categories/mason.png');
+  if (s.includes('mechanic') || s.includes('auto')) return getAssetPath('/categories/mechanic.png');
+  return null;
 };
 
-const getCategoryFallbackIcon = (slug: string = '') => {
-  const s = slug.toLowerCase();
+const getCategoryFallbackIcon = (slug: string = '', name: string = '') => {
+  const s = `${slug || ''} ${name || ''}`.toLowerCase();
   if (s.includes('elec')) return <Zap size={28} className="text-amber-400" />;
   if (s.includes('plumb')) return <Droplet size={28} className="text-sky-400" />;
   if (s.includes('carp')) return <Hammer size={28} className="text-orange-400" />;
   if (s.includes('paint')) return <Paintbrush size={28} className="text-purple-400" />;
   if (s.includes('clean')) return <Sparkles size={28} className="text-teal-400" />;
   if (s.includes('pest')) return <Bug size={28} className="text-rose-400" />;
-  if (s.includes('ac')) return <Flame size={28} className="text-blue-400" />;
-  if (s.includes('salon')) return <Scissors size={28} className="text-pink-400" />;
-  if (s.includes('mechanic')) return <Car size={28} className="text-emerald-400" />;
+  if (s.includes('ac') || s.includes('cool')) return <Flame size={28} className="text-blue-400" />;
+  if (s.includes('salon') || s.includes('hair') || s.includes('barber')) return <Scissors size={28} className="text-pink-400" />;
+  if (s.includes('mechanic') || s.includes('auto') || s.includes('car')) return <Car size={28} className="text-emerald-400" />;
   return <Tool size={28} className="text-amber-400" />;
 };
 
-const CategoryIcon = ({ slug, size = 58 }: { slug: string, size?: number }) => {
+const CategoryIcon = ({ slug, iconUrl, name, size = 58 }: { slug: string; iconUrl?: string; name?: string; size?: number }) => {
   const [hasError, setHasError] = useState(false);
-  const imgPath = getCategory3DImage(slug);
+  const imgPath = iconUrl || getCategory3DImage(slug);
 
-  if (hasError) {
+  if (!imgPath || hasError) {
     return (
       <div 
         style={{ 
           width: size, 
           height: size, 
           borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.08)',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.18)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backdropFilter: 'blur(8px)'
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.25)'
         }}
       >
-        {getCategoryFallbackIcon(slug)}
+        {getCategoryFallbackIcon(slug, name)}
       </div>
     );
   }
@@ -99,7 +100,7 @@ const CategoryIcon = ({ slug, size = 58 }: { slug: string, size?: number }) => {
   return (
     <img 
       src={imgPath} 
-      alt={slug} 
+      alt={name || slug} 
       onError={() => setHasError(true)}
       style={{ 
         width: size, 
@@ -589,7 +590,7 @@ export default function HomeScreen({
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.2s ease'
                   }}>
-                    <CategoryIcon slug={cat.slug} size={58} />
+                    <CategoryIcon slug={cat.slug} iconUrl={cat.icon_url} name={cat.name_en} size={58} />
                   </div>
                   <span style={{ 
                     fontSize: 12, fontWeight: 800, 

@@ -922,6 +922,8 @@ export default function ProfileScreen() {
             </div>
           </div>
         </div>
+      )}
+
       {/* Notification Permission Explanation Modal */}
       <PermissionModal
         isOpen={showNotifPermissionModal}
