@@ -8,8 +8,9 @@ import {
   ChevronRight, ExternalLink, Award, AlertCircle, TrendingUp,
   Flame, Droplet, Hammer, Paintbrush, Scissors, Car, Bug, Wrench, Zap,
   Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert, Calendar,
-  Plus, X, Tag, Layers
+  Plus, X, Tag, Layers, Wand2, Image as ImageIcon, Sliders, Upload
 } from 'lucide-react';
+import { generateCategory3DIcon, processAndCompressIcon, uploadCategoryIcon, fileToDataUrl } from '../lib/geminiImage';
 
 const SUPER_ADMIN_PHONE = '7975182162';
 
@@ -194,6 +195,22 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   const [catActionLoading, setCatActionLoading] = useState<boolean>(false);
   const [catActionMsg, setCatActionMsg] = useState<string>('');
 
+  // Gemini AI 3D Icon Generator State
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin_gemini_api_key') || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+    }
+    return '';
+  });
+  const [showGeminiKeyInput, setShowGeminiKeyInput] = useState<boolean>(false);
+  const [generatedIconUrl, setGeneratedIconUrl] = useState<string | null>(null);
+  const [rawGeneratedIconUrl, setRawGeneratedIconUrl] = useState<string | null>(null);
+  const [bgCutoutPreset, setBgCutoutPreset] = useState<'balanced' | 'subtle' | 'aggressive'>('balanced');
+  const [isGeneratingIcon, setIsGeneratingIcon] = useState<boolean>(false);
+  const [iconGenError, setIconGenError] = useState<string | null>(null);
+  const [removeBgEnabled, setRemoveBgEnabled] = useState<boolean>(true);
+  const [aiIconModalCat, setAiIconModalCat] = useState<AdminCategoryRecord | null>(null);
+
   const loadAllData = async () => {
     try {
       const client = getClient();
@@ -269,6 +286,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
             id: c.id,
             slug: c.slug,
             name_en: c.name_en,
+            icon_url: c.icon_url,
             is_active: c.is_active !== false,
             created_at: c.created_at || new Date().toISOString(),
             worker_count: catCounts[c.name_en] || 0,
@@ -399,6 +417,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         id: c.id,
         slug: c.slug,
         name_en: c.name_en,
+        icon_url: c.icon_url,
         is_active: c.is_active !== false,
         created_at: c.created_at || new Date().toISOString(),
         worker_count: catCounts[c.name_en] || 0,
@@ -739,6 +758,161 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     }
   };
 
+  // Delete Category from Admin
+  const handleDeleteCategory = async (catId: string, catName: string) => {
+    if (!window.confirm(`Are you sure you want to delete category "${catName}"?`)) return;
+    const client = getClient();
+    if (!client) return;
+
+    setCatActionLoading(true);
+    try {
+      const { data: rpcData, error: rpcError } = await client.rpc('admin_delete_service_category', {
+        p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
+        p_pin: credentials?.pin || '7975',
+        p_category_id: catId
+      });
+      if (!rpcError && rpcData && rpcData.success) {
+        setCategoriesList(prev => prev.filter(c => c.id !== catId));
+        setCatActionMsg(`✓ Category "${catName}" deleted successfully.`);
+        setTimeout(() => setCatActionMsg(''), 4000);
+        setCatActionLoading(false);
+        return;
+      }
+    } catch {}
+
+    // Fallback direct delete or deactivate
+    const { error } = await client.from('service_categories').delete().eq('id', catId);
+    if (!error) {
+      setCategoriesList(prev => prev.filter(c => c.id !== catId));
+      setCatActionMsg(`✓ Category "${catName}" deleted successfully.`);
+    } else {
+      // If RLS blocked, deactivate instead
+      await handleToggleCategory(catId, true);
+      setCatActionMsg(`Category deactivated. Run delete_duplicate_category.sql in Supabase to enable permanent deletion.`);
+    }
+    setTimeout(() => setCatActionMsg(''), 4000);
+    setCatActionLoading(false);
+  };
+
+  // Background removal tolerance presets
+  const getToleranceForPreset = (preset: 'balanced' | 'subtle' | 'aggressive') => {
+    switch (preset) {
+      case 'subtle': return { tolerance: 26, feather: 12 };
+      case 'aggressive': return { tolerance: 52, feather: 20 };
+      case 'balanced':
+      default: return { tolerance: 38, feather: 16 };
+    }
+  };
+
+  // Re-run background cutout immediately without re-calling API
+  const handleRecutIcon = async (newRemoveBg: boolean, newPreset: 'balanced' | 'subtle' | 'aggressive') => {
+    if (!rawGeneratedIconUrl) return;
+    try {
+      const { tolerance, feather } = getToleranceForPreset(newPreset);
+      const reprocessed = await processAndCompressIcon(rawGeneratedIconUrl, {
+        maxSize: 256,
+        quality: 0.88,
+        removeBackground: newRemoveBg,
+        tolerance,
+        feather
+      });
+      setGeneratedIconUrl(reprocessed);
+    } catch (err: any) {
+      console.error('Error re-cutting icon:', err);
+    }
+  };
+
+  // Upload an image file directly and remove background
+  const handleFileUploadForIcon = async (e: React.ChangeEvent<HTMLInputElement>, forExistingCat?: AdminCategoryRecord) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsGeneratingIcon(true);
+      setIconGenError(null);
+      const dataUrl = await fileToDataUrl(file);
+      setRawGeneratedIconUrl(dataUrl);
+
+      const { tolerance, feather } = getToleranceForPreset(bgCutoutPreset);
+      const processed = await processAndCompressIcon(dataUrl, {
+        maxSize: 256,
+        quality: 0.88,
+        removeBackground: removeBgEnabled,
+        tolerance,
+        feather
+      });
+      setGeneratedIconUrl(processed);
+
+      if (forExistingCat) {
+        const client = getClient();
+        if (client) {
+          const finalUrl = await uploadCategoryIcon(client, processed, forExistingCat.slug);
+          await client.from('service_categories').update({ icon_url: finalUrl }).eq('id', forExistingCat.id);
+          setCategoriesList(prev => prev.map(c => c.id === forExistingCat.id ? { ...c, icon_url: finalUrl } : c));
+          setCatActionMsg(`✓ Custom transparent icon uploaded for "${forExistingCat.name_en}".`);
+          setAiIconModalCat(null);
+          setTimeout(() => setCatActionMsg(''), 4000);
+        }
+      }
+    } catch (err: any) {
+      setIconGenError(err.message || 'Failed to process custom image file.');
+    } finally {
+      setIsGeneratingIcon(false);
+    }
+  };
+
+  // Generate 3D Icon with Gemini AI (Imagen 3) & auto-remove background
+  const handleGenerateCategoryIcon = async (categoryName: string, forExistingCat?: AdminCategoryRecord) => {
+    if (!categoryName.trim()) {
+      setIconGenError('Please enter a service name first.');
+      return;
+    }
+    const cleanKey = geminiApiKey.trim();
+    if (!cleanKey) {
+      setIconGenError('Please provide your Gemini API key (Google AI Studio) below.');
+      setShowGeminiKeyInput(true);
+      return;
+    }
+
+    setIsGeneratingIcon(true);
+    setIconGenError(null);
+
+    try {
+      // 1. Call Imagen 3 via Gemini API
+      const rawDataUrl = await generateCategory3DIcon(categoryName.trim(), cleanKey);
+      setRawGeneratedIconUrl(rawDataUrl);
+
+      // 2. Downsample to 256x256, remove solid background (transparent cutout), and compress to WebP
+      const { tolerance, feather } = getToleranceForPreset(bgCutoutPreset);
+      const processedDataUrl = await processAndCompressIcon(rawDataUrl, {
+        maxSize: 256,
+        quality: 0.88,
+        removeBackground: removeBgEnabled,
+        tolerance,
+        feather
+      });
+
+      setGeneratedIconUrl(processedDataUrl);
+
+      if (forExistingCat) {
+        // Direct save to existing category
+        const client = getClient();
+        if (client) {
+          const finalUrl = await uploadCategoryIcon(client, processedDataUrl, forExistingCat.slug);
+          await client.from('service_categories').update({ icon_url: finalUrl }).eq('id', forExistingCat.id);
+          setCategoriesList(prev => prev.map(c => c.id === forExistingCat.id ? { ...c, icon_url: finalUrl } : c));
+          setCatActionMsg(`✓ 3D transparent icon saved for "${forExistingCat.name_en}".`);
+          setAiIconModalCat(null);
+          setTimeout(() => setCatActionMsg(''), 4000);
+        }
+      }
+    } catch (err: any) {
+      console.error('[Gemini AI Icon Error]', err);
+      setIconGenError(err.message || 'Failed to generate icon.');
+    } finally {
+      setIsGeneratingIcon(false);
+    }
+  };
+
   // Add Category from Admin
   const handleAdminAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -761,6 +935,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         // Automatically reactivate it!
         await handleToggleCategory(existingCat.id, false);
         setNewCatName('');
+        setGeneratedIconUrl(null);
         setShowAddCatModal(false);
         setCatActionMsg(`✓ Existing category "${existingCat.name_en}" reactivated successfully.`);
         setTimeout(() => setCatActionMsg(''), 4000);
@@ -773,6 +948,12 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
       }
     }
 
+    // Process icon upload if generated
+    let finalIconUrl: string | undefined = undefined;
+    if (generatedIconUrl) {
+      finalIconUrl = await uploadCategoryIcon(client, generatedIconUrl, slug);
+    }
+
     // 2. Try secure admin RPC first
     try {
       const { data: rpcData, error: rpcError } = await client.rpc('admin_add_service_category', {
@@ -780,6 +961,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         p_pin: credentials?.pin || '7975',
         p_name_en: cleanName,
         p_slug: slug,
+        p_icon_url: finalIconUrl
       });
 
       if (!rpcError && rpcData && rpcData.success) {
@@ -791,6 +973,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
           });
         }
         setNewCatName('');
+        setGeneratedIconUrl(null);
         setShowAddCatModal(false);
         setCatActionMsg(rpcData.message || `✓ Service "${cleanName}" added successfully.`);
         setTimeout(() => setCatActionMsg(''), 4000);
@@ -803,6 +986,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     const { data, error } = await client.from('service_categories').insert({
       name_en: cleanName,
       slug,
+      icon_url: finalIconUrl,
       is_active: true,
     }).select().single();
 
@@ -817,6 +1001,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     } else if (data) {
       setCategoriesList(prev => [...prev, { ...data, worker_count: 0 }]);
       setNewCatName('');
+      setGeneratedIconUrl(null);
       setShowAddCatModal(false);
       setCatActionMsg(`✓ Service "${cleanName}" added successfully.`);
       setTimeout(() => setCatActionMsg(''), 4000);
@@ -1872,8 +2057,12 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 14, background: cat.is_active ? '#F0FDF4' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0' }}>
-                          {getCategoryIcon(cat.slug, cat.name_en, 22)}
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: '#0B2942', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                          {cat.icon_url ? (
+                            <img src={cat.icon_url} alt={cat.name_en} style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                          ) : (
+                            getCategoryIcon(cat.slug, cat.name_en, 24)
+                          )}
                         </div>
                         <div>
                           <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: 0 }}>
@@ -1906,27 +2095,75 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid #F1F5F9' }}>
                       <span style={{ fontSize: 11, color: '#94A3B8' }}>
                         {cat.created_at ? `Added ${new Date(cat.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Standard Category'}
                       </span>
 
-                      <button
-                        onClick={() => handleToggleCategory(cat.id, cat.is_active)}
-                        style={{
-                          background: cat.is_active ? '#FEF2F2' : '#F0FDF4',
-                          border: `1px solid ${cat.is_active ? '#FECACA' : '#BBF7D0'}`,
-                          color: cat.is_active ? '#DC2626' : '#16A34A',
-                          borderRadius: 8,
-                          padding: '6px 12px',
-                          fontSize: 12,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        {cat.is_active ? 'Deactivate' : 'Activate Service'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiIconModalCat(cat);
+                            setIconGenError(null);
+                          }}
+                          title="Generate or update 3D transparent icon with Gemini AI"
+                          style={{
+                            background: '#EFF6FF',
+                            border: '1px solid #BFDBFE',
+                            color: '#1D4ED8',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          <Wand2 size={12} /> {cat.icon_url ? 'AI Icon' : '✨ AI Icon'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCategory(cat.id, cat.is_active)}
+                          style={{
+                            background: cat.is_active ? '#FEF2F2' : '#F0FDF4',
+                            border: `1px solid ${cat.is_active ? '#FECACA' : '#BBF7D0'}`,
+                            color: cat.is_active ? '#DC2626' : '#16A34A',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {cat.is_active ? 'Hide' : 'Show'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCategory(cat.id, cat.name_en)}
+                          title="Delete this service category"
+                          style={{
+                            background: '#FEE2E2',
+                            border: '1px solid #FECACA',
+                            color: '#DC2626',
+                            borderRadius: 8,
+                            padding: '6px 8px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1941,7 +2178,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
               </div>
             )}
 
-            {/* ── Admin Add Category Modal ── */}
+            {/* ── Admin Add Category Modal with Gemini AI 3D Icon Generator ── */}
             {showAddCatModal && (
               <div style={{
                 position: 'fixed',
@@ -1958,7 +2195,9 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                   background: 'white',
                   borderRadius: 24,
                   width: '100%',
-                  maxWidth: 420,
+                  maxWidth: 460,
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
                   padding: '24px 22px',
                   boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
                 }}>
@@ -1972,7 +2211,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                       </h3>
                     </div>
                     <button 
-                      onClick={() => { setShowAddCatModal(false); setNewCatName(''); }}
+                      onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); }}
                       style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
                       <X size={16} color="#64748B" />
@@ -2012,10 +2251,251 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                       </div>
                     )}
 
+                    {/* Gemini 3D Icon Generator Section */}
+                    <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 16, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#0F172A' }}>
+                          <Wand2 size={15} color="#059669" />
+                          <span>3D Icon Generator (Gemini AI)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowGeminiKeyInput(!showGeminiKeyInput)}
+                          style={{ background: 'transparent', border: 'none', color: '#0369A1', fontSize: 11, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {geminiApiKey ? 'Change Key' : '+ Set Gemini Key'}
+                        </button>
+                      </div>
+
+                      {(showGeminiKeyInput || !geminiApiKey) && (
+                        <div style={{ background: 'white', padding: '10px 12px', borderRadius: 10, border: '1px solid #CBD5E1', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: '#475569' }}>
+                            <span>Gemini / Google AI Studio API Key</span>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: '#2563EB', textDecoration: 'none' }}>
+                              Get Free Key ↗
+                            </a>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                              type="password"
+                              value={geminiApiKey}
+                              onChange={e => {
+                                setGeminiApiKey(e.target.value);
+                                if (typeof window !== 'undefined') {
+                                  localStorage.setItem('admin_gemini_api_key', e.target.value.trim());
+                                }
+                              }}
+                              placeholder="AIzaSy..."
+                              style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #E2E8F0', outline: 'none' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (geminiApiKey.trim()) {
+                                  setShowGeminiKeyInput(false);
+                                  setIconGenError(null);
+                                }
+                              }}
+                              style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Save Key
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Auto-remove background controls */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#F8FAFC', padding: '10px 12px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#1E293B', fontWeight: 700, cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={removeBgEnabled}
+                              onChange={e => {
+                                setRemoveBgEnabled(e.target.checked);
+                                handleRecutIcon(e.target.checked, bgCutoutPreset);
+                              }}
+                              style={{ accentColor: '#2563EB', cursor: 'pointer' }}
+                            />
+                            <span>Remove Background (Transparent 3D Cutout)</span>
+                          </label>
+
+                          {removeBgEnabled && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ fontSize: 10, color: '#64748B', fontWeight: 700 }}>Intensity:</span>
+                              {(['subtle', 'balanced', 'aggressive'] as const).map(preset => (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() => {
+                                    setBgCutoutPreset(preset);
+                                    handleRecutIcon(removeBgEnabled, preset);
+                                  }}
+                                  style={{
+                                    padding: '2px 6px',
+                                    fontSize: 10,
+                                    borderRadius: 4,
+                                    border: bgCutoutPreset === preset ? '1px solid #2563EB' : '1px solid #CBD5E1',
+                                    background: bgCutoutPreset === preset ? '#EFF6FF' : 'white',
+                                    color: bgCutoutPreset === preset ? '#1D4ED8' : '#64748B',
+                                    fontWeight: bgCutoutPreset === preset ? 800 : 500,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {preset === 'subtle' ? 'Subtle' : preset === 'balanced' ? 'Balanced' : 'Deep'}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Live Triple Preview If Icon Generated */}
+                      {generatedIconUrl ? (
+                        <div style={{ background: 'white', padding: '12px', borderRadius: 12, border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
+                              3D Cutout Live Preview
+                            </div>
+                            <span style={{ fontSize: 10, background: '#DCFCE7', color: '#166534', fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+                              ✓ Background Removed (WebP ~20KB)
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {/* Checkered Transparency Preview */}
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: 14,
+                                backgroundImage: 'linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)',
+                                backgroundSize: '10px 10px',
+                                backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px',
+                                backgroundColor: '#ffffff',
+                                border: '1px solid #CBD5E1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <img src={generatedIconUrl} alt="Transparent Cutout" style={{ width: 50, height: 50, objectFit: 'contain' }} />
+                              </div>
+                              <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginTop: 4, display: 'block' }}>Transparent</span>
+                            </div>
+
+                            {/* Customer Dark Preview */}
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ width: 64, height: 64, borderRadius: 14, background: '#0B2942', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}>
+                                <img src={generatedIconUrl} alt="Customer Dark Card" style={{ width: 50, height: 50, objectFit: 'contain' }} />
+                              </div>
+                              <span style={{ fontSize: 10, color: '#0B2942', fontWeight: 800, marginTop: 4, display: 'block' }}>Customer App</span>
+                            </div>
+
+                            {/* Light Card Preview */}
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ width: 64, height: 64, borderRadius: 14, background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img src={generatedIconUrl} alt="Light Card" style={{ width: 50, height: 50, objectFit: 'contain' }} />
+                              </div>
+                              <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginTop: 4, display: 'block' }}>Light Card</span>
+                            </div>
+
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 120 }}>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button
+                                  type="button"
+                                  disabled={isGeneratingIcon}
+                                  onClick={() => handleGenerateCategoryIcon(newCatName)}
+                                  style={{ flex: 1, background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 6, padding: '5px 8px', fontSize: 11, fontWeight: 700, color: '#334155', cursor: 'pointer' }}
+                                >
+                                  Re-generate
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setGeneratedIconUrl(null); setRawGeneratedIconUrl(null); }}
+                                  style={{ background: '#FEE2E2', border: '1px solid #FECACA', borderRadius: 6, padding: '5px 8px', fontSize: 11, fontWeight: 700, color: '#DC2626', cursor: 'pointer' }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            type="button"
+                            disabled={!newCatName.trim() || isGeneratingIcon}
+                            onClick={() => handleGenerateCategoryIcon(newCatName)}
+                            style={{
+                              flex: 2,
+                              background: isGeneratingIcon ? '#E2E8F0' : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                              color: isGeneratingIcon ? '#94A3B8' : 'white',
+                              border: 'none',
+                              borderRadius: 10,
+                              padding: '10px 14px',
+                              fontSize: 13,
+                              fontWeight: 800,
+                              cursor: !newCatName.trim() || isGeneratingIcon ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 8,
+                              boxShadow: isGeneratingIcon ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.25)'
+                            }}
+                          >
+                            {isGeneratingIcon ? (
+                              <>
+                                <RefreshCw size={15} className="animate-spin" />
+                                Generating & Removing Background…
+                              </>
+                            ) : (
+                              <>
+                                <Wand2 size={15} />
+                                Generate 3D Icon with Gemini AI
+                              </>
+                            )}
+                          </button>
+
+                          <label
+                            style={{
+                              flex: 1,
+                              background: '#F8FAFC',
+                              border: '1px dashed #CBD5E1',
+                              borderRadius: 10,
+                              padding: '10px',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: '#475569',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Upload size={14} />
+                            <span>Upload & Cutout</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={e => handleFileUploadForIcon(e)}
+                            />
+                          </label>
+                        </div>
+                      )}
+
+                      {iconGenError && (
+                        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#DC2626', fontWeight: 600 }}>
+                          {iconGenError}
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                       <button
                         type="button"
-                        onClick={() => { setShowAddCatModal(false); setNewCatName(''); }}
+                        onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); }}
                         style={{
                           flex: 1,
                           padding: '12px',
@@ -2049,6 +2529,239 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {/* ── Modal for Generating / Updating AI Icon on Existing Category ── */}
+            {aiIconModalCat && (
+              <div style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(4, 27, 48, 0.75)',
+                backdropFilter: 'blur(5px)',
+                zIndex: 1000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 20
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: 24,
+                  width: '100%',
+                  maxWidth: 440,
+                  padding: '24px 22px',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 12, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Wand2 size={20} color="#1D4ED8" />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: 0 }}>
+                          Generate 3D Icon for "{aiIconModalCat.name_en}"
+                        </h3>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>
+                          Powered by Gemini Imagen 3 · Transparent Background
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setAiIconModalCat(null)}
+                      style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <X size={16} color="#64748B" />
+                    </button>
+                  </div>
+
+                  {/* Current Icon Preview */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#F8FAFC', padding: '12px 16px', borderRadius: 14, border: '1px solid #E2E8F0' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 14, background: '#0B2942', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {aiIconModalCat.icon_url ? (
+                        <img src={aiIconModalCat.icon_url} alt={aiIconModalCat.name_en} style={{ width: 44, height: 44, objectFit: 'contain' }} />
+                      ) : (
+                        getCategoryIcon(aiIconModalCat.slug, aiIconModalCat.name_en, 26)
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>Current Icon</div>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>
+                        {aiIconModalCat.icon_url ? 'Custom 3D Icon Attached' : 'Using default built-in icon'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gemini API Key Input if not set */}
+                  {(!geminiApiKey || showGeminiKeyInput) && (
+                    <div style={{ background: '#FFFBEB', padding: '10px 12px', borderRadius: 10, border: '1px solid #FDE68A', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: '#92400E' }}>
+                        <span>Gemini API Key Required</span>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: '#2563EB', textDecoration: 'none' }}>
+                          Get Key ↗
+                        </a>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          type="password"
+                          value={geminiApiKey}
+                          onChange={e => {
+                            setGeminiApiKey(e.target.value);
+                            if (typeof window !== 'undefined') {
+                              localStorage.setItem('admin_gemini_api_key', e.target.value.trim());
+                            }
+                          }}
+                          placeholder="AIzaSy..."
+                          style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #CBD5E1', outline: 'none' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowGeminiKeyInput(false)}
+                          style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Auto-remove background controls */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#F8FAFC', padding: '10px 12px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#1E293B', fontWeight: 700, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={removeBgEnabled}
+                          onChange={e => {
+                            setRemoveBgEnabled(e.target.checked);
+                            handleRecutIcon(e.target.checked, bgCutoutPreset);
+                          }}
+                          style={{ accentColor: '#1D4ED8', cursor: 'pointer' }}
+                        />
+                        <span>Remove Background (Transparent 3D Cutout)</span>
+                      </label>
+
+                      {removeBgEnabled && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 10, color: '#64748B', fontWeight: 700 }}>Intensity:</span>
+                          {(['subtle', 'balanced', 'aggressive'] as const).map(preset => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                setBgCutoutPreset(preset);
+                                handleRecutIcon(removeBgEnabled, preset);
+                              }}
+                              style={{
+                                padding: '2px 6px',
+                                fontSize: 10,
+                                borderRadius: 4,
+                                border: bgCutoutPreset === preset ? '1px solid #2563EB' : '1px solid #CBD5E1',
+                                background: bgCutoutPreset === preset ? '#EFF6FF' : 'white',
+                                color: bgCutoutPreset === preset ? '#1D4ED8' : '#64748B',
+                                fontWeight: bgCutoutPreset === preset ? 800 : 500,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {preset === 'subtle' ? 'Subtle' : preset === 'balanced' ? 'Balanced' : 'Deep'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {iconGenError && (
+                    <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#DC2626', fontWeight: 600 }}>
+                      {iconGenError}
+                    </div>
+                  )}
+
+                  {/* Upload Custom Image Option */}
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <label
+                      style={{
+                        width: '100%',
+                        background: '#F8FAFC',
+                        border: '1px dashed #CBD5E1',
+                        borderRadius: 10,
+                        padding: '9px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: '#475569',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Upload size={14} />
+                      <span>Or Upload Custom Image & Auto-Cutout Background</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={e => handleFileUploadForIcon(e, aiIconModalCat)}
+                      />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => setAiIconModalCat(null)}
+                      style={{
+                        flex: 1,
+                        padding: '11px',
+                        borderRadius: 12,
+                        border: '1.5px solid #E2E8F0',
+                        background: 'white',
+                        color: '#64748B',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isGeneratingIcon}
+                      onClick={() => handleGenerateCategoryIcon(aiIconModalCat.name_en, aiIconModalCat)}
+                      style={{
+                        flex: 2,
+                        padding: '11px',
+                        borderRadius: 12,
+                        border: 'none',
+                        background: isGeneratingIcon ? '#CBD5E1' : 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                        color: 'white',
+                        fontWeight: 800,
+                        fontSize: 13,
+                        cursor: isGeneratingIcon ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6
+                      }}
+                    >
+                      {isGeneratingIcon ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          Generating & Cutout…
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 size={14} />
+                          Generate & Save 3D Icon
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
