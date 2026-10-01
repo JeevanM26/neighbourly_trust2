@@ -42,7 +42,7 @@
       "title": "Admin Dashboard Realtime Sync & Concierge Worker Dispatch",
       "description": "Add realtime subscription to bookings in AdminDashboard.tsx, show full customer details with 1-tap call, and add worker assignment selector to dispatch nearby technician.",
       "priority": 6,
-      "passes": false
+      "passes": true
     }
   ]
 }

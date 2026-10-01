@@ -41,11 +41,14 @@ export interface UserProfile {
 export interface WorkerProfile {
   worker_id: string;
   category_id?: string;
+  category_name?: string;
+  category_slug?: string;
   full_name: string;
   avatar_url?: string;
+  phone?: string;
   avg_rating: number;
   total_jobs: number;
-  years_experience: number;
+  years_experience?: number;
   distance_km: number;
   
   // From old schema / dummy data

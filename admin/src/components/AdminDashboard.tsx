@@ -211,6 +211,74 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   const [removeBgEnabled, setRemoveBgEnabled] = useState<boolean>(true);
   const [aiIconModalCat, setAiIconModalCat] = useState<AdminCategoryRecord | null>(null);
 
+  // Concierge Dispatch Modal State
+  const [dispatchBooking, setDispatchBooking] = useState<AdminBooking | null>(null);
+  const [dispatchSearch, setDispatchSearch] = useState<string>('');
+  const [dispatchCategoryFilter, setDispatchCategoryFilter] = useState<'matching' | 'all'>('matching');
+  const [isDispatching, setIsDispatching] = useState<boolean>(false);
+  const [dispatchNotice, setDispatchNotice] = useState<string>('');
+
+  const handleAssignWorker = async (bookingId: string, worker: AdminWorker) => {
+    const client = getClient();
+    if (!client) return;
+    setIsDispatching(true);
+    setDispatchNotice('');
+    try {
+      const { error } = await client
+        .from('bookings')
+        .update({
+          worker_id: worker.id,
+          status: 'accepted',
+        })
+        .eq('id', bookingId);
+
+      if (error) {
+        setDispatchNotice(`Error: ${error.message}`);
+        setIsDispatching(false);
+        return;
+      }
+
+      try {
+        await client.from('booking_offers').insert({
+          booking_id: bookingId,
+          worker_id: worker.id,
+          status: 'accepted',
+        });
+      } catch (e) {
+        console.warn('booking_offers insert notice:', e);
+      }
+
+      setDispatchNotice(`✓ Assigned ${worker.full_name} successfully!`);
+      setBookings(prev => prev.map(b => {
+        if (b.id === bookingId) {
+          return {
+            ...b,
+            status: 'accepted',
+            worker: {
+              id: worker.id,
+              full_name: worker.full_name,
+              phone: worker.phone,
+              email: worker.email,
+              avatar_url: worker.avatar_url,
+              rating: worker.rating,
+            }
+          };
+        }
+        return b;
+      }));
+
+      setTimeout(() => {
+        setDispatchBooking(null);
+        setIsDispatching(false);
+        setDispatchNotice('');
+      }, 1000);
+      loadAllData();
+    } catch (err: any) {
+      setDispatchNotice(`Error: ${err?.message || 'Failed to dispatch'}`);
+      setIsDispatching(false);
+    }
+  };
+
   const loadAllData = async () => {
     try {
       const client = getClient();
@@ -517,8 +585,17 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
       })
       .subscribe();
 
+    // Realtime bookings synchronization (instant dispatch updates)
+    const bookingsChannel = client
+      .channel('admin_bookings_realtime_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        loadAllData();
+      })
+      .subscribe();
+
     return () => {
       catChannel.unsubscribe();
+      bookingsChannel.unsubscribe();
     };
   }, []);
 
@@ -646,6 +723,10 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     const inProgressCount = bookings.filter(b => ['accepted', 'on_the_way', 'in_progress'].includes(b.status)).length;
     const cancelledCount = bookings.filter(b => b.status === 'cancelled').length;
 
+    // Unassigned / Concierge Dispatch Needed Bookings
+    const unassignedBookings = bookings.filter(b => !b.worker?.id || b.status === 'searching' || b.status === 'pending');
+    const unassignedCount = unassignedBookings.length;
+
     // Today's Work Done
     const todayDone = bookings.filter(b => b.status === 'completed' && (isSameDay(b.completed_at) || isSameDay(b.created_at)));
     const todayGMV = todayDone.reduce((sum, b) => sum + (b.final_price || 0), 0);
@@ -663,6 +744,8 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
       completedCount,
       inProgressCount,
       cancelledCount,
+      unassignedCount,
+      unassignedBookings,
       totalGMV,
       totalCommission,
       workerNetPayout,
@@ -680,7 +763,11 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   // Filtered Bookings
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
-      const matchesStatus = bookingStatusFilter === 'all' || b.status === bookingStatusFilter;
+      const matchesStatus = bookingStatusFilter === 'all'
+        ? true
+        : (bookingStatusFilter === 'unassigned' || bookingStatusFilter === 'searching')
+        ? (!b.worker?.id || b.status === 'searching' || b.status === 'pending')
+        : b.status === bookingStatusFilter;
       const q = bookingSearch.toLowerCase();
       const matchesSearch = !q || 
         b.customer?.full_name?.toLowerCase().includes(q) ||
@@ -688,6 +775,8 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         b.worker?.full_name?.toLowerCase().includes(q) ||
         b.worker?.phone?.includes(q) ||
         b.category_name?.toLowerCase().includes(q) ||
+        b.address_text?.toLowerCase().includes(q) ||
+        b.description?.toLowerCase().includes(q) ||
         b.id.toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
@@ -1078,7 +1167,13 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
           {[
             { key: 'today', label: "Today's Work Done", icon: CheckCircle2, badge: stats.todayDoneCount > 0 ? `${stats.todayDoneCount} Done Today` : null, highlight: true },
             { key: 'overview', label: 'Overview & Finances', icon: BarChart3, badge: null },
-            { key: 'bookings', label: 'All Tasks & Calling', icon: Briefcase, badge: stats.totalJobs },
+            { 
+              key: 'bookings', 
+              label: 'All Tasks & Calling', 
+              icon: Briefcase, 
+              badge: stats.unassignedCount > 0 ? `⚡ ${stats.unassignedCount} to dispatch` : stats.totalJobs,
+              alert: stats.unassignedCount > 0
+            },
             { key: 'workers', label: 'Workers Directory', icon: Wrench, badge: stats.totalWorkers },
             { key: 'services', label: 'Services & Skills', icon: Sparkles, badge: categoriesList.length },
             { key: 'customers', label: 'Customers Directory', icon: Users, badge: stats.totalCustomers },
@@ -1507,8 +1602,8 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                   />
                 </div>
 
-                <div style={{ display: 'flex', background: 'white', borderRadius: 10, border: '1px solid #E2E8F0', padding: 3 }}>
-                  {['all', 'completed', 'in_progress', 'cancelled'].map(st => (
+                <div style={{ display: 'flex', background: 'white', borderRadius: 10, border: '1px solid #E2E8F0', padding: 3, flexWrap: 'wrap' }}>
+                  {['all', 'unassigned', 'in_progress', 'completed', 'cancelled'].map(st => (
                     <button
                       key={st}
                       onClick={() => setBookingStatusFilter(st)}
@@ -1519,12 +1614,12 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                         fontSize: 12,
                         fontWeight: 700,
                         cursor: 'pointer',
-                        background: bookingStatusFilter === st ? '#0B3D66' : 'transparent',
-                        color: bookingStatusFilter === st ? 'white' : '#64748B',
+                        background: bookingStatusFilter === st ? (st === 'unassigned' ? '#EA580C' : '#0B3D66') : 'transparent',
+                        color: bookingStatusFilter === st ? 'white' : (st === 'unassigned' && stats.unassignedCount > 0 ? '#EA580C' : '#64748B'),
                         textTransform: 'capitalize',
                       }}
                     >
-                      {st === 'in_progress' ? 'Active' : st}
+                      {st === 'unassigned' ? `⚡ Unassigned (${stats.unassignedCount})` : st === 'in_progress' ? 'Active' : st}
                     </button>
                   ))}
                 </div>
@@ -1587,6 +1682,23 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                             {b.customer?.phone ? `+91 ${b.customer.phone}` : 'No phone saved'}
                           </div>
 
+                          {(b.address_text || b.description) && (
+                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              {b.address_text && (
+                                <div style={{ fontSize: 11, color: '#475569', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                                  <MapPin size={12} color="#0B3D66" style={{ marginTop: 2, flexShrink: 0 }} />
+                                  <span style={{ wordBreak: 'break-word' }}>{b.address_text}</span>
+                                </div>
+                              )}
+                              {b.description && (
+                                <div style={{ fontSize: 11, color: '#1E293B', background: '#F1F5F9', padding: '4px 8px', borderRadius: 6 }}>
+                                  <span style={{ fontWeight: 700, color: '#0B3D66' }}>Note: </span>
+                                  {b.description}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {custPhone && (
                             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                               <a
@@ -1633,9 +1745,14 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                         </div>
 
                         {/* Worker Column */}
-                        <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
-                            🛠️ Technician
+                        <div style={{ background: b.worker ? '#F8FAFC' : '#FFFBEB', borderRadius: 12, padding: '12px 14px', border: `1px solid ${b.worker ? '#E2E8F0' : '#FCD34D'}` }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: b.worker ? '#64748B' : '#B45309', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span>🛠️ Technician</span>
+                            {!b.worker && (
+                              <span style={{ background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 900 }}>
+                                DISPATCH NEEDED
+                              </span>
+                            )}
                           </div>
                           {b.worker ? (
                             <>
@@ -1668,8 +1785,37 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                               )}
                             </>
                           ) : (
-                            <div style={{ fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>
-                              Auto-searching nearby technicians...
+                            <div>
+                              <div style={{ fontSize: 12, color: '#92400E', fontWeight: 600, marginBottom: 8 }}>
+                                No technician assigned. Call verified technicians offline to confirm arrival.
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setDispatchBooking(b);
+                                  setDispatchSearch('');
+                                  setDispatchCategoryFilter('matching');
+                                  setDispatchNotice('');
+                                }}
+                                style={{
+                                  width: '100%',
+                                  background: 'linear-gradient(135deg, #0B3D66 0%, #1D4ED8 100%)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: 8,
+                                  padding: '8px 12px',
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 6,
+                                  boxShadow: '0 2px 8px rgba(11, 61, 102, 0.2)',
+                                }}
+                              >
+                                <Zap size={13} color="#FDE047" />
+                                <span>Find & Dispatch Specialist ➔</span>
+                              </button>
                             </div>
                           )}
                         </div>
@@ -3119,6 +3265,304 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                 </form>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* ── Concierge Dispatch Specialist Modal ── */}
+        {dispatchBooking && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: 20,
+              width: '100%',
+              maxWidth: 580,
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #E2E8F0',
+              overflow: 'hidden',
+            }}>
+              {/* Modal Header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)',
+                color: 'white',
+                padding: '20px 24px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Zap size={20} color="#FDE047" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 17, fontWeight: 900, margin: 0, letterSpacing: '-0.3px' }}>
+                      Concierge Dispatch: Assign Specialist
+                    </h3>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: '2px 0 0' }}>
+                      Call technician offline to verify availability, then assign
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setDispatchBooking(null); setDispatchNotice(''); }}
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Order Context Banner */}
+              <div style={{ background: '#EFF6FF', padding: '14px 20px', borderBottom: '1px solid #DBEAFE', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 900, color: '#0B3D66' }}>
+                      {dispatchBooking.category_name}
+                    </span>
+                    <span style={{ background: '#DBEAFE', color: '#1E40AF', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800 }}>
+                      ID: {dispatchBooking.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: '#0B3D66' }}>
+                    Est. ₹{dispatchBooking.price_estimate || 350}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontWeight: 700 }}>Customer:</span>
+                  <span>{dispatchBooking.customer?.full_name || 'Customer'}</span>
+                  {dispatchBooking.customer?.phone && (
+                    <a
+                      href={`tel:+91${dispatchBooking.customer.phone.replace(/\D/g, '')}`}
+                      style={{ color: '#2563EB', fontWeight: 800, textDecoration: 'none', marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                    >
+                      <Phone size={11} /> +91 {dispatchBooking.customer.phone}
+                    </a>
+                  )}
+                </div>
+
+                {dispatchBooking.address_text && (
+                  <div style={{ fontSize: 11, color: '#475569', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                    <MapPin size={12} color="#0B3D66" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span style={{ wordBreak: 'break-word' }}>{dispatchBooking.address_text}</span>
+                  </div>
+                )}
+
+                {dispatchBooking.description && (
+                  <div style={{ fontSize: 11, color: '#1E293B', background: 'white', padding: '6px 10px', borderRadius: 6, border: '1px solid #BFDBFE' }}>
+                    <span style={{ fontWeight: 700, color: '#0B3D66' }}>Issue: </span>
+                    {dispatchBooking.description}
+                  </div>
+                )}
+              </div>
+
+              {/* Notice / Feedback */}
+              {dispatchNotice && (
+                <div style={{
+                  padding: '10px 20px',
+                  background: dispatchNotice.startsWith('✓') ? '#DCFCE7' : '#FEE2E2',
+                  color: dispatchNotice.startsWith('✓') ? '#166534' : '#991B1B',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  {dispatchNotice}
+                </div>
+              )}
+
+              {/* Search & Filter Bar */}
+              <div style={{ padding: '14px 20px 8px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+                  <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    value={dispatchSearch}
+                    onChange={e => setDispatchSearch(e.target.value)}
+                    placeholder="Search technician name or phone..."
+                    style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 8, padding: 3 }}>
+                  <button
+                    onClick={() => setDispatchCategoryFilter('matching')}
+                    style={{
+                      padding: '5px 10px',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: dispatchCategoryFilter === 'matching' ? '#0B3D66' : 'transparent',
+                      color: dispatchCategoryFilter === 'matching' ? 'white' : '#64748B',
+                    }}
+                  >
+                    Matching Skill
+                  </button>
+                  <button
+                    onClick={() => setDispatchCategoryFilter('all')}
+                    style={{
+                      padding: '5px 10px',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: dispatchCategoryFilter === 'all' ? '#0B3D66' : 'transparent',
+                      color: dispatchCategoryFilter === 'all' ? 'white' : '#64748B',
+                    }}
+                  >
+                    All Pros ({workers.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Technicians List */}
+              <div style={{ padding: '8px 20px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(() => {
+                  const eligible = workers.filter(w => {
+                    const catMatches = dispatchCategoryFilter === 'all' || w.categories.some(c =>
+                      c.toLowerCase().includes((dispatchBooking.category_name || '').toLowerCase()) ||
+                      (dispatchBooking.category_name || '').toLowerCase().includes(c.toLowerCase())
+                    );
+                    const q = dispatchSearch.toLowerCase().trim();
+                    const searchMatches = !q || w.full_name.toLowerCase().includes(q) || (w.phone && w.phone.includes(q));
+                    return catMatches && searchMatches;
+                  });
+
+                  if (eligible.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748B' }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 6px' }}>No technicians found matching filter</p>
+                        <p style={{ fontSize: 11, margin: '0 0 12px' }}>Try switching to "All Pros" or searching by name</p>
+                        <button
+                          onClick={() => setDispatchCategoryFilter('all')}
+                          style={{ background: '#0B3D66', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          View All Technicians ({workers.length})
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return eligible.map(w => {
+                    const cleanPhone = (w.phone || '').replace(/\D/g, '');
+                    return (
+                      <div
+                        key={w.id}
+                        style={{
+                          background: 'white',
+                          border: '1.5px solid #E2E8F0',
+                          borderRadius: 12,
+                          padding: '12px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#F0F7FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid #CBD5E1', fontSize: 16, fontWeight: 900, color: '#0B3D66' }}>
+                            {w.avatar_url ? (
+                              <img src={w.avatar_url} alt={w.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                            ) : (
+                              w.full_name.slice(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 14, fontWeight: 900, color: '#0F172A' }}>
+                                {w.full_name}
+                              </span>
+                              <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6, background: w.is_online ? '#DCFCE7' : '#F1F5F9', color: w.is_online ? '#15803D' : '#64748B' }}>
+                                {w.is_online ? '● Online' : 'Offline'}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#64748B', marginTop: 2, flexWrap: 'wrap' }}>
+                              <span style={{ color: '#D97706', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Star size={11} fill="#F59E0B" color="#F59E0B" /> {w.rating.toFixed(1)}
+                              </span>
+                              <span>·</span>
+                              <span>{w.total_jobs} jobs</span>
+                              <span>·</span>
+                              <span style={{ color: '#0B3D66', fontWeight: 700 }}>{w.categories.slice(0, 2).join(', ')}</span>
+                            </div>
+
+                            {cleanPhone && (
+                              <div style={{ fontSize: 11, color: '#334155', fontWeight: 700, marginTop: 2 }}>
+                                +91 {cleanPhone}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          {cleanPhone && (
+                            <a
+                              href={`tel:+91${cleanPhone}`}
+                              style={{
+                                background: '#F1F5F9',
+                                color: '#0F172A',
+                                border: '1px solid #CBD5E1',
+                                borderRadius: 8,
+                                padding: '8px 10px',
+                                fontSize: 11,
+                                fontWeight: 800,
+                                textDecoration: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}
+                              title="Call technician to verify availability"
+                            >
+                              <Phone size={12} color="#0B3D66" />
+                              <span>Call</span>
+                            </a>
+                          )}
+                          <button
+                            onClick={() => handleAssignWorker(dispatchBooking.id, w)}
+                            disabled={isDispatching}
+                            style={{
+                              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: 8,
+                              padding: '8px 12px',
+                              fontSize: 11,
+                              fontWeight: 800,
+                              cursor: isDispatching ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              opacity: isDispatching ? 0.7 : 1,
+                              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)',
+                            }}
+                          >
+                            <Check size={13} />
+                            <span>{isDispatching ? 'Assigning...' : 'Dispatch'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           </div>
         )}
