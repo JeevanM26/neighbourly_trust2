@@ -86,6 +86,9 @@ export interface Booking {
   total_amount?: number;
   commission_amount?: number;
   address_notes?: string;
+  address_text?: string;
+  description?: string;
+  notes?: string;
   created_at: string;
   review?: { id?: string; rating: number; comment?: string } | null;
 }

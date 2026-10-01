@@ -35,7 +35,7 @@
       "title": "Customer Bookings Screen Assisted Dispatch State with Hotline Support",
       "description": "Ensure BookingsScreen displays unassigned 'searching'/'pending' bookings cleanly with animated dispatch status and one-tap Call Dispatch button.",
       "priority": 5,
-      "passes": false
+      "passes": true
     },
     {
       "id": "NT-06",

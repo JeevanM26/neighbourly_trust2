@@ -6,8 +6,23 @@ import { Booking } from '../../lib/types';
 import { Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarDays, Phone, Star, ShieldCheck, MapPin, Sparkles, MessageSquare, ChevronRight, X, Navigation } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
-import { getClient, subscribeToAssignedWorkerLocation, calcWorkerDistance, parseWorkerCoords } from '../../lib/supabase';
+import { getClient, subscribeToAssignedWorkerLocation, calcWorkerDistance, parseWorkerCoords, cancelBooking } from '../../lib/supabase';
 import { getStatusLabel } from '../../lib/i18n';
+
+const getCategory3DImage = (nameOrSlug: string = ''): string | null => {
+  const s = nameOrSlug.toLowerCase();
+  if (s.includes('elec')) return '/categories/electrician.png';
+  if (s.includes('plumb')) return '/categories/plumber.png';
+  if (s.includes('carp')) return '/categories/carpenter.png';
+  if (s.includes('paint')) return '/categories/painter.png';
+  if (s.includes('clean')) return '/categories/cleaning.png';
+  if (s.includes('pest')) return '/categories/pestcontrol.png';
+  if (s.includes('ac') || s.includes('appliance') || s.includes('cool')) return '/categories/acrepair.png';
+  if (s.includes('salon') || s.includes('barber')) return '/categories/salon.png';
+  if (s.includes('mason')) return '/categories/mason.png';
+  if (s.includes('mechanic') || s.includes('auto')) return '/categories/mechanic.png';
+  return null;
+};
 
 const getStepLabels = (lang: string) => {
   const map: Record<string, string[]> = {
@@ -38,11 +53,15 @@ function BookingCard({
   onOpenReview,
   onOpenSos,
   onQuickMessage,
+  onCancelBooking,
+  cancelling,
 }: { 
   booking: Booking; 
   onOpenReview: (b: Booking) => void;
   onOpenSos: (b: Booking) => void;
   onQuickMessage: (b: Booking, msg: string) => void;
+  onCancelBooking?: (bookingId: string) => void;
+  cancelling?: boolean;
 }) {
   const { user, webrtc, settings } = useApp();
   const { userLocation } = useLocation();
@@ -67,6 +86,8 @@ function BookingCard({
   })();
 
   const isActive = ['searching', 'pending', 'accepted', 'on_the_way', 'in_progress'].includes(booking.status);
+  const isConciergeDispatch = !booking.worker_id || ['searching', 'pending'].includes(booking.status);
+  const categoryImg = getCategory3DImage(booking.category_name || '');
   const canCall = ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && !!booking.worker_id;
   const completionPin = (booking.id || '0000').slice(-4).toUpperCase();
 
@@ -123,16 +144,18 @@ function BookingCard({
             }}>
               {booking.worker_avatar ? (
                 <img src={booking.worker_avatar} alt={booking.worker_name || 'Worker'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : categoryImg ? (
+                <img src={categoryImg} alt={booking.category_name || 'Category'} style={{ width: 36, height: 36, objectFit: 'contain' }} />
               ) : (
                 <span style={{ fontSize: 24 }}>{status.emoji}</span>
               )}
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.2px' }}>
-                {booking.worker_name || booking.category_name || 'Home Specialist'}
+                {booking.worker_name || (booking.category_name ? `${booking.category_name} Specialist` : 'Assisted Concierge')}
               </div>
               <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600, marginTop: 1 }}>
-                {booking.category_name}
+                {isConciergeDispatch ? 'Hero Hand Concierge · Dispatch Active' : booking.category_name}
               </div>
             </div>
           </div>
@@ -146,6 +169,44 @@ function BookingCard({
             </span>
           </div>
         </div>
+
+        {/* ── Concierge Dispatch In-Progress Card ── */}
+        {isConciergeDispatch && isActive && (
+          <div style={{
+            background: 'linear-gradient(135deg, #EFF6FF 0%, #FEF3C7 100%)',
+            borderRadius: 16, padding: '14px 16px', marginBottom: 14,
+            border: '1.5px solid #BFDBFE',
+            boxShadow: '0 2px 10px rgba(11, 61, 102, 0.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ position: 'relative', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0B3D66' }} />
+                  <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: 'rgba(11, 61, 102, 0.25)', animation: 'pulse-ring 2s infinite' }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 900, color: '#0B3D66', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                  Hero Hand Concierge Active
+                </span>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 800, background: '#0B3D66', color: 'white', padding: '3px 8px', borderRadius: 8 }}>
+                DISPATCHING
+              </span>
+            </div>
+
+            <p style={{ fontSize: 12, color: '#334155', margin: '0 0 10px', lineHeight: 1.45, fontWeight: 500 }}>
+              Our operations dispatchers in Bangalore are matching you with a verified specialist. We will contact you shortly to confirm arrival.
+            </p>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'white', borderRadius: 10, padding: '8px 12px', border: '1px solid #E2E8F0',
+              fontSize: 11, color: '#64748B'
+            }}>
+              <span style={{ fontWeight: 600 }}>Estimated Dispatch</span>
+              <span style={{ fontWeight: 800, color: '#0B3D66' }}>15 – 30 mins</span>
+            </div>
+          </div>
+        )}
 
         {/* ── Real-Time Specialist Tracking Banner ── */}
         {isActive && ['accepted', 'on_the_way', 'in_progress'].includes(booking.status) && (
@@ -256,10 +317,20 @@ function BookingCard({
           </div>
         </div>
 
-        {booking.address_notes && (
-          <div style={{ marginTop: 8, background: '#F8FAFC', borderRadius: 8, padding: '8px 10px', fontSize: 12, color: '#475569', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <MapPin size={13} color="#0B3D66" />
-            <span>{booking.address_notes}</span>
+        {(booking.address_notes || booking.address_text) && (
+          <div style={{ marginTop: 8, background: '#F8FAFC', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#475569', fontWeight: 500, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <MapPin size={15} color="#0B3D66" style={{ marginTop: 2, flexShrink: 0 }} />
+            <div style={{ wordBreak: 'break-word' }}>
+              <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: 2 }}>Service Address</div>
+              {booking.address_notes || booking.address_text}
+            </div>
+          </div>
+        )}
+
+        {booking.description && (
+          <div style={{ marginTop: 6, background: '#F1F5F9', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#334155', fontWeight: 500 }}>
+            <span style={{ fontWeight: 700, color: '#0B3D66' }}>Problem Note: </span>
+            {booking.description}
           </div>
         )}
 
@@ -294,7 +365,51 @@ function BookingCard({
 
         {/* ── Action Buttons ── */}
         <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-          {canCall && (
+          {isConciergeDispatch ? (
+            <>
+              <a
+                href="tel:7975182162"
+                style={{
+                  flex: 2,
+                  background: 'linear-gradient(135deg, #0B3D66 0%, #1D4ED8 100%)',
+                  color: 'white',
+                  padding: '11px 14px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 7,
+                  boxShadow: '0 4px 14px rgba(11, 61, 102, 0.25)',
+                }}
+              >
+                <Phone size={15} fill="white" color="white" />
+                <span>Call Dispatch (7975182162)</span>
+              </a>
+
+              {onCancelBooking && (
+                <button
+                  onClick={() => onCancelBooking(booking.id)}
+                  disabled={cancelling}
+                  style={{
+                    flex: 1,
+                    background: '#F8FAFC',
+                    border: '1.5px solid #CBD5E1',
+                    color: '#64748B',
+                    padding: '11px 10px',
+                    borderRadius: 12,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {cancelling ? 'Cancelling...' : 'Cancel'}
+                </button>
+              )}
+            </>
+          ) : canCall ? (
             <button
               onClick={() => {
                 const targetWorkerId = booking.worker_id;
@@ -317,7 +432,29 @@ function BookingCard({
               <Phone size={15} fill="#047857" color="#047857" />
               Free Call
             </button>
-          )}
+          ) : booking.status === 'no_workers_found' ? (
+            <a
+              href="tel:7975182162"
+              style={{
+                flex: 1,
+                background: '#FEF2F2',
+                border: '1.5px solid #FECACA',
+                color: '#DC2626',
+                padding: '11px 14px',
+                borderRadius: 12,
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <Phone size={15} />
+              <span>Call Dispatch to Reschedule</span>
+            </a>
+          ) : null}
 
           {isActive && (
             <button
@@ -396,6 +533,27 @@ export default function BookingsScreen() {
 
   // SOS Emergency Modal State
   const [sosBooking, setSosBooking] = useState<Booking | null>(null);
+
+  // Cancel Booking State
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this service request?')) return;
+    setCancellingId(bookingId);
+    try {
+      const ok = await cancelBooking(bookingId);
+      if (ok) {
+        showToast('Booking request cancelled', 'info');
+        await refreshBookings();
+      } else {
+        showToast('Failed to cancel. Please call dispatch helpline.', 'error');
+      }
+    } catch {
+      showToast('Failed to cancel. Please call dispatch helpline.', 'error');
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   useEffect(() => { refreshBookings(); }, [refreshBookings]);
 
@@ -565,6 +723,8 @@ export default function BookingsScreen() {
               onOpenReview={setReviewBooking}
               onOpenSos={setSosBooking}
               onQuickMessage={handleQuickMessage}
+              onCancelBooking={handleCancelBooking}
+              cancelling={cancellingId === b.id}
             />
           ))
         )}

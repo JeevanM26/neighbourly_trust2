@@ -419,6 +419,8 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
     
     return data.map((b: any) => ({
       ...b,
+      address_notes: b.address_notes || b.address_text,
+      description: b.description,
       worker_name: b.profiles?.full_name,
       worker_avatar: b.profiles?.avatar_url,
       // Removed worker_phone for privacy
@@ -495,6 +497,25 @@ export async function createBooking(params: {
 
     return data?.id ?? null;
   } catch { return null; }
+}
+
+// ─── Cancel Booking ─────────────────────────────────────────
+export async function cancelBooking(bookingId: string): Promise<boolean> {
+  const client = getClient();
+  if (!client) return false;
+  try {
+    const { error } = await client
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', bookingId);
+    if (error) {
+      console.warn("Cancel booking notice:", error);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ─── Upsert Profile ─────────────────────────────────────────
