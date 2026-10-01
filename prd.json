@@ -14,7 +14,7 @@
       "title": "Hide Worker Profiles & Direct Browsing from Customer Screen",
       "description": "Remove the 'Specialists Near You' worker cards list and worker filter pills from HomeScreen.tsx to avoid empty marketplace impressions.",
       "priority": 2,
-      "passes": false
+      "passes": true
     },
     {
       "id": "NT-03",

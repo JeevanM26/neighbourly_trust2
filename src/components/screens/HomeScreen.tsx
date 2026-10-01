@@ -647,200 +647,185 @@ export default function HomeScreen({
       {/* ─── Bottom Section (Light Gray) ─── */}
       <div style={{ background: '#F8FAFC', flex: 1, paddingBottom: 100 }}>
         
-        {/* Filter Pills */}
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '16px 20px', background: 'white', borderBottom: '1px solid #F1F5F9', scrollbarWidth: 'none' }}>
-          {[
-            { id: 'All', label: t('filterAll') }, 
-            { id: 'Top Rated', label: t('filterTopRated') }, 
-            { id: 'Available Now', label: t('filterAvailableNow') }, 
-            { id: 'Under ₹350', label: t('filterUnder350') }
-          ].map((f) => (
-            <button key={f.id} onClick={() => setActiveFilter(f.id)} style={{
-              background: activeFilter === f.id ? '#0B3D66' : '#F1F5F9',
-              color: activeFilter === f.id ? 'white' : '#334155',
-              border: 'none', borderRadius: 20, padding: '8px 16px',
-              fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0
-            }}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Specialists Near You */}
-        <div style={{ padding: '24px 20px' }}>
-          <div style={{ padding: '24px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
-                {t('specialistsNearYou')}
-              </h2>
-              <p style={{ fontSize: 13, color: '#64748B', margin: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <MapPin size={14} /> {filteredWorkers.length} {filteredWorkers.length === 1 ? t('verifiedSpecialistFound') : t('verifiedSpecialistsFound')}
+        {/* ─── 1. Instant Concierge Helpline Quick-Dial ─── */}
+        <div style={{ padding: '16px 20px 8px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0B3D66 0%, #041B30 100%)',
+            borderRadius: 20,
+            padding: '16px 18px',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            boxShadow: '0 8px 24px rgba(11, 61, 102, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38BDF8',
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: 10,
+                marginBottom: 6,
+                letterSpacing: '0.4px',
+                textTransform: 'uppercase'
+              }}>
+                <Sparkles size={11} /> 24/7 Assisted Dispatch
+              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 900, color: 'white', margin: '0 0 2px' }}>
+                {settings?.language === 'kn' ? 'ತುರ್ತು ತಂತ್ರಜ್ಞರ ಸಹಾಯ ಬೇಕೇ?' : settings?.language === 'hi' ? 'आपातकालीन सेवा सहायता चाहिए?' : 'Need Help Booking a Service?'}
+              </h3>
+              <p style={{ fontSize: 11, color: '#94A3B8', margin: 0, fontWeight: 500 }}>
+                {settings?.language === 'kn' ? 'ನೇರವಾಗಿ ನಮ್ಮ ನಿಯಂತ್ರಣ ಕೊಠಡಿಗೆ ಕರೆ ಮಾಡಿ' : settings?.language === 'hi' ? 'सीधे हमारे कंट्रोल रूम में कॉल करें' : 'Call our central dispatch desk for immediate support'}
               </p>
             </div>
-            
-            <button 
-              onClick={handleRefresh}
-              disabled={isLoadingWorkers}
-              style={{ 
-                display: 'flex', alignItems: 'center', gap: 6, background: 'white', 
-                border: '1px solid #E2E8F0', borderRadius: 20, padding: '6px 14px',
-                fontSize: 13, fontWeight: 700, color: isLoadingWorkers ? '#94A3B8' : '#0B3D66', 
-                cursor: isLoadingWorkers ? 'not-allowed' : 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+            <a
+              href="tel:7975182162"
+              style={{
+                background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+                color: 'white',
+                padding: '10px 16px',
+                borderRadius: 14,
+                textDecoration: 'none',
+                fontWeight: 900,
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 4px 14px rgba(34, 197, 94, 0.35)',
+                flexShrink: 0
               }}
             >
-              <RefreshCw size={14} className={isLoadingWorkers ? 'animate-spin' : ''} /> {isLoadingWorkers ? t('refreshing') : t('refresh')}
-            </button>
+              <PhoneCall size={14} /> {settings?.language === 'kn' ? 'ಕರೆ ಮಾಡಿ' : settings?.language === 'hi' ? 'कॉल करें' : 'Call Dispatch'}
+            </a>
+          </div>
+        </div>
+
+        {/* ─── 2. How Hero Hand Works (3-Step Fast Dispatch) ─── */}
+        <div style={{ padding: '20px 20px 8px' }}>
+          <div style={{ marginBottom: 12 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: '0 0 2px' }}>
+              {settings?.language === 'kn' ? 'ಹೀರೋ ಹ್ಯಾಂಡ್ ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ' : settings?.language === 'hi' ? 'हीरो हैंड कैसे काम करता है' : 'How Hero Hand Works'}
+            </h3>
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontWeight: 500 }}>
+              {settings?.language === 'kn' ? 'ನಿಮ್ಮ ಬಾಗಿಲಿಗೆ ಕೇವಲ 3 ಸುಲಭ ಹಂತಗಳಲ್ಲಿ' : settings?.language === 'hi' ? 'मात्र 3 आसान चरणों में आपके द्वार पर' : 'Verified doorstep assistance in 3 easy steps'}
+            </p>
           </div>
 
-          {/* Specialist Cards Horizontal Scroll */}
-          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollbarWidth: 'none', padding: '4px 0 16px', scrollSnapType: 'x mandatory' }}>
-            {isLoadingWorkers ? (
-              <>
-                <ProviderSkeleton />
-                <ProviderSkeleton />
-                <ProviderSkeleton />
-              </>
-            ) : filteredWorkers.length > 0 ? filteredWorkers.map(worker => {
-              const cat = categories.find(c => c.id === worker.category_id);
-              const catName = cat?.name_en || 'Specialist';
-              const avatar = worker.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.full_name)}&background=0B3D66&color=fff&size=200`;
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {[
+              {
+                step: '1',
+                title: settings?.language === 'kn' ? 'ಸೇವೆ ಆರಿಸಿ' : settings?.language === 'hi' ? 'सेवा चुनें' : '1. Pick Service',
+                desc: settings?.language === 'kn' ? '3D ಮೆನುವಿನಲ್ಲಿ ಟ್ಯಾಪ್ ಮಾಡಿ' : settings?.language === 'hi' ? 'ऊपर 3D कैटलॉग चुनें' : 'Tap any 3D icon above'
+              },
+              {
+                step: '2',
+                title: settings?.language === 'kn' ? 'ಬುಕ್ / ಕರೆ' : settings?.language === 'hi' ? 'बुक या कॉल' : '2. Book or Call',
+                desc: settings?.language === 'kn' ? 'ಆನ್‌ಲೈನ್ ಬುಕ್ ಅಥವಾ ನೇರ ಕರೆ' : settings?.language === 'hi' ? '1-क्लिक कॉल या त्वरित फॉर्म' : 'Direct dial or instant form'
+              },
+              {
+                step: '3',
+                title: settings?.language === 'kn' ? 'ತಂತ್ರಜ್ಞ ಆಗಮನ' : settings?.language === 'hi' ? 'हीरो आगमन' : '3. Hero Arrives',
+                desc: settings?.language === 'kn' ? '15-30 ನಿಮಿಷಗಳಲ್ಲಿ ಹಾಜರ್' : settings?.language === 'hi' ? '15-30 मिनट में द्वार पर' : 'At your door in 15-30 mins'
+              }
+            ].map(item => (
+              <div 
+                key={item.step}
+                style={{
+                  background: 'white',
+                  borderRadius: 16,
+                  padding: '14px 10px',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{
+                  width: 26, height: 26, borderRadius: '50%',
+                  background: '#0B3D66', color: 'white',
+                  fontSize: 12, fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 8px',
+                  boxShadow: '0 2px 6px rgba(11,61,102,0.2)'
+                }}>
+                  {item.step}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>
+                  {item.title}
+                </div>
+                <div style={{ fontSize: 10, color: '#64748B', fontWeight: 500, lineHeight: 1.25 }}>
+                  {item.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-              return (
-                <div 
-                  key={worker.worker_id} 
-                  onClick={() => onSelectWorker?.(worker.worker_id, worker.category_id || '')}
-                  style={{
-                    background: 'white', borderRadius: 22, overflow: 'hidden',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)', position: 'relative',
-                    width: 270, minWidth: 270, flexShrink: 0, cursor: 'pointer',
-                    scrollSnapAlign: 'start',
-                    display: 'flex', flexDirection: 'column',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                  }}
-                >
-                  {/* Card Header Image Area */}
-                  <div style={{ 
-                    height: 150, background: '#0F172A', position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    <img 
-                      src={avatar} 
-                      alt={worker.full_name} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.2) 50%, transparent 100%)'
-                    }} />
+        {/* ─── 3. Trust & Safety Guarantee Cards ─── */}
+        <div style={{ padding: '16px 20px 24px' }}>
+          <div style={{ marginBottom: 12 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', margin: '0 0 2px' }}>
+              {settings?.language === 'kn' ? 'ನಮ್ಮ ವಿಶ್ವಾಸಾರ್ಹತೆಯ ಭರವಸೆ' : settings?.language === 'hi' ? 'हमारा सुरक्षा और भरोसा वादा' : 'Our Trust & Safety Promise'}
+            </h3>
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontWeight: 500 }}>
+              {settings?.language === 'kn' ? 'ನಮ್ಮ ಪ್ರತಿಯೊಬ್ಬ ಗ್ರಾಹಕರಿಗೆ 100% ಸುರಕ್ಷಿತ' : settings?.language === 'hi' ? 'प्रत्येक घर के लिए 100% सुरक्षित और प्रमाणित' : '100% verified & insured service platform'}
+            </p>
+          </div>
 
-                    {/* TOP PRO badge */}
-                    {worker.featured && (
-                      <div style={{
-                        position: 'absolute', top: 10, left: 10,
-                        background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                        color: 'white', fontSize: 10, fontWeight: 900,
-                        padding: '3px 8px', borderRadius: 14, letterSpacing: '0.4px',
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        boxShadow: '0 2px 8px rgba(245,158,11,0.4)'
-                      }}>
-                        <Sparkles size={11} color="white" /> TOP PRO
-                      </div>
-                    )}
-
-                    {/* Volume Audio Intro Button */}
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        speakText(
-                          `${worker.full_name}, ${catName}. ` +
-                          `Rating: ${Number(worker.avg_rating || 4.9).toFixed(1)} stars. ` +
-                          `Completed ${worker.total_jobs || 2} verified jobs.`
-                        );
-                      }}
-                      style={{ 
-                        position: 'absolute', top: 10, right: 10, width: 32, height: 32, 
-                        borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)', color: '#0B3D66',
-                        backdropFilter: 'blur(4px)'
-                      }}>
-                      <Volume2 size={15} />
-                    </button>
-
-                    {/* Name & Verification on image */}
-                    <div style={{ position: 'absolute', bottom: 10, left: 12, right: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.2px', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
-                          {worker.full_name}
-                        </h3>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, marginTop: 2 }}>
-                        {catName} Specialist
-                      </div>
-                    </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            {[
+              {
+                icon: '🛡️',
+                title: settings?.language === 'kn' ? '100% ಪರಿಶೀಲಿತರು' : settings?.language === 'hi' ? '100% सत्यापित' : '100% Verified',
+                desc: settings?.language === 'kn' ? 'ಆಧಾರ್ ಮತ್ತು ಹಿನ್ನೆಲೆ ತಪಾಸಣೆ' : settings?.language === 'hi' ? 'आधार एवं बैकग्राउंड वेरिफाइड' : 'Aadhaar & identity vetted'
+              },
+              {
+                icon: '💰',
+                title: settings?.language === 'kn' ? 'ಸ್ಪಷ್ಟ ದರಗಳು' : settings?.language === 'hi' ? 'पारदर्शी दरें' : 'Fixed Standard Rate',
+                desc: settings?.language === 'kn' ? '₹350/ಗಂಟೆಯಿಂದ ಆರಂಭ' : settings?.language === 'hi' ? '₹350/घंटा से शुरू' : 'Starts at ₹350/hr'
+              },
+              {
+                icon: '⏱️',
+                title: settings?.language === 'kn' ? 'ವೇಗದ ಆಗಮನ' : settings?.language === 'hi' ? 'त्वरित सेवा' : 'Fast Arrival',
+                desc: settings?.language === 'kn' ? 'ಹತ್ತಿರದ ಹೀರೋ ನಿಯೋಜನೆ' : settings?.language === 'hi' ? 'निकटतम तकनीशियन आवंटन' : 'Assigned to nearest hero'
+              },
+              {
+                icon: '🔒',
+                title: settings?.language === 'kn' ? 'ಗೌಪ್ಯತೆ ರಕ್ಷಣೆ' : settings?.language === 'hi' ? 'गोपनीयता सुरक्षा' : 'Privacy Protected',
+                desc: settings?.language === 'kn' ? 'ಫೋನ್ ಸಂಖ್ಯೆ ಬಹಿರಂಗವಿಲ್ಲ' : settings?.language === 'hi' ? 'नंबर सुरक्षित रखा जाता है' : 'Your direct phone is private'
+              }
+            ].map(card => (
+              <div
+                key={card.title}
+                style={{
+                  background: 'white',
+                  borderRadius: 16,
+                  padding: '12px 14px',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10
+                }}
+              >
+                <span style={{ fontSize: 20 }}>{card.icon}</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>
+                    {card.title}
                   </div>
-
-                  {/* Card Body */}
-                  <div style={{ padding: '14px 14px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    {/* Ratings & Jobs Metas */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', background: '#FEF3C7', padding: '3px 7px', borderRadius: 10 }}>
-                          <Star size={12} color="#D97706" fill="#D97706" style={{ marginRight: 3 }} />
-                          <span style={{ fontSize: 12, fontWeight: 800, color: '#92400E' }}>
-                            {Number(worker.avg_rating || 4.9).toFixed(1)}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-                          ({worker.total_jobs || 2} jobs)
-                        </span>
-                      </div>
-                      {Boolean(worker.years_experience && worker.years_experience > 0) && (
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: 8 }}>
-                          {worker.years_experience}y exp
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Distance Bar */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, background: '#F8FAFC', padding: '8px 10px', borderRadius: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#475569', fontSize: 12, fontWeight: 600 }}>
-                        <MapPin size={13} color="#0B3D66" />
-                        {worker.distance_km ? `${Number(worker.distance_km).toFixed(1)} km away` : '0.6 km away'}
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 8 }}>
-                        Available
-                      </div>
-                    </div>
-
-                    {/* 1-Tap Book Button CTA */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectWorker?.(worker.worker_id, worker.category_id || '');
-                      }}
-                      style={{
-                        width: '100%', background: 'linear-gradient(135deg, #041B30 0%, #0B3D66 100%)',
-                        color: 'white', border: 'none', borderRadius: 12, padding: '9px',
-                        fontSize: 13, fontWeight: 800, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        boxShadow: '0 4px 10px rgba(11,61,102,0.2)'
-                      }}
-                    >
-                      Book Specialist ➔
-                    </button>
+                  <div style={{ fontSize: 10, color: '#64748B', fontWeight: 500, lineHeight: 1.25 }}>
+                    {card.desc}
                   </div>
                 </div>
-              );
-            }) : (
-              <div style={{ padding: '20px', color: '#64748B', fontSize: 14, textAlign: 'center', width: '100%' }}>
-                {t('noSpecialistsFound')}
               </div>
-            )}
+            ))}
           </div>
-          
         </div>
       </div>
 

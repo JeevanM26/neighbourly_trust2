@@ -8,3 +8,4 @@
 ## Verification & Learnings Log
 - 2026-10-02: Initialized SPEC-01 and prd.json for Assisted Concierge Marketplace pivot.
 - 2026-10-02 [NT-01]: Transformed service categories in HomeScreen.tsx from horizontal scroll row to a 3-column responsive grid with 3D icons, high contrast cards, price badges, and localized typography. Validated with tsc (exit code 0). Touched: src/components/screens/HomeScreen.tsx, src/lib/types.ts, src/lib/notifications.ts, src/lib/supabase.ts, src/context/AppContext.tsx.
+- 2026-10-02 [NT-02]: Removed direct worker profile cards and filter pills from HomeScreen.tsx to avoid empty marketplace impressions. Added 24/7 Assisted Dispatch Hotline Banner, 'How Hero Hand Works' 3-step guide, and 4-point Trust & Safety Promise. Validated with tsc (exit code 0). Touched: src/components/screens/HomeScreen.tsx.
