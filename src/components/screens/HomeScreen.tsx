@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLocation } from '../../context/LocationContext';
 import { WorkerProfile, ServiceCategory } from '../../lib/types';
-import { findNearbyWorkers } from '../../lib/supabase';
+import { findNearbyWorkers, createBooking } from '../../lib/supabase';
 import { detectIntent } from '../../lib/intentEngine';
 import { SearchWithVoice } from '../SearchWithVoice';
+import { CategoryActionModal } from '../CategoryActionModal';
 import { 
   Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, 
   Volume2, VolumeX, RefreshCw, MapPin, Star, X, 
@@ -201,7 +202,7 @@ export default function HomeScreen({
   onSelectCategory: (categoryId: string) => void;
   onSelectWorker?: (workerId: string, categoryId: string) => void;
 }) {
-  const { categories, user, settings, toggleVoice, t, setLanguage, showToast } = useApp();
+  const { categories, user, settings, toggleVoice, t, setLanguage, showToast, loginUser, refreshBookings } = useApp();
   const { userLocation, locationStatus, requestLocation, searchLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLangPicker, setShowLangPicker] = useState(false);
@@ -216,6 +217,69 @@ export default function HomeScreen({
   const [activeFilter, setActiveFilter] = useState('All');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedCategoryForModal, setSelectedCategoryForModal] = useState<ServiceCategory | null>(null);
+  const [currentAddress, setCurrentAddress] = useState('');
+
+  const activeLoc = searchLocation || userLocation || { lat: 13.9299, lng: 75.5681 };
+
+  useEffect(() => {
+    if (activeLoc?.lat && activeLoc?.lng) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${activeLoc.lat}&lon=${activeLoc.lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.display_name) {
+            const parts = data.display_name.split(',');
+            setCurrentAddress(parts.slice(0, 3).join(',').trim());
+          }
+        })
+        .catch(() => {});
+    }
+  }, [activeLoc?.lat, activeLoc?.lng]);
+
+  const handleConfirmBooking = async (params: {
+    category: ServiceCategory;
+    addressText: string;
+    description: string;
+    customerName?: string;
+    customerPhone?: string;
+  }) => {
+    let customerId = user?.id;
+
+    if (!customerId) {
+      const cleanPhone = params.customerPhone || '7975182162';
+      const name = params.customerName || 'HeroHand Customer';
+      const guestId = 'guest_' + Date.now();
+      loginUser(cleanPhone, name, guestId);
+      customerId = guestId;
+    }
+
+    const lat = activeLoc.lat || 13.9299;
+    const lng = activeLoc.lng || 75.5681;
+
+    const bookingId = await createBooking({
+      customerId,
+      categoryId: params.category.id,
+      workerId: null,
+      lat,
+      lng,
+      addressText: params.addressText,
+      description: params.description,
+      priceEstimate: 350
+    });
+
+    if (bookingId) {
+      showToast(
+        settings?.language === 'kn' ? 'ಬುಕಿಂಗ್ ದೃಢಪಟ್ಟಿದೆ! ಹತ್ತಿರದ ಹೀರೋ ನಿಯೋಜಿಸಲಾಗುತ್ತಿದೆ 🎉' :
+        settings?.language === 'hi' ? 'बुकिंग कन्फर्म हो गई! तकनीशियन भेजा जा रहा है 🎉' :
+        'Booking confirmed! Finding & dispatching your nearest Hero 🎉',
+        'success'
+      );
+      if (refreshBookings) {
+        refreshBookings();
+      }
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     // Automatically prompt for location when the user lands on the Home Screen
@@ -236,7 +300,6 @@ export default function HomeScreen({
     } catch { /* non-fatal */ }
   }, [settings.voice, currentLangObj.code]);
 
-  const activeLoc = searchLocation || userLocation || { lat: 13.9299, lng: 75.5681 };
   const roundedLat = activeLoc.lat;
   const roundedLng = activeLoc.lng;
   const hasFetchedRef = React.useRef(false);
@@ -1046,6 +1109,19 @@ export default function HomeScreen({
           </div>
         </div>
       )}
+
+      {/* ─── Category Action Modal (Call Now / Book Online) ─── */}
+      <CategoryActionModal
+        category={selectedCategoryForModal}
+        isOpen={!!selectedCategoryForModal}
+        onClose={() => setSelectedCategoryForModal(null)}
+        onConfirmBooking={handleConfirmBooking}
+        initialAddress={currentAddress}
+        userLocation={activeLoc}
+        currentUser={user}
+        language={settings?.language || 'en'}
+        t={t}
+      />
 
       <style>{`
         .shimmer-loading {

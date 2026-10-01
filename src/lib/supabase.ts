@@ -437,10 +437,12 @@ export async function fetchCustomerBookings(customerId: string): Promise<Booking
 export async function createBooking(params: {
   customerId: string;
   categoryId: string;
-  workerId: string;
+  workerId?: string | null;
   lat: number;
   lng: number;
   addressText?: string;
+  description?: string;
+  priceEstimate?: number;
 }): Promise<string | null> {
   const client = getClient();
   if (!client) return null;
@@ -462,12 +464,14 @@ export async function createBooking(params: {
       .insert({
         customer_id: params.customerId,
         category_id: params.categoryId,
-        worker_id: params.workerId,
+        worker_id: params.workerId || null,
         status: 'searching',
         customer_location: `SRID=4326;POINT(${params.lng} ${params.lat})`,
         customer_lat: params.lat,
         customer_lng: params.lng,
-        address_text: address || `${params.lat.toFixed(4)}, ${params.lng.toFixed(4)}`
+        address_text: address || `${params.lat.toFixed(4)}, ${params.lng.toFixed(4)}`,
+        description: params.description || null,
+        price_estimate: params.priceEstimate || 350
       })
       .select('id')
       .single();
