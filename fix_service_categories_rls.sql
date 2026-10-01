@@ -63,6 +63,12 @@ CREATE POLICY "allow_all_update_service_categories"
   USING (true)
   WITH CHECK (true);
 
+-- Allow deleting categories (Admin Portal Category Management)
+CREATE POLICY "allow_all_delete_service_categories"
+  ON public.service_categories FOR DELETE
+  TO anon, authenticated
+  USING (true);
+
 -- 5. Secure Admin RPC: Add Service Category (PIN & Phone Verified)
 CREATE OR REPLACE FUNCTION public.admin_add_service_category(
   p_phone TEXT,
@@ -200,14 +206,55 @@ BEGIN
 END;
 $$;
 
--- 7. Grant Permissions to Anon and Authenticated Roles
+-- 7. Secure Admin RPC: Delete Service Category (Cascades worker_categories and cleans bookings)
+CREATE OR REPLACE FUNCTION public.admin_delete_service_category(
+  p_phone TEXT,
+  p_pin TEXT,
+  p_category_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_clean_phone TEXT;
+BEGIN
+  v_clean_phone := regexp_replace(p_phone, '\D', '', 'g');
+
+  IF (v_clean_phone != '7975182162') OR (trim(p_pin) != '7975') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Unauthorized: Invalid Admin Credentials');
+  END IF;
+
+  -- 1. Remove worker category associations
+  DELETE FROM public.worker_categories WHERE category_id = p_category_id;
+
+  -- 2. Nullify category_id on existing bookings so historical bookings aren't deleted
+  UPDATE public.bookings SET category_id = NULL WHERE category_id = p_category_id;
+
+  -- 3. Delete the category itself
+  DELETE FROM public.service_categories WHERE id = p_category_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'category_id', p_category_id,
+    'message', 'Category deleted successfully'
+  );
+END;
+$$;
+
+-- 8. Grant Permissions to Anon and Authenticated Roles
 GRANT EXECUTE ON FUNCTION public.admin_add_service_category(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_toggle_service_category(TEXT, TEXT, UUID, BOOLEAN) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_delete_service_category(TEXT, TEXT, UUID) TO anon, authenticated;
 
--- 8. Enable Realtime Replication for instant multi-app sync
+-- 9. Enable Realtime Replication for instant multi-app sync
 DO $$ BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE public.service_categories;
 EXCEPTION
   WHEN duplicate_object THEN null;
   WHEN undefined_object THEN null;
 END $$;
+
+-- 10. Clean up known duplicate entries
+UPDATE public.service_categories SET is_active = false WHERE slug IN ('mason', 'wood-worker', 'home-appliance', 'laptop-sales', 'test-temp-xyz', 'acrepair', 'pestcontrol');

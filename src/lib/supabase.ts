@@ -53,12 +53,27 @@ export async function fetchServiceCategories(forceRefresh = false): Promise<Serv
   try {
     const { data, error } = await client.from('service_categories').select('*').eq('is_active', true).order('name_en', { ascending: true });
     if (!error && data) {
-      _cachedCategories = data;
+      // De-duplicate by normalized slug/category concept
+      const seen = new Set<string>();
+      const deduped = data.filter(c => {
+        const key = (c.slug || c.name_en || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normKey = key.includes('mason') ? 'mason'
+          : (key.includes('cctv') || key.includes('camera')) ? 'cctv'
+          : (key.includes('laptop') || key.includes('computer')) ? 'laptop'
+          : (key.includes('acrepair') || key.includes('appliance')) ? 'acrepair'
+          : (key.includes('wood') || key.includes('carpenter')) ? 'carpenter'
+          : (key.includes('pest')) ? 'pest'
+          : key;
+        if (seen.has(normKey)) return false;
+        seen.add(normKey);
+        return true;
+      });
+      _cachedCategories = deduped;
       _categoriesLastFetch = Date.now();
       if (typeof window !== 'undefined') {
-        try { localStorage.setItem('nt_categories_cache', JSON.stringify(data)); } catch {}
+        try { localStorage.setItem('nt_categories_cache', JSON.stringify(deduped)); } catch {}
       }
-      return data;
+      return deduped;
     }
   } catch (e) { 
     console.warn("fetchServiceCategories exception:", e);

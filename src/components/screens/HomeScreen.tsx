@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLocation } from '../../context/LocationContext';
 import { WorkerProfile, ServiceCategory } from '../../lib/types';
@@ -11,7 +11,7 @@ import {
   Zap, Droplet, Hammer, Paintbrush, Sparkles, Wrench as Tool, 
   Volume2, VolumeX, RefreshCw, MapPin, Star, X, 
   Flame, Bug, Scissors, Car, ChevronRight, PhoneCall,
-  ChevronDown, ChevronUp, MessageCircle
+  ChevronDown, ChevronUp, MessageCircle, Camera, Laptop, Shield
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -44,38 +44,43 @@ export const getAssetPath = (path: string): string => {
   return cleanPath;
 };
 
-const getCategory3DImage = (slug: string = ''): string | null => {
-  const s = slug.toLowerCase();
+const getCategory3DImage = (slug: string = '', name: string = ''): string | null => {
+  const s = `${slug} ${name}`.toLowerCase();
+  if (s.includes('cctv') || s.includes('camera') || s.includes('surveillance') || s.includes('security')) return getAssetPath('/categories/cctv.png');
+  if (s.includes('laptop') || s.includes('computer') || s.includes('pc') || s.includes('tech')) return getAssetPath('/categories/laptop.png');
   if (s.includes('elec')) return getAssetPath('/categories/electrician.png');
   if (s.includes('plumb')) return getAssetPath('/categories/plumber.png');
-  if (s.includes('carp')) return getAssetPath('/categories/carpenter.png');
+  if (s.includes('carp') || s.includes('wood')) return getAssetPath('/categories/carpenter.png');
   if (s.includes('paint')) return getAssetPath('/categories/painter.png');
   if (s.includes('clean')) return getAssetPath('/categories/cleaning.png');
   if (s.includes('pest')) return getAssetPath('/categories/pestcontrol.png');
-  if (s.includes('ac') || s.includes('appliance')) return getAssetPath('/categories/acrepair.png');
-  if (s.includes('salon') || s.includes('barber')) return getAssetPath('/categories/salon.png');
-  if (s.includes('mason')) return getAssetPath('/categories/mason.png');
-  if (s.includes('mechanic') || s.includes('auto')) return getAssetPath('/categories/mechanic.png');
+  if (s.includes('ac') || s.includes('appliance') || s.includes('fridge') || s.includes('cool')) return getAssetPath('/categories/acrepair.png');
+  if (s.includes('salon') || s.includes('barber') || s.includes('hair') || s.includes('beauty')) return getAssetPath('/categories/salon.png');
+  if (s.includes('mason') || s.includes('construct') || s.includes('brick')) return getAssetPath('/categories/mason.png');
+  if (s.includes('mechanic') || s.includes('auto') || s.includes('bike') || s.includes('car')) return getAssetPath('/categories/mechanic.png');
   return null;
 };
 
 const getCategoryFallbackIcon = (slug: string = '', name: string = '') => {
   const s = `${slug || ''} ${name || ''}`.toLowerCase();
+  if (s.includes('cctv') || s.includes('camera') || s.includes('surveillance')) return <Camera size={28} className="text-cyan-400" />;
+  if (s.includes('laptop') || s.includes('computer') || s.includes('pc') || s.includes('tech')) return <Laptop size={28} className="text-sky-400" />;
   if (s.includes('elec')) return <Zap size={28} className="text-amber-400" />;
   if (s.includes('plumb')) return <Droplet size={28} className="text-sky-400" />;
-  if (s.includes('carp')) return <Hammer size={28} className="text-orange-400" />;
+  if (s.includes('carp') || s.includes('wood')) return <Hammer size={28} className="text-orange-400" />;
   if (s.includes('paint')) return <Paintbrush size={28} className="text-purple-400" />;
   if (s.includes('clean')) return <Sparkles size={28} className="text-teal-400" />;
   if (s.includes('pest')) return <Bug size={28} className="text-rose-400" />;
-  if (s.includes('ac') || s.includes('cool')) return <Flame size={28} className="text-blue-400" />;
+  if (s.includes('ac') || s.includes('appliance') || s.includes('cool')) return <Flame size={28} className="text-blue-400" />;
   if (s.includes('salon') || s.includes('hair') || s.includes('barber')) return <Scissors size={28} className="text-pink-400" />;
   if (s.includes('mechanic') || s.includes('auto') || s.includes('car')) return <Car size={28} className="text-emerald-400" />;
+  if (s.includes('mason') || s.includes('construct')) return <Hammer size={28} className="text-amber-500" />;
   return <Tool size={28} className="text-amber-400" />;
 };
 
 const CategoryIcon = ({ slug, iconUrl, name, size = 58 }: { slug: string; iconUrl?: string; name?: string; size?: number }) => {
   const [hasError, setHasError] = useState(false);
-  const imgPath = iconUrl || getCategory3DImage(slug);
+  const imgPath = iconUrl || getCategory3DImage(slug, name);
 
   if (!imgPath || hasError) {
     return (
@@ -218,6 +223,25 @@ export default function HomeScreen({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedCategoryForModal, setSelectedCategoryForModal] = useState<ServiceCategory | null>(null);
   const [currentAddress, setCurrentAddress] = useState('');
+
+  // De-duplicate categories to prevent duplicate cards or identical icons
+  const displayCategories = useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter(cat => {
+      if (cat.is_active === false) return false;
+      const key = (cat.slug || cat.name_en || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normKey = key.includes('mason') ? 'mason'
+        : (key.includes('cctv') || key.includes('camera')) ? 'cctv'
+        : (key.includes('laptop') || key.includes('computer')) ? 'laptop'
+        : (key.includes('acrepair') || key.includes('appliance')) ? 'acrepair'
+        : (key.includes('wood') || key.includes('carpenter')) ? 'carpenter'
+        : (key.includes('pest')) ? 'pest'
+        : key;
+      if (seen.has(normKey)) return false;
+      seen.add(normKey);
+      return true;
+    });
+  }, [categories]);
 
   const activeLoc = searchLocation || userLocation || { lat: 13.9299, lng: 75.5681 };
 
@@ -638,7 +662,7 @@ export default function HomeScreen({
             gap: 12, 
             padding: '4px 16px 8px' 
           }}>
-            {categories.map(cat => {
+            {displayCategories.map(cat => {
               const localizedName = getCategoryLocalizedName(cat, settings?.language || 'en');
               const isSelected = (searchQuery.toLowerCase() === cat.name_en.toLowerCase()) || activeCategory === cat.id || selectedCategoryForModal?.id === cat.id;
               return (

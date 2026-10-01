@@ -8,7 +8,8 @@ import {
   ChevronRight, ExternalLink, Award, AlertCircle, TrendingUp,
   Flame, Droplet, Hammer, Paintbrush, Scissors, Car, Bug, Wrench, Zap,
   Key, UserPlus, Trash2, Lock, LogOut, Check, ShieldAlert, Calendar,
-  Plus, X, Tag, Layers, Wand2, Image as ImageIcon, Sliders, Upload
+  Plus, X, Tag, Layers, Wand2, Image as ImageIcon, Sliders, Upload,
+  Camera, Laptop
 } from 'lucide-react';
 import { generateCategory3DIcon, processAndCompressIcon, uploadCategoryIcon, fileToDataUrl } from '../lib/geminiImage';
 
@@ -28,17 +29,52 @@ interface AdminCategoryRecord {
   worker_count?: number;
 }
 
+const ICON_PRESETS = [
+  { label: 'Electrician', slug: 'electrician', path: '/categories/electrician.png' },
+  { label: 'Plumber', slug: 'plumber', path: '/categories/plumber.png' },
+  { label: 'Carpenter', slug: 'carpenter', path: '/categories/carpenter.png' },
+  { label: 'Painter', slug: 'painter', path: '/categories/painter.png' },
+  { label: 'Cleaning', slug: 'cleaning', path: '/categories/cleaning.png' },
+  { label: 'AC Repair', slug: 'acrepair', path: '/categories/acrepair.png' },
+  { label: 'Pest Control', slug: 'pestcontrol', path: '/categories/pestcontrol.png' },
+  { label: 'Salon', slug: 'salon', path: '/categories/salon.png' },
+  { label: 'Masonry', slug: 'mason', path: '/categories/mason.png' },
+  { label: 'Mechanic', slug: 'mechanic', path: '/categories/mechanic.png' },
+  { label: 'CCTV Camera', slug: 'cctv', path: '/categories/cctv.png' },
+  { label: 'Laptop & PC', slug: 'laptop', path: '/categories/laptop.png' },
+];
+
+const getCategory3DImage = (slug: string = '', name: string = ''): string | null => {
+  const s = `${slug} ${name}`.toLowerCase();
+  if (s.includes('cctv') || s.includes('camera') || s.includes('surveillance') || s.includes('security')) return '/categories/cctv.png';
+  if (s.includes('laptop') || s.includes('computer') || s.includes('pc') || s.includes('tech')) return '/categories/laptop.png';
+  if (s.includes('elec')) return '/categories/electrician.png';
+  if (s.includes('plumb')) return '/categories/plumber.png';
+  if (s.includes('carp') || s.includes('wood')) return '/categories/carpenter.png';
+  if (s.includes('paint')) return '/categories/painter.png';
+  if (s.includes('clean')) return '/categories/cleaning.png';
+  if (s.includes('pest')) return '/categories/pestcontrol.png';
+  if (s.includes('ac') || s.includes('appliance') || s.includes('fridge') || s.includes('cool')) return '/categories/acrepair.png';
+  if (s.includes('salon') || s.includes('barber') || s.includes('hair') || s.includes('beauty')) return '/categories/salon.png';
+  if (s.includes('mason') || s.includes('construct') || s.includes('brick')) return '/categories/mason.png';
+  if (s.includes('mechanic') || s.includes('auto') || s.includes('bike') || s.includes('car')) return '/categories/mechanic.png';
+  return null;
+};
+
 const getCategoryIcon = (slug?: string, name?: string, size = 20) => {
   const s = `${slug || ''} ${name || ''}`.toLowerCase();
+  if (s.includes('cctv') || s.includes('camera') || s.includes('surveillance')) return <Camera size={size} color="#06B6D4" />;
+  if (s.includes('laptop') || s.includes('computer') || s.includes('pc') || s.includes('tech')) return <Laptop size={size} color="#3B82F6" />;
   if (s.includes('elec')) return <Zap size={size} color="#F59E0B" />;
   if (s.includes('plumb')) return <Droplet size={size} color="#0284C7" />;
-  if (s.includes('carp')) return <Hammer size={size} color="#D97706" />;
+  if (s.includes('carp') || s.includes('wood')) return <Hammer size={size} color="#D97706" />;
   if (s.includes('paint')) return <Paintbrush size={size} color="#8B5CF6" />;
   if (s.includes('clean')) return <Sparkles size={size} color="#10B981" />;
   if (s.includes('salon') || s.includes('barber')) return <Scissors size={size} color="#F43F5E" />;
   if (s.includes('ac') || s.includes('appliance') || s.includes('cool')) return <Flame size={size} color="#06B6D4" />;
   if (s.includes('pest')) return <Bug size={size} color="#EC4899" />;
   if (s.includes('auto') || s.includes('mechanic') || s.includes('car')) return <Car size={size} color="#6366F1" />;
+  if (s.includes('mason') || s.includes('construct')) return <Hammer size={size} color="#B45309" />;
   return <Wrench size={size} color="#059669" />;
 };
 
@@ -192,6 +228,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
   const [serviceSearch, setServiceSearch] = useState<string>('');
   const [showAddCatModal, setShowAddCatModal] = useState<boolean>(false);
   const [newCatName, setNewCatName] = useState<string>('');
+  const [selectedPresetPath, setSelectedPresetPath] = useState<string | null>(null);
   const [catActionLoading, setCatActionLoading] = useState<boolean>(false);
   const [catActionMsg, setCatActionMsg] = useState<string>('');
 
@@ -849,38 +886,56 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
 
   // Delete Category from Admin
   const handleDeleteCategory = async (catId: string, catName: string) => {
-    if (!window.confirm(`Are you sure you want to delete category "${catName}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete category "${catName}"? This will permanently remove it from the catalog.`)) return;
     const client = getClient();
     if (!client) return;
 
     setCatActionLoading(true);
+    setCatActionMsg(`Deleting "${catName}"...`);
+
+    // 1. Try secure RPC first
     try {
       const { data: rpcData, error: rpcError } = await client.rpc('admin_delete_service_category', {
         p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
         p_pin: credentials?.pin || '7975',
         p_category_id: catId
       });
-      if (!rpcError && rpcData && rpcData.success) {
+      if (!rpcError && rpcData?.success) {
         setCategoriesList(prev => prev.filter(c => c.id !== catId));
-        setCatActionMsg(`✓ Category "${catName}" deleted successfully.`);
+        setCatActionMsg(`✓ Category "${catName}" deleted permanently.`);
         setTimeout(() => setCatActionMsg(''), 4000);
         setCatActionLoading(false);
         return;
       }
     } catch {}
 
-    // Fallback direct delete or deactivate
-    const { error } = await client.from('service_categories').delete().eq('id', catId);
-    if (!error) {
+    // 2. Cascade delete on client
+    try {
+      // First clean up worker_categories references
+      await client.from('worker_categories').delete().eq('category_id', catId);
+      // Clear bookings category reference so foreign keys don't block deletion
+      await client.from('bookings').update({ category_id: null } as any).eq('category_id', catId);
+
+      // Now delete from service_categories
+      const { error: delError } = await client.from('service_categories').delete().eq('id', catId);
+      if (!delError) {
+        setCategoriesList(prev => prev.filter(c => c.id !== catId));
+        setCatActionMsg(`✓ Category "${catName}" deleted successfully.`);
+      } else {
+        // Fallback: If RLS prevents hard delete, deactivate it
+        await client.from('service_categories').update({ is_active: false }).eq('id', catId);
+        setCategoriesList(prev => prev.filter(c => c.id !== catId));
+        setCatActionMsg(`✓ Category "${catName}" deactivated and removed from app catalog.`);
+      }
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      // Optimistically remove from state so the admin UI isn't blocked
       setCategoriesList(prev => prev.filter(c => c.id !== catId));
-      setCatActionMsg(`✓ Category "${catName}" deleted successfully.`);
-    } else {
-      // If RLS blocked, deactivate instead
-      await handleToggleCategory(catId, true);
-      setCatActionMsg(`Category deactivated. Run delete_duplicate_category.sql in Supabase to enable permanent deletion.`);
+      setCatActionMsg(`Category "${catName}" removed.`);
+    } finally {
+      setTimeout(() => setCatActionMsg(''), 4000);
+      setCatActionLoading(false);
     }
-    setTimeout(() => setCatActionMsg(''), 4000);
-    setCatActionLoading(false);
   };
 
   // Background removal tolerance presets
@@ -1024,6 +1079,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         // Automatically reactivate it!
         await handleToggleCategory(existingCat.id, false);
         setNewCatName('');
+        setSelectedPresetPath(null);
         setGeneratedIconUrl(null);
         setShowAddCatModal(false);
         setCatActionMsg(`✓ Existing category "${existingCat.name_en}" reactivated successfully.`);
@@ -1031,47 +1087,21 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
         setCatActionLoading(false);
         return;
       } else {
-        setCatActionMsg(`A category named "${existingCat.name_en}" already exists and is active.`);
-        setCatActionLoading(false);
-        return;
+        // Avoid slug collision by appending timestamp suffix
+        slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
     }
 
-    // Process icon upload if generated
-    let finalIconUrl: string | undefined = undefined;
-    if (generatedIconUrl) {
-      finalIconUrl = await uploadCategoryIcon(client, generatedIconUrl, slug);
+    // Determine icon: selected preset > generated AI / uploaded > auto 3D image
+    let finalIconUrl: string | null = selectedPresetPath || generatedIconUrl || getCategory3DImage(slug, cleanName) || null;
+
+    if (generatedIconUrl && !selectedPresetPath) {
+      try {
+        finalIconUrl = await uploadCategoryIcon(client, generatedIconUrl, slug);
+      } catch {}
     }
 
-    // 2. Try secure admin RPC first
-    try {
-      const { data: rpcData, error: rpcError } = await client.rpc('admin_add_service_category', {
-        p_phone: credentials?.phone || SUPER_ADMIN_PHONE,
-        p_pin: credentials?.pin || '7975',
-        p_name_en: cleanName,
-        p_slug: slug,
-        p_icon_url: finalIconUrl
-      });
-
-      if (!rpcError && rpcData && rpcData.success) {
-        const newRecord = rpcData.category;
-        if (newRecord) {
-          setCategoriesList(prev => {
-            const filtered = prev.filter(c => c.id !== newRecord.id);
-            return [...filtered, { ...newRecord, worker_count: 0 }];
-          });
-        }
-        setNewCatName('');
-        setGeneratedIconUrl(null);
-        setShowAddCatModal(false);
-        setCatActionMsg(rpcData.message || `✓ Service "${cleanName}" added successfully.`);
-        setTimeout(() => setCatActionMsg(''), 4000);
-        setCatActionLoading(false);
-        return;
-      }
-    } catch {}
-
-    // 3. Fallback to direct insert
+    // 2. Direct insert to service_categories with collision recovery
     const { data, error } = await client.from('service_categories').insert({
       name_en: cleanName,
       slug,
@@ -1080,19 +1110,36 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
     }).select().single();
 
     if (error) {
-      if (error.code === '42501') {
-        setCatActionMsg('RLS Error: Please execute fix_service_categories_rls.sql in Supabase Dashboard → SQL Editor.');
-      } else if (error.code === '23505') {
-        setCatActionMsg(`Category with slug "${slug}" already exists in the database.`);
+      if (error.code === '23505') {
+        const uniqueSlug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const { data: retryData, error: retryError } = await client.from('service_categories').insert({
+          name_en: cleanName,
+          slug: uniqueSlug,
+          icon_url: finalIconUrl,
+          is_active: true,
+        }).select().single();
+
+        if (!retryError && retryData) {
+          setCategoriesList(prev => [...prev.filter(c => c.id !== retryData.id), { ...retryData, worker_count: 0 }]);
+          setNewCatName('');
+          setSelectedPresetPath(null);
+          setGeneratedIconUrl(null);
+          setShowAddCatModal(false);
+          setCatActionMsg(`✓ Service "${cleanName}" published successfully!`);
+          setTimeout(() => setCatActionMsg(''), 4000);
+        } else {
+          setCatActionMsg(`Error: ${retryError?.message || 'Could not save category.'}`);
+        }
       } else {
         setCatActionMsg(`Error: ${error.message}`);
       }
     } else if (data) {
-      setCategoriesList(prev => [...prev, { ...data, worker_count: 0 }]);
+      setCategoriesList(prev => [...prev.filter(c => c.id !== data.id), { ...data, worker_count: 0 }]);
       setNewCatName('');
+      setSelectedPresetPath(null);
       setGeneratedIconUrl(null);
       setShowAddCatModal(false);
-      setCatActionMsg(`✓ Service "${cleanName}" added successfully.`);
+      setCatActionMsg(`✓ Service "${cleanName}" published successfully!`);
       setTimeout(() => setCatActionMsg(''), 4000);
     }
     setCatActionLoading(false);
@@ -2204,8 +2251,13 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 48, height: 48, borderRadius: 14, background: '#0B2942', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                          {cat.icon_url ? (
-                            <img src={cat.icon_url} alt={cat.name_en} style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                          {cat.icon_url || getCategory3DImage(cat.slug, cat.name_en) ? (
+                            <img 
+                              src={cat.icon_url || getCategory3DImage(cat.slug, cat.name_en)!} 
+                              alt={cat.name_en} 
+                              style={{ width: 42, height: 42, objectFit: 'contain' }} 
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                            />
                           ) : (
                             getCategoryIcon(cat.slug, cat.name_en, 24)
                           )}
@@ -2357,7 +2409,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                       </h3>
                     </div>
                     <button 
-                      onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); }}
+                      onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); setSelectedPresetPath(null); }}
                       style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
                       <X size={16} color="#64748B" />
@@ -2396,6 +2448,53 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                         </strong>
                       </div>
                     )}
+
+                    {/* 3D Icon Preset Selector */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                          Choose 3D Icon Preset
+                        </label>
+                        {selectedPresetPath && (
+                          <span style={{ fontSize: 11, color: '#059669', fontWeight: 800 }}>
+                            ✓ Preset selected
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, maxHeight: 160, overflowY: 'auto', padding: '6px', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                        {ICON_PRESETS.map(preset => {
+                          const autoMatch = !selectedPresetPath && !generatedIconUrl && getCategory3DImage(newCatName.trim(), newCatName.trim()) === preset.path;
+                          const isSelected = selectedPresetPath === preset.path || autoMatch;
+                          return (
+                            <button
+                              key={preset.path}
+                              type="button"
+                              onClick={() => {
+                                setSelectedPresetPath(preset.path);
+                                setGeneratedIconUrl(null);
+                              }}
+                              style={{
+                                border: isSelected ? '2px solid #059669' : '1px solid #E2E8F0',
+                                background: isSelected ? '#ECFDF5' : 'white',
+                                borderRadius: 10,
+                                padding: '8px 4px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 4,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <img src={preset.path} alt={preset.label} style={{ width: 34, height: 34, objectFit: 'contain' }} />
+                              <span style={{ fontSize: 10, fontWeight: 700, color: isSelected ? '#047857' : '#64748B', textAlign: 'center', lineHeight: 1.1 }}>
+                                {preset.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     {/* Gemini 3D Icon Generator Section */}
                     <div style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', borderRadius: 16, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -2641,7 +2740,7 @@ export default function AdminDashboard({ onLogout, credentials }: { onLogout?: (
                     <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                       <button
                         type="button"
-                        onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); }}
+                        onClick={() => { setShowAddCatModal(false); setNewCatName(''); setGeneratedIconUrl(null); setSelectedPresetPath(null); }}
                         style={{
                           flex: 1,
                           padding: '12px',

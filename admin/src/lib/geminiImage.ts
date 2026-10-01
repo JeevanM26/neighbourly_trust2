@@ -26,48 +26,49 @@ export async function generateCategory3DIcon(
 
   const prompt = customPrompt || buildServiceIconPrompt(categoryName);
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${encodeURIComponent(cleanKey)}`;
+  const models = ['imagen-3.0-generate-002', 'imagen-3.0-generate', 'imagen-3.0-fast-generate-001'];
+  let lastError = '';
 
-  const body = {
-    instances: [
-      {
-        prompt: prompt
+  for (const model of models) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${encodeURIComponent(cleanKey)}`;
+    const body = {
+      instances: [{ prompt }],
+      parameters: {
+        sampleCount: 1,
+        aspectRatio: '1:1',
+        outputMimeType: 'image/png'
       }
-    ],
-    parameters: {
-      sampleCount: 1,
-      aspectRatio: '1:1',
-      outputMimeType: 'image/png'
-    }
-  };
+    };
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) {
-    let errorDetail = `Status ${res.status}: ${res.statusText}`;
     try {
-      const errData = await res.json();
-      if (errData?.error?.message) {
-        errorDetail = errData.error.message;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const prediction = data?.predictions?.[0];
+        if (prediction?.bytesBase64Encoded) {
+          return `data:${prediction.mimeType || 'image/png'};base64,${prediction.bytesBase64Encoded}`;
+        }
+      } else {
+        let errorDetail = `Status ${res.status}: ${res.statusText}`;
+        try {
+          const errData = await res.json();
+          if (errData?.error?.message) {
+            errorDetail = errData.error.message;
+          }
+        } catch {}
+        lastError = errorDetail;
       }
-    } catch {}
-    throw new Error(`Gemini Imagen API error: ${errorDetail}`);
+    } catch (e: any) {
+      lastError = e.message || 'Network error';
+    }
   }
 
-  const data = await res.json();
-  const prediction = data?.predictions?.[0];
-
-  if (!prediction?.bytesBase64Encoded) {
-    throw new Error('No image was returned from the Gemini Imagen model.');
-  }
-
-  return `data:${prediction.mimeType || 'image/png'};base64,${prediction.bytesBase64Encoded}`;
+  throw new Error(`Google AI Imagen error: ${lastError}. You can select one of the built-in 3D icons below or use the "Upload & Cutout" button.`);
 }
 
 /**
