@@ -513,7 +513,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user?.id) {
       const client = getClient();
       if (client) {
-        client.from('profiles').update({ preferred_language: lang }).eq('id', user.id).then(() => {}).catch(() => {});
+        client.from('profiles').update({ preferred_language: lang }).eq('id', user.id).then(() => {}, () => {});
       }
     }
   }, [user?.id, settings]);

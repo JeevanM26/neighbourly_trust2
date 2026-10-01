@@ -1,0 +1,10 @@
+## Codebase Patterns
+- Neighborly Trust is a split-frontend monorepo: Customer App (`src/`, port 3000), Worker App (`worker/`, port 3001), Admin App (`admin/`, port 3002).
+- Shared Supabase PostgreSQL + PostGIS backend. Both customer and worker read/write the same tables.
+- Category 3D icons are served either from Supabase Storage `category-icons` bucket or fallback `/categories/*.png`.
+- Concierge Hotline phone: `7975182162` (configured via env or fallback).
+- Customer profiles and bookings do not expose raw phone numbers across customer/worker roles; admin has full visibility for review and dispatch.
+
+## Verification & Learnings Log
+- 2026-10-02: Initialized SPEC-01 and prd.json for Assisted Concierge Marketplace pivot.
+- 2026-10-02 [NT-01]: Transformed service categories in HomeScreen.tsx from horizontal scroll row to a 3-column responsive grid with 3D icons, high contrast cards, price badges, and localized typography. Validated with tsc (exit code 0). Touched: src/components/screens/HomeScreen.tsx, src/lib/types.ts, src/lib/notifications.ts, src/lib/supabase.ts, src/context/AppContext.tsx.

@@ -1,0 +1,48 @@
+{
+  "project": "Neighborly Trust (Hero Hand)",
+  "version": "2.0.0",
+  "stories": [
+    {
+      "id": "NT-01",
+      "title": "Transform Service Categories into a Multi-Row/Column Grid",
+      "description": "Convert categories in HomeScreen.tsx from horizontal scroll row to responsive 3-column grid with 3D icons, high contrast cards, and localized names.",
+      "priority": 1,
+      "passes": true
+    },
+    {
+      "id": "NT-02",
+      "title": "Hide Worker Profiles & Direct Browsing from Customer Screen",
+      "description": "Remove the 'Specialists Near You' worker cards list and worker filter pills from HomeScreen.tsx to avoid empty marketplace impressions.",
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "NT-03",
+      "title": "Category Action Popup with Call Now and Book Now Options",
+      "description": "Clicking a category opens a high-aesthetic action modal/sheet with Category 3D icon, localized title, 'Call Now' (direct dialer to helpline), and 'Book Now' (quick booking form with address and notes).",
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "NT-04",
+      "title": "Update createBooking to support Nullable Worker & Description",
+      "description": "Allow createBooking in src/lib/supabase.ts to accept optional/nullable workerId and problem description/notes, writing properly to Supabase bookings table.",
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "NT-05",
+      "title": "Customer Bookings Screen Assisted Dispatch State with Hotline Support",
+      "description": "Ensure BookingsScreen displays unassigned 'searching'/'pending' bookings cleanly with animated dispatch status and one-tap Call Dispatch button.",
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": "NT-06",
+      "title": "Admin Dashboard Realtime Sync & Concierge Worker Dispatch",
+      "description": "Add realtime subscription to bookings in AdminDashboard.tsx, show full customer details with 1-tap call, and add worker assignment selector to dispatch nearby technician.",
+      "priority": 6,
+      "passes": false
+    }
+  ]
+}

@@ -26,12 +26,12 @@ export async function sendLocalNotification(title: string, options?: { body?: st
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
 
-  const notifOptions: NotificationOptions = {
+  const notifOptions: NotificationOptions & { vibrate?: number[]; renotify?: boolean } = {
     body: options?.body || '',
     icon: options?.icon || '/favicon.ico',
     badge: '/favicon.ico',
     tag: options?.tag || 'hero_hand_alert',
-    vibrate: [200, 100, 200, 100, 200] as any,
+    vibrate: [200, 100, 200, 100, 200],
     renotify: true,
     requireInteraction: true,
   };

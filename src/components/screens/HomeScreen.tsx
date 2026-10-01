@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLocation } from '../../context/LocationContext';
-import { WorkerProfile } from '../../lib/types';
+import { WorkerProfile, ServiceCategory } from '../../lib/types';
 import { findNearbyWorkers } from '../../lib/supabase';
 import { detectIntent } from '../../lib/intentEngine';
 import { SearchWithVoice } from '../SearchWithVoice';
@@ -215,6 +215,7 @@ export default function HomeScreen({
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [selectedCategoryForModal, setSelectedCategoryForModal] = useState<ServiceCategory | null>(null);
 
   useEffect(() => {
     // Automatically prompt for location when the user lands on the Home Screen
@@ -546,61 +547,96 @@ export default function HomeScreen({
           )}
         </div>
         
-        {/* ─── All Services Section (Sleek Horizontal Scroll Row) ─── */}
-        <div style={{ background: '#081B2C', padding: '16px 0 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* ─── All Services Grid (Multi-Row & Multi-Column Layout) ─── */}
+        <div style={{ background: '#081B2C', padding: '20px 0 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           {/* Section Header */}
-          <div style={{ padding: '0 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.2px' }}>
-              {t('allServices')}
-            </h2>
-            <span style={{ fontSize: 11, color: '#38BDF8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
-              {settings?.language === 'kn' ? 'ವೀಕ್ಷಿಸಲು ಸ್ವೈಪ್ ಮಾಡಿ →' : settings?.language === 'hi' ? 'देखने के लिए स्वाइप करें →' : 'Swipe to explore →'}
+          <div style={{ padding: '0 20px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.2px' }}>
+                {t('allServices')}
+              </h2>
+              <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0', fontWeight: 600 }}>
+                {settings?.language === 'kn' ? 'ತಕ್ಷಣದ ಸೇವೆ ಅಥವಾ ಕರೆಗಾಗಿ ಟ್ಯಾಪ್ ಮಾಡಿ' : settings?.language === 'hi' ? 'त्वरित बुकिंग या कॉल के लिए टैप करें' : 'Tap any service for instant booking or direct call'}
+              </p>
+            </div>
+            <span style={{ 
+              fontSize: 11, color: '#38BDF8', background: 'rgba(56, 189, 248, 0.12)', 
+              padding: '4px 10px', borderRadius: 12, border: '1px solid rgba(56, 189, 248, 0.25)', 
+              fontWeight: 800, letterSpacing: '0.2px' 
+            }}>
+              {categories.length} {settings?.language === 'kn' ? 'ಸೇವೆಗಳು' : settings?.language === 'hi' ? 'सेवाएं' : 'Services'}
             </span>
           </div>
 
-          {/* Horizontal Scroll Row */}
+          {/* Responsive Multi-Row, Multi-Column Grid */}
           <div style={{ 
-            display: 'flex', gap: 12, overflowX: 'auto', padding: '4px 20px 8px', scrollbarWidth: 'none',
-            scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch'
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', 
+            gap: 12, 
+            padding: '4px 16px 8px' 
           }}>
             {categories.map(cat => {
               const localizedName = getCategoryLocalizedName(cat, settings?.language || 'en');
-              const isSelected = (searchQuery.toLowerCase() === cat.name_en.toLowerCase()) || activeCategory === cat.id;
+              const isSelected = (searchQuery.toLowerCase() === cat.name_en.toLowerCase()) || activeCategory === cat.id || selectedCategoryForModal?.id === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => {
-                    setSearchQuery(isSelected ? '' : cat.name_en);
-                    setActiveCategory(isSelected ? null : cat.id);
+                    setSelectedCategoryForModal(cat);
+                    setActiveCategory(cat.id);
                   }}
                   style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 8, cursor: 'pointer',
                     background: isSelected 
                       ? 'linear-gradient(180deg, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0.08) 100%)' 
                       : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
                     border: isSelected ? '2px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 20, padding: '8px 4px 10px', minWidth: 88, width: 88, flexShrink: 0,
-                    scrollSnapAlign: 'start',
-                    boxShadow: isSelected ? '0 0 20px rgba(56, 189, 248, 0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                    borderRadius: 20, padding: '14px 6px 12px',
+                    boxShadow: isSelected ? '0 0 20px rgba(56, 189, 248, 0.35)' : '0 4px 12px rgba(0,0,0,0.25)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    minHeight: 124,
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
                   <div style={{ 
-                    width: 60, height: 60, 
+                    width: 62, height: 62, 
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.2s ease'
+                    transition: 'transform 0.2s ease',
+                    marginTop: 2
                   }}>
-                    <CategoryIcon slug={cat.slug} iconUrl={cat.icon_url} name={cat.name_en} size={58} />
+                    <CategoryIcon slug={cat.slug} iconUrl={cat.icon_url} name={cat.name_en} size={60} />
                   </div>
-                  <span style={{ 
-                    fontSize: 12, fontWeight: 800, 
-                    color: isSelected ? '#38BDF8' : 'rgba(255,255,255,0.9)', 
-                    textAlign: 'center', lineHeight: 1.2,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%',
-                    transition: 'color 0.2s ease'
-                  }}>
-                    {localizedName}
-                  </span>
+                  <div style={{ width: '100%', textAlign: 'center' }}>
+                    <span style={{ 
+                      fontSize: 12, fontWeight: 800, 
+                      color: isSelected ? '#38BDF8' : 'rgba(255,255,255,0.95)', 
+                      textAlign: 'center', lineHeight: 1.25,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      wordBreak: 'break-word',
+                      width: '100%',
+                      padding: '0 2px'
+                    }}>
+                      {localizedName}
+                    </span>
+                    <span style={{ 
+                      display: 'inline-block',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: '#38BDF8',
+                      marginTop: 4,
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      padding: '1px 6px',
+                      borderRadius: 8,
+                      border: '0.5px solid rgba(56, 189, 248, 0.2)'
+                    }}>
+                      ₹350/hr
+                    </span>
+                  </div>
                 </button>
               );
             })}

@@ -41,6 +41,8 @@ export interface UserProfile {
 export interface WorkerProfile {
   worker_id: string;
   category_id?: string;
+  category_name?: string;
+  category_slug?: string;
   full_name: string;
   avatar_url?: string;
   avg_rating: number;

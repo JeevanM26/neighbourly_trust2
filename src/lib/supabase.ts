@@ -310,7 +310,6 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
         worker_id: p.id,
         full_name: p.full_name || 'Specialist',
         avatar_url: p.avatar_url,
-        phone: p.phone,
         category_id: '',
         category_name: 'Specialist',
         category_slug: '',
@@ -341,7 +340,6 @@ export async function getWorkerProfile(workerId: string): Promise<WorkerProfile 
       worker_id: w.profile_id,
       full_name: (w.profiles as any)?.full_name || 'Specialist',
       avatar_url: (w.profiles as any)?.avatar_url,
-      phone: (w.profiles as any)?.phone,
       category_id: workerCats && workerCats[0]?.category_id ? workerCats[0].category_id : (primaryCat?.id || ''),
       category_name: primaryCat?.name_en || 'Specialist',
       category_slug: primaryCat?.slug || '',
@@ -500,7 +498,9 @@ export async function upsertProfile(profile: {
   id: string;
   full_name: string;
   phone?: string;
+  email?: string;
   language: string;
+  preferred_language?: string;
   consent_given: boolean;
 }): Promise<boolean> {
   const client = getClient();
